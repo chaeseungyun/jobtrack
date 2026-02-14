@@ -52,19 +52,23 @@
 ---
 
 ## Step 3. 인증(Auth) 구현
-- [ ] 회원가입 API(`POST /api/auth/register`)
-- [ ] 로그인 API(`POST /api/auth/login`)
-- [ ] 로그아웃 API(`POST /api/auth/logout`)
-- [ ] JWT 발급/검증 유틸 및 보호 라우트 처리
+- [x] 회원가입 API(`POST /api/auth/register`)
+- [x] 로그인 API(`POST /api/auth/login`)
+- [x] 로그아웃 API(`POST /api/auth/logout`)
+- [x] JWT 발급/검증 유틸 및 보호 라우트 처리
 
 산출물
 - 인증 API 3종 + 토큰 검증 로직
 
 완료 기준
-- 회원가입 -> 로그인 -> 보호 API 접근 흐름 정상
+- [x] 회원가입 -> 로그인 -> 보호 API 접근 흐름 정상
 
 사용자 결정 포인트
-- [ ] 토큰 만료 시간(예: 7일)
+- [x] 토큰 만료 시간: 7일
+
+진행 메모
+- [x] E2E 검증 완료(회원가입 201, 로그인 200, 로그아웃 200)
+- [x] `.env.local`에 `JWT_SECRET` 설정 필요
 
 ---
 
@@ -150,3 +154,8 @@
 - 기능 추가보다 안정성을 우선한다.
 - 큰 리팩터링보다 작은 단위 완성을 우선한다.
 - 모든 변경은 검증 가능한 완료 기준을 가진다.
+
+## API 문서 정책
+- Swagger 경로는 `/swagger`로 고정한다.
+- OpenAPI 스펙 파일은 `public/openapi.json`으로 관리한다.
+- API 생성/수정 시 같은 작업 단위에서 `public/openapi.json`을 반드시 갱신한다.

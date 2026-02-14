@@ -11,6 +11,8 @@
 - 기존 패턴 우선 준수
 - 오류 발생시 오류 내용 보고
 - 코드 작성 및 변경, 아키텍처 수정 시 관련 문서 업데이트
+- API 생성/수정 시 `public/openapi.json`(Swagger 스펙) 즉시 업데이트
+- Swagger 확인 경로: `/swagger`
 
 ## Usage Policy
 - Use supabase-mcp when database, storage, RLS, or SQL is involved.
