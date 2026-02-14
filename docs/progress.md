@@ -6,6 +6,7 @@
 - Next.js 초기 세팅
 - API Route 초기 세팅
 - Supabase 초기 세팅 및 테이블 생성
+- Step 3(Auth) 구현
 
 ### 2) 작업 내용
 - Done:
@@ -13,6 +14,9 @@
   - shadcn/ui 컴포넌트 설치 완료
   - DB 헬스 체크 API(`GET /api/health/db`) 구현 완료
   - Supabase 연결 및 타입 구조(`generated + domain`) 정리 완료
+  - JWT(7d) 기반 인증 API(`register/login/logout`) 구현 완료
+  - Swagger 페이지(`/swagger`) 및 OpenAPI 스펙(`public/openapi.json`) 추가 완료
+  - `JWT_SECRET` 생성 및 로컬 반영 완료
 - In Progress:
   - 없음
 - Blocked:
@@ -22,23 +26,41 @@
 - 주제: Supabase 타입 관리 방식
 - 선택지:
   - A: PRD 스키마 기준 수기 타입 작성
-  - B: Supabase type generator 기반 생성
+  - B: Supabase type generator 기반 생성 + 도메인 타입 분리
 - 최종 결정: B안
-- 판단 근거(왜): DB 스키마와 타입 정합성을 유지하기 위해 자동 생성 기준을 사용하고, 도메인 제약 타입만 별도 관리
+- 판단 근거(왜): DB 스키마 정합성은 자동 생성으로 보장하고, 비즈니스 제약(도메인)은 별도 타입으로 관리하는 편이 유지보수/안정성 측면에서 유리
 - 예상 리스크: `supabase link` 미완료 시 `db:types` 실행 실패
 
-- 주제: env 값 조회 함수(`getRequiredEnv`)의 정의 위치
+- 주제: `getRequiredEnv` 정의 위치
 - 선택지:
   - A: 공용 `utils.ts`로 분리
-  - B: 필요한 파일 내부에 정의
+  - B: 필요한 파일 내부(`server-only`)에 정의
 - 최종 결정: B안
-- 판단 근거(왜): `service_role` 관련 로직은 서버 전용이어야 하므로 `server-only` 경계 내부에 두는 것이 안전
-- 예상 리스크: 서버 전용 함수의 잘못된 import 시 빌드 실패 가능
+- 판단 근거(왜): `service_role` 관련 로직은 서버 전용 경계에서만 실행되어야 하므로, 범용 유틸 분리보다 파일 내부 고정이 안전
+- 예상 리스크: 서버 전용 함수를 클라이언트 영역에서 import하면 빌드 실패 가능
+
+- 주제: 인증 방식 선택
+- 선택지:
+  - A: JWT(7d)
+  - B: Cookie + Session
+- 최종 결정: A안
+- 판단 근거(왜): 현재 목표(빠른 MVP + API 중심 구현)에서 구현 복잡도를 낮추면서도 인증 흐름을 빠르게 검증 가능
+- 예상 리스크: 탈취된 JWT는 만료 전 강제 무효화가 어려움(블랙리스트/세션 저장소 미도입 상태)
+
+- 주제: API 테스트 환경 선택
+- 선택지:
+  - A: Swagger
+  - B: Postman
+- 최종 결정: A안
+- 판단 근거(왜): 프로젝트 내부에서 즉시 테스트 가능하고, API 문서와 테스트를 한 경로(`/swagger`)로 일원화 가능
+- 예상 리스크: API 변경 시 `public/openapi.json` 미갱신하면 문서-코드 불일치 발생
 
 ### 4) 검증/지표
 - API health: 성공 (`200`, `{"ok":true,"database":"connected"}`)
-- Build: 실패 (기존 설정 이슈: `tsconfig`의 `ignoreDeprecations` 값 오류)
-- 타입/린트: 타입 파일 진단 통과, 전체 린트는 미실행
+- Auth E2E: 성공 (`register 201`, `login 200`, `logout 200`)
+- Swagger/OpenAPI 접근: 성공 (`/swagger 200`, `/openapi.json 200`)
+- Build: pass
+- 타입/린트: 변경 파일 타입 진단 통과, 전체 린트는 미실행
 - 배포 후 오류 보고 건수: 미배포
 - 생산성 지표(선택): 작업 소요 시간 기록 필요
 
@@ -46,12 +68,19 @@
 - 배운 점:
   - Supabase 프로젝트 초기 연결 흐름
   - SQL Editor 기반 테이블 생성
-  - `supabase gen` 기반 타입 관리 전략
-  - `server-only`를 활용한 클라이언트/서버 경계 설정
-- 근거(문서/실험): 코드 변경 + 로컬 API 검증 결과
+  - `supabase gen` 기반 타입 동기화 전략
+  - `server-only`를 활용한 서버/클라이언트 경계 설계
+  - JWT 만료시간(7d) 기준의 인증 API 설계 및 검증
+  - Swagger를 통한 API 문서/테스트 일원화 운영
+- 근거(문서/실험): 코드 변경 + 로컬 API/빌드 검증 결과
 - 다음에 적용할 점:
-  - 프로젝트 시작 시 타입 생성 스크립트와 서버 경계 정책을 먼저 고정
+  - 프로젝트 시작 시 타입 생성 스크립트, 인증 정책, API 문서 정책을 먼저 고정
+  - API 변경 시 스펙(`public/openapi.json`) 동시 수정을 PR 체크리스트에 포함
 
 ### 6) 다음 액션
-- [ ] `tsconfig`의 `ignoreDeprecations` 값 수정 후 `pnpm build` 재검증
-- [ ] Step 3(Auth) 구현 시작 (`register/login/logout`)
+- [ ] Step 4(Applications/Events/Documents API) 구현 시작
+- [ ] Step 4 API 추가 시 `public/openapi.json` 동시 업데이트
+
+### 7) 이력서/포트폴리오용 요약 포인트
+- Next.js App Router 기반 풀스택 MVP에서 인증(JWT), DB(Supabase), API 문서화(Swagger)까지 단일 리포에서 설계/구현/검증 수행
+- 인증/타입/문서 정책을 코드와 문서(AGENTS.md, steps.md, progress.md)에 일관되게 반영해 운영 가능한 개발 흐름 구축
