@@ -33,28 +33,21 @@
 ---
 
 ## Step 2. Supabase 연동 베이스 코드
-- [ ] 서버용 Supabase 클라이언트(`service_role`) 분리
-- [ ] 브라우저용 Supabase 클라이언트(`anon`) 분리
-- [ ] DB 타입 파일 생성/연동
-
-실행 가이드라인
-- [ ] `lib/supabase/server.ts` 생성: `SUPABASE_SERVICE_ROLE_KEY` 기반 서버 전용 클라이언트
-- [ ] `lib/supabase/client.ts` 생성: `NEXT_PUBLIC_SUPABASE_ANON_KEY` 기반 브라우저 클라이언트
-- [ ] `lib/supabase/types.ts` 생성: DB 타입 정의/연동
-- [ ] `app/api/health/db/route.ts` 생성: DB 연결 확인용 테스트 API
-- [ ] 보안 점검: `service_role` 키가 클라이언트 번들로 노출되지 않도록 확인
+- [x] 서버용 Supabase 클라이언트(`service_role`) 분리
+- [x] 브라우저용 Supabase 클라이언트(`anon`) 분리
+- [x] DB 타입 파일 생성/연동
 
 산출물
 - `lib/supabase/server.ts`, `lib/supabase/client.ts` 등 연동 유틸
 
 완료 기준
-- 테스트 API에서 DB 연결 성공 확인
+- [x] 테스트 API에서 DB 연결 성공 확인
 
-Step 2에서 나(에이전트)가 할 수 있는 일
-- [ ] Supabase server/client/types 파일 코드 작성
-- [ ] DB 연결 확인 API 코드 작성 및 에러 핸들링 추가
-- [ ] 타입 안전성 확인(기본 타입/반환 타입 정리)
-- [ ] Step 2 결과를 본 문서에 즉시 업데이트
+진행 메모
+- [x] Step 2 코드 구현 완료
+- [x] 로컬 API 호출로 DB 연결 성공 확인 (`GET /api/health/db`)
+- [x] DB 타입 생성 스크립트 추가 (`pnpm db:types`, `pnpm db:types:local`)
+- [x] 데이터 생성/관리는 Supabase Dashboard 우선 사용(초기 개발 단계)
 
 ---
 
