@@ -2,7 +2,7 @@
 
 - project-name: my-fisrt-fullstack
 - 서버부터 프론트까지 개발 후 배포하는 것이 목적. 인프라 구성, api 설계, 프론트 최적화를 학습 예정
-- 현재 단계: 기획
+- 현재 단계: 개발
 
 # Agent rules
 
