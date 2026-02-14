@@ -16,16 +16,19 @@
 ---
 
 ## Step 1. 프로젝트 기반 세팅
-- [ ] Next.js 14 App Router 구조 정리
-- [ ] shadcn/ui 초기화 및 핵심 컴포넌트 설치
-- [ ] 기본 폴더 구조 생성(`app`, `components`, `lib`, `types`)
+- [x] Next.js 14 App Router 구조 정리
+- [x] shadcn/ui 초기화 및 핵심 컴포넌트 설치
+- [x] 기본 폴더 구조 생성(`app`, `components`, `lib`, `types`)
 
 산출물
 - 기본 실행 가능한 프로젝트 구조
 - shadcn/ui 컴포넌트 사용 준비 완료
 
 완료 기준
-- `pnpm dev` 정상 실행
+- [x] `pnpm dev` 정상 실행
+
+검증 메모
+- [x] Step 1 완료 및 로컬 검증 완료
 
 ---
 
@@ -34,11 +37,24 @@
 - [ ] 브라우저용 Supabase 클라이언트(`anon`) 분리
 - [ ] DB 타입 파일 생성/연동
 
+실행 가이드라인
+- [ ] `lib/supabase/server.ts` 생성: `SUPABASE_SERVICE_ROLE_KEY` 기반 서버 전용 클라이언트
+- [ ] `lib/supabase/client.ts` 생성: `NEXT_PUBLIC_SUPABASE_ANON_KEY` 기반 브라우저 클라이언트
+- [ ] `lib/supabase/types.ts` 생성: DB 타입 정의/연동
+- [ ] `app/api/health/db/route.ts` 생성: DB 연결 확인용 테스트 API
+- [ ] 보안 점검: `service_role` 키가 클라이언트 번들로 노출되지 않도록 확인
+
 산출물
 - `lib/supabase/server.ts`, `lib/supabase/client.ts` 등 연동 유틸
 
 완료 기준
 - 테스트 API에서 DB 연결 성공 확인
+
+Step 2에서 나(에이전트)가 할 수 있는 일
+- [ ] Supabase server/client/types 파일 코드 작성
+- [ ] DB 연결 확인 API 코드 작성 및 에러 핸들링 추가
+- [ ] 타입 안전성 확인(기본 타입/반환 타입 정리)
+- [ ] Step 2 결과를 본 문서에 즉시 업데이트
 
 ---
 
