@@ -1,5 +1,71 @@
 # Progress Log
 
+## 2026-02-16
+
+### 1) 오늘의 목표
+- 
+- 
+- 
+
+### 2) 작업 내용
+- Done:
+  - 
+- In Progress:
+  - 
+- Blocked:
+  - 없음
+
+### 3) 개발 판단 로그
+- 주제:
+- 선택지:
+  - A:
+  - B:
+- 최종 결정:
+- 판단 근거(왜):
+  1. 
+  2. 
+- 예상 리스크:
+  - 
+
+### 4) 검증/지표
+- 코드/문서 변경 추적
+  - 변경 파일(핵심):
+    - 
+  - 스펙/문서 동기화:
+    - 
+- 기능 검증(회귀 포함)
+  - API health:
+  - 핵심 시나리오:
+    - 
+- 아키텍처/품질 지표
+  - Build:
+  - 타입/진단(LSP):
+  - `use client` 라우트 수(전/후):
+  - `localStorage` 인증 참조 건수(전/후):
+  - 인증 계약 지표:
+    - `token` 응답 필드 제거 여부:
+    - `Set-Cookie(jobtrack_auth)` 확인:
+    - 보호 API 쿠키 없음/있음 결과:
+- 운영 지표
+  - 배포 후 오류 보고 건수:
+  - 생산성 지표(작업 소요 시간/재시도 횟수):
+
+### 5) 학습 로그
+- 배운 점:
+  - 
+- 근거(문서/실험):
+  - 
+- 다음에 적용할 점:
+  - 
+
+### 6) 다음 액션
+- [ ] 
+- [ ] 
+
+### 7) 이력서/포트폴리오용 요약 포인트
+- 
+- 
+
 ## 2026-02-15
 ### 1) 오늘의 목표
 - Server components를 활용하도록 아키텍처 변경
@@ -8,9 +74,18 @@
 
 ### 2) 작업 내용
 - Done:
+  - 인증 전달 방식을 `localStorage + Bearer`에서 `httpOnly cookie(jobtrack_auth)`로 전환
+    - 변경 파일: `src/app/api/auth/login/route.ts`, `src/app/api/auth/register/route.ts`, `src/app/api/auth/logout/route.ts`, `src/lib/auth/request.ts`, `src/lib/auth/jwt.ts`
+  - 클라이언트 토큰 의존 제거
+    - 변경 파일: `src/lib/api/client.ts`, `src/app/page.tsx`, `src/app/auth/page.tsx`, `src/app/dashboard/page.tsx`, `src/app/board/page.tsx`, `src/app/applications/[id]/page.tsx`, `src/components/app/app-shell.tsx`
+    - 제거 파일: `src/lib/auth/token.ts`
+  - OpenAPI 스펙을 쿠키 인증 기준으로 동기화
+    - 변경 파일: `public/openapi.json`
+  - 문서 동기화
+    - 변경 파일: `docs/steps.md`, `docs/prd.llm.md`, `docs/progress.md`
+  - Server Components first 전면 전환(페이지 단위 클라이언트 제거) 후속 진행
 - In Progress:
-  - Server components를 활용하도록 아키텍처 변경
-  - jwt 관리를 브라우저 스토리지가 아닌 쿠키에서 하도록 변경
+  - 지원서 등록 화면 UI(`/applications/new` 또는 동등 경로) 구현
 - Blocked:
   - 없음
 
@@ -33,6 +108,59 @@
   5. PPR 도입 가능성
   향후 Partial Pre-Rendering을 적용하여 정적/동적 영역을 분리하는 실험적 구조 확장 가능
 - 예상 리스크: Server Components와 Client Components 경계 설정 복잡도 증가
+
+- 주제: 인증 방식 전환
+- 선택지:
+  - A: 기존 방식 유지 (jwt를 클라이언트가 local-stroage에서 관리)
+  - B: jwt를 http-only 쿠키로 전달
+- 최종 결정: B안
+- 판단 근거(왜):
+  1. XSS 공격에 대한 방어 강화
+  localStorage에 저장된 토큰은 JavaScript를 통해 접근 가능하므로 XSS 발생 시 즉시 탈취될 수 있다. HttpOnly 쿠키는 브라우저에서 자동 전송되지만 JS에서 접근이 불가능하여 토큰 직접 탈취를 방지할 수 있다.
+  2. Server Components 기반 렌더링과의 정합성
+  localStorage는 서버에서 접근할 수 없기 때문에 인증 상태를 기반으로 한 SSR이 불가능.
+  hydration 이후 클라이언트에서 토큰을 읽고 데이터 패칭을 하면 초기 렌더링 지연, 서버 데이터 캐싱 전략과 충돌
+  반면 http-only 쿠키는 요청 시 자동 포함되므로 서버 컴포넌트 및 router handler에서 인증 정보 활용 가능.
+- 예상 리스크: 여전히 JWT의 기본 특성상 즉시 무효화 어려움. 쿠키 설정 복잡성 증가. 쿠키 기반 인증은 자동 전송 특성으로 인해 CSRF 공격에 노출될 수 있다.
+
+### 4) 검증/지표
+- 코드/문서 변경 추적(확인 완료)
+  - 당일 커밋 기준 변경 범위가 인증 전환 + 라우트/UI 연계 + OpenAPI/문서 동기화로 일치
+- 기능 검증(당일 기록)
+  - API health: 성공 (`200`, `{"ok":true,"database":"connected"}`)
+  - Auth 회귀: 성공 (`register 201`, `login 200`, `logout 200`)
+  - Swagger/OpenAPI 접근: 성공 (`/swagger 200`, `/openapi.json 200`)
+  - Step 4 API 회귀: 성공
+    - application: `create 201`, `list 200`, `get 200`, `patch 200`, `delete 204`
+    - event: `create 201`, `patch 200`, `delete 204`
+    - document: `upload 201`, `delete 204`
+- 아키텍처 전환 지표(해당 일자 측정 누락, 다음 기록부터 의무화)
+  - `token` 응답 필드 제거 여부 (`/api/auth/login`, `/api/auth/register`)
+  - `Set-Cookie` 헤더(`jobtrack_auth`, `HttpOnly`, `SameSite`, `Path`) 확인
+  - 보호 API 쿠키 인증 케이스: 쿠키 없음 `401`, 쿠키 있음 `200`
+  - `use client` 페이지 수(전/후), `localStorage` 참조 건수(전/후)
+  - Build/LSP 결과를 전환 작업 기준으로 별도 기록
+- 배포/운영 지표
+  - 배포 후 오류 보고 건수: 미배포
+  - 생산성 지표: 작업 소요 시간/재시도 횟수 기록 누락(다음 기록부터 추가)
+
+### 5) 학습 로그
+- 배운 점:
+  - Server Component/Client Component 경계 설정이 인증 방식(localStorage vs cookie)과 강하게 결합됨
+  - 쿠키 기반 인증 전환 시 API 계약, 클라이언트 호출 방식, OpenAPI 문서를 같은 작업 단위에서 함께 갱신해야 안정적
+  - 검증 항목은 기능 회귀(HTTP 상태)와 아키텍처 지표(경계/번들/참조 제거)를 분리해 기록해야 누락이 줄어듦
+- 근거(문서/실험): 코드 변경 + 로컬 API 회귀 검증 + 스펙/문서 동기화 결과
+- 다음에 적용할 점:
+  - Server Component first로 설계하고, 클라이언트는 인터랙션 island로만 분리
+  - 진행 로그의 검증/지표는 "기능 회귀"와 "아키텍처 전환 지표"를 분리해 수치화
+
+### 6) 다음 액션
+- [ ] 지원서 등록 화면 UI 추가 구현
+
+### 7) 이력서/포트폴리오용 요약 포인트
+- JWT 전달 구조를 `localStorage + Bearer`에서 `httpOnly cookie` 기반으로 전환하고, 인증 API/클라이언트 호출 계층/OpenAPI 문서를 한 작업 단위로 동기화해 인증 경계를 재정의
+- App Router에서 주요 페이지를 Server Components first로 전환하고, 인터랙션 영역만 Client Island로 분리해 렌더링 전략을 서버 중심으로 재구성
+
 
 ## 2026-02-14
 
