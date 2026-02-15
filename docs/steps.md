@@ -112,6 +112,9 @@
 - [x] `/dashboard` 지표 카드 + 다가오는 일정(상위 지원서 이벤트 기반)
 - [x] `/board` 단계별 칸반 뷰
 - [x] `/applications/[id]` 상세 조회 + stage/memo/position 수정
+- [x] Server Components first 전환(`/dashboard`, `/board`, `/applications/[id]` 서버 렌더링)
+- [x] 인터랙션 전용 Client Island 분리(`src/app/**/_components/*.client.tsx`, `src/components/islands/*.client.tsx`)
+- [x] 클라이언트 데이터 요청 구간 React Query 적용(로그인/회원가입, 저장, 로그아웃 mutation)
 - [ ] 지원서 등록 전용 UI는 다음 작업 단위에서 구현
 
 ---

@@ -1,11 +1,8 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 
-import { applicationsApi, type ApplicationDetail } from "@/lib/api/client";
 import { STAGE_LABELS } from "@/lib/app/stages";
+import { requireServerAuth } from "@/lib/auth/session";
+import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ApplicationRow } from "@/lib/supabase/types";
 
 import { AppShell } from "@/components/app/app-shell";
@@ -28,77 +25,73 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
   minute: "2-digit",
 });
 
-export default function DashboardPage() {
-  const router = useRouter();
-  const [applications, setApplications] = useState<ApplicationRow[]>([]);
-  const [upcoming, setUpcoming] = useState<UpcomingItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+export default async function DashboardPage() {
+  const auth = await requireServerAuth();
+  const supabase = createServerSupabaseClient();
 
-  useEffect(() => {
-    const load = async () => {
-      setIsLoading(true);
-      setErrorMessage(null);
+  let errorMessage: string | null = null;
+  let applications: ApplicationRow[] = [];
+  let upcoming: UpcomingItem[] = [];
 
-      try {
-        const listResult = await applicationsApi.list();
-        setApplications(listResult.applications);
+  try {
+    const { data: applicationRows, error: applicationsError } = await supabase
+      .from("applications")
+      .select("*")
+      .eq("user_id", auth.sub)
+      .order("created_at", { ascending: false })
+      .returns<ApplicationRow[]>();
 
-        const detailTargets = listResult.applications.slice(0, 5);
-        const details = await Promise.all(
-          detailTargets.map((application) =>
-            applicationsApi
-              .get(application.id)
-              .catch(() => null as ApplicationDetail | null)
-          )
-        );
+    if (applicationsError) {
+      throw new Error(applicationsError.message);
+    }
 
-        const now = Date.now();
-        const upcomingEvents = details
-          .flatMap((detail) => {
-            if (!detail) {
-              return [];
-            }
+    applications = applicationRows ?? [];
 
-            return detail.events
-              .filter((event) => new Date(event.scheduled_at).getTime() >= now)
-              .map((event) => ({
-                id: event.id,
-                applicationId: detail.id,
-                companyName: detail.company_name,
-                position: detail.position,
-                type: event.event_type,
-                at: event.scheduled_at,
-              }));
-          })
-          .sort(
-            (left, right) =>
-              new Date(left.at).getTime() - new Date(right.at).getTime()
-          )
-          .slice(0, 5);
+    const targetApplications = applications.slice(0, 5);
+    const targetIds = targetApplications.map((application) => application.id);
 
-        setUpcoming(upcomingEvents);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to load";
-        if (message === "Unauthorized") {
-          router.replace("/auth");
-          return;
-        }
-        setErrorMessage(message);
-      } finally {
-        setIsLoading(false);
+    if (targetIds.length > 0) {
+      const { data: upcomingEvents, error: eventsError } = await supabase
+        .from("events")
+        .select("id,application_id,event_type,scheduled_at")
+        .in("application_id", targetIds)
+        .gte("scheduled_at", new Date().toISOString())
+        .order("scheduled_at", { ascending: true });
+
+      if (eventsError) {
+        throw new Error(eventsError.message);
       }
-    };
 
-    void load();
-  }, [router]);
+      const applicationMap = new Map(targetApplications.map((item) => [item.id, item]));
 
-  const stageCounts = useMemo(() => {
-    return applications.reduce<Record<string, number>>((acc, application) => {
-      acc[application.current_stage] = (acc[application.current_stage] ?? 0) + 1;
-      return acc;
-    }, {});
-  }, [applications]);
+      upcoming = (upcomingEvents ?? [])
+        .map((event) => {
+          const application = applicationMap.get(event.application_id);
+
+          if (!application) {
+            return null;
+          }
+
+          return {
+            id: event.id,
+            applicationId: application.id,
+            companyName: application.company_name,
+            position: application.position,
+            type: event.event_type,
+            at: event.scheduled_at,
+          } satisfies UpcomingItem;
+        })
+        .filter((item): item is UpcomingItem => item !== null)
+        .slice(0, 5);
+    }
+  } catch (error) {
+    errorMessage = error instanceof Error ? error.message : "Failed to load";
+  }
+
+  const stageCounts = applications.reduce<Record<string, number>>((acc, application) => {
+    acc[application.current_stage] = (acc[application.current_stage] ?? 0) + 1;
+    return acc;
+  }, {});
 
   const interviewCount = stageCounts.interview ?? 0;
 
@@ -106,6 +99,7 @@ export default function DashboardPage() {
     <AppShell
       title="Dashboard"
       description="Track outcomes and upcoming schedules from one screen."
+      activePath="/dashboard"
     >
       {errorMessage ? (
         <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -148,8 +142,7 @@ export default function DashboardPage() {
             <CardTitle>Upcoming Schedule</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {isLoading ? <p className="text-sm text-slate-500">Loading...</p> : null}
-            {!isLoading && upcoming.length === 0 ? (
+            {upcoming.length === 0 ? (
               <p className="text-sm text-slate-500">No scheduled events in tracked items.</p>
             ) : null}
             {upcoming.map((item) => (
@@ -194,7 +187,7 @@ export default function DashboardPage() {
                 </p>
               </Link>
             ))}
-            {!applications.length && !isLoading ? (
+            {!applications.length ? (
               <p className="text-sm text-slate-500">No applications yet.</p>
             ) : null}
           </CardContent>

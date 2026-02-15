@@ -37,6 +37,7 @@ Key Problems Solved:
 ### 2.1 Required Stack
 ```
 Frontend:    Next.js 14 (App Router)
+Client Data: TanStack React Query (client islands only)
 UI Library:  shadcn/ui (Tailwind CSS + Radix UI)
 Package Manager: pnpm
 Backend:     Next.js API Routes
@@ -504,23 +505,29 @@ CREATE TABLE documents (
 
 ### 5.2 Component Guidelines
 
-**Layout Components:**
+**Layout Components (Server Components first):**
 ```
 app/
-├── layout.tsx           # Root layout with auth provider
-├── page.tsx             # Redirects to /dashboard or /login
-├── (auth)/              # Auth routes (no layout sidebar)
-│   ├── login/page.tsx
-│   └── register/page.tsx
-├── (app)/               # App routes (with sidebar layout)
-│   ├── layout.tsx       # App layout with sidebar, auth check
-│   ├── dashboard/page.tsx
-│   ├── board/page.tsx
-│   └── applications/
-│       ├── new/page.tsx
-│       └── [id]/
-│           ├── page.tsx
-│           └── edit/page.tsx
+├── layout.tsx
+├── providers.tsx
+├── page.tsx
+├── auth/
+│   ├── page.tsx
+│   └── _components/
+│       └── auth-form.client.tsx
+├── dashboard/
+│   └── page.tsx
+├── board/
+│   └── page.tsx
+└── applications/
+    └── [id]/
+        ├── page.tsx
+        └── _components/
+            └── application-detail-form.client.tsx
+
+components/
+└── islands/
+    └── logout-button.client.tsx
 ```
 
 **Key Components:**
@@ -994,27 +1001,17 @@ export async function POST(request: NextRequest) {
 }
 ```
 
-### 10.3 Client-Side Data Fetching
+### 10.3 Client-Side Data Fetching (Client Island + React Query)
 
 ```typescript
-// hooks/useApplications.ts
-import useSWR from 'swr';
+// components/islands/logout-button.client.tsx
+import { useMutation } from '@tanstack/react-query';
 
-const fetcher = (url: string) =>
-  fetch(url, {
-    credentials: 'include',
-  }).then(res => res.json());
+const logoutMutation = useMutation({
+  mutationFn: () => fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }),
+});
 
-export function useApplications() {
-  const { data, error, mutate } = useSWR('/api/applications', fetcher);
-  
-  return {
-    applications: data?.applications,
-    isLoading: !error && !data,
-    isError: error,
-    mutate,
-  };
-}
+// Use React Query only where client-side interaction requires it.
 ```
 
 ### 10.4 shadcn/ui Custom Component Pattern

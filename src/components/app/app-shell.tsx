@@ -1,16 +1,11 @@
-"use client";
-
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 
-import { authApi } from "@/lib/api/client";
-
-import { Button } from "@/components/ui/button";
+import { LogoutButton } from "@/components/islands/logout-button.client";
 
 interface AppShellProps {
   title: string;
   description?: string;
+  activePath?: string;
   children: React.ReactNode;
 }
 
@@ -19,23 +14,12 @@ const NAV_ITEMS = [
   { href: "/board", label: "Board" },
 ];
 
-export function AppShell({ title, description, children }: AppShellProps) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-
-    try {
-      await authApi.logout();
-    } catch (error) {
-      console.error("Logout request failed", error);
-    } finally {
-      setIsLoggingOut(false);
-      router.replace("/auth");
-    }
-  };
+export function AppShell({
+  title,
+  description,
+  activePath = "",
+  children,
+}: AppShellProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
@@ -46,7 +30,7 @@ export function AppShell({ title, description, children }: AppShellProps) {
           </Link>
           <nav className="flex items-center gap-2">
             {NAV_ITEMS.map((item) => {
-              const isActive = pathname.startsWith(item.href);
+              const isActive = activePath.startsWith(item.href);
               return (
                 <Link
                   key={item.href}
@@ -61,14 +45,7 @@ export function AppShell({ title, description, children }: AppShellProps) {
                 </Link>
               );
             })}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleLogout}
-              disabled={isLoggingOut}
-            >
-              {isLoggingOut ? "Logging out..." : "Logout"}
-            </Button>
+            <LogoutButton />
           </nav>
         </div>
       </header>
