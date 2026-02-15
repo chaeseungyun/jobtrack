@@ -1,5 +1,39 @@
 # Progress Log
 
+## 2026-02-15
+### 1) 오늘의 목표
+- Server components를 활용하도록 아키텍처 변경
+- jwt 관리를 브라우저 스토리지가 아닌 쿠키에서 하도록 변경
+- 지원서 등록 화면 UI(`/applications/new` 또는 동등 경로) 구현하기
+
+### 2) 작업 내용
+- Done:
+- In Progress:
+  - Server components를 활용하도록 아키텍처 변경
+  - jwt 관리를 브라우저 스토리지가 아닌 쿠키에서 하도록 변경
+- Blocked:
+  - 없음
+
+### 3) 개발 판단 로그
+- 주제: 렌더링 방식
+- 선택지:
+  - A: CSR 중심 구조 (Client Component + useEffect 데이터 패칭)
+  - B: SSR 기반 구조 (Server Components First)
+- 최종 결정: B안
+- 판단 근거(왜):
+  1. 초기 렌더링 성능 개선
+  CSR 구조에서는 데이터 패칭이 hydration 이후 수행되므로 주요 콘텐츠가 JS 실행 이후 렌더링됨. 이는 LCP 지표에 불리함.
+  반면 Server Components는 서버에서 데이터 패칭 후 완전한 HTML을 제공하므로 초기 콘텐츠 표시 속도 개선 가능
+  2. 번들 크기 감소
+  Server Components는 클라이언트 번들에 포함되지 않으므로 JS 번들 크기를 줄이고 hydration 비용을 낮출 수 있음.
+  3. Next.js App Router 철학과 맞닿음
+  App router는 Server Components, Data Cache, Streaming 등을 전제로 설계되어 있음.
+  4. 캐싱
+  서버 기반 데이터 패칭은 Next.js의 캐시 전략을 적극 활용 가능
+  5. PPR 도입 가능성
+  향후 Partial Pre-Rendering을 적용하여 정적/동적 영역을 분리하는 실험적 구조 확장 가능
+- 예상 리스크: Server Components와 Client Components 경계 설정 복잡도 증가
+
 ## 2026-02-14
 
 ### 1) 오늘의 목표
