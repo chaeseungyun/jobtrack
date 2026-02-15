@@ -16,7 +16,8 @@
 
 ## Usage Policy
 - Use supabase-mcp when database, storage, RLS, or SQL is involved.
-- Use react-best-practices skill when generating React components.
+- Use vercel-react-best-practices skill when generating React components.
 
 ## Preload Context
 - docs/steps.md
+- docs/prd.llm.md
