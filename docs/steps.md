@@ -73,30 +73,46 @@
 ---
 
 ## Step 4. 지원서/이벤트/문서 API 구현
-- [ ] Applications CRUD API
-- [ ] Events CRUD API
-- [ ] Documents 업로드/삭제 API
-- [ ] 입력 검증(Zod) 적용
+- [x] Applications CRUD API
+- [x] Events CRUD API
+- [x] Documents 업로드/삭제 API
+- [x] 입력 검증(Zod) 적용
 
 산출물
 - 핵심 도메인 API 완성
 
 완료 기준
-- Postman/Thunder Client로 주요 API 정상 응답(200/201/204)
+- [x] 주요 API 정상 응답(200/201/204)
+
+진행 메모
+- [x] E2E 시나리오 검증 완료
+  - register 201
+  - create/list/get/patch/delete application: 201/200/200/200/204
+  - create/patch/delete event: 201/200/204
+  - upload/delete document: 201/204
+- [x] `public/openapi.json` Step4 엔드포인트 동기화 완료
 
 ---
 
 ## Step 5. 핵심 화면 UI 구현
-- [ ] 로그인/회원가입 화면
-- [ ] 대시보드 화면(지표 + 다가오는 일정)
-- [ ] 칸반 보드 화면(단계 이동)
-- [ ] 지원서 등록/상세/수정 화면
+- [x] 로그인/회원가입 화면
+- [x] 대시보드 화면(지표 + 다가오는 일정)
+- [x] 칸반 보드 화면(단계별 파이프라인 가시화)
+- [ ] 지원서 등록 화면
+- [x] 지원서 상세/수정 화면
 
 산출물
 - MVP 주요 사용자 플로우 화면 완성
 
 완료 기준
 - 실제 사용자가 브라우저에서 핵심 흐름 수행 가능
+
+진행 메모
+- [x] `/auth` 로그인/회원가입 탭 구현 및 JWT localStorage 유지
+- [x] `/dashboard` 지표 카드 + 다가오는 일정(상위 지원서 이벤트 기반)
+- [x] `/board` 단계별 칸반 뷰
+- [x] `/applications/[id]` 상세 조회 + stage/memo/position 수정
+- [ ] 지원서 등록 전용 UI는 다음 작업 단위에서 구현
 
 ---
 
