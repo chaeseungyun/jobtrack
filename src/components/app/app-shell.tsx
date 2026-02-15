@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 
 import { authApi } from "@/lib/api/client";
-import { clearAuthToken, getAuthToken } from "@/lib/auth/token";
 
 import { Button } from "@/components/ui/button";
 
@@ -25,21 +24,14 @@ export function AppShell({ title, description, children }: AppShellProps) {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const isAuthenticated = useMemo(() => Boolean(getAuthToken()), []);
-
   const handleLogout = async () => {
-    const token = getAuthToken();
-
     setIsLoggingOut(true);
 
     try {
-      if (token) {
-        await authApi.logout(token);
-      }
+      await authApi.logout();
     } catch (error) {
       console.error("Logout request failed", error);
     } finally {
-      clearAuthToken();
       setIsLoggingOut(false);
       router.replace("/auth");
     }
@@ -69,16 +61,14 @@ export function AppShell({ title, description, children }: AppShellProps) {
                 </Link>
               );
             })}
-            {isAuthenticated ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-              >
-                {isLoggingOut ? "Logging out..." : "Logout"}
-              </Button>
-            ) : null}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              disabled={isLoggingOut}
+            >
+              {isLoggingOut ? "Logging out..." : "Logout"}
+            </Button>
           </nav>
         </div>
       </header>

@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 
 import { applicationsApi } from "@/lib/api/client";
 import { STAGE_LABELS, STAGE_ORDER } from "@/lib/app/stages";
-import { getAuthToken } from "@/lib/auth/token";
 import type { ApplicationRow, StageType } from "@/lib/supabase/types";
 
 import { AppShell } from "@/components/app/app-shell";
@@ -20,22 +19,20 @@ export default function BoardPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = getAuthToken();
-
-    if (!token) {
-      router.replace("/auth");
-      return;
-    }
-
     const load = async () => {
       setIsLoading(true);
       setErrorMessage(null);
 
       try {
-        const result = await applicationsApi.list(token);
+        const result = await applicationsApi.list();
         setApplications(result.applications);
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : "Failed to load");
+        const message = error instanceof Error ? error.message : "Failed to load";
+        if (message === "Unauthorized") {
+          router.replace("/auth");
+          return;
+        }
+        setErrorMessage(message);
       } finally {
         setIsLoading(false);
       }

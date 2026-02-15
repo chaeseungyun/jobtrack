@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 
 import { applicationsApi, type ApplicationDetail } from "@/lib/api/client";
 import { STAGE_LABELS, STAGE_ORDER } from "@/lib/app/stages";
-import { getAuthToken } from "@/lib/auth/token";
 import type { StageType } from "@/lib/supabase/types";
 
 import { AppShell } from "@/components/app/app-shell";
@@ -50,19 +49,12 @@ export default function ApplicationDetailPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = getAuthToken();
-
-    if (!token) {
-      router.replace("/auth");
-      return;
-    }
-
     const load = async () => {
       setIsLoading(true);
       setErrorMessage(null);
 
       try {
-        const result = await applicationsApi.get(token, params.id);
+        const result = await applicationsApi.get(params.id);
         setDetail(result);
         setEditState({
           position: result.position,
@@ -72,7 +64,12 @@ export default function ApplicationDetailPage() {
           cover_letter: result.cover_letter ?? "",
         });
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : "Failed to load");
+        const message = error instanceof Error ? error.message : "Failed to load";
+        if (message === "Unauthorized") {
+          router.replace("/auth");
+          return;
+        }
+        setErrorMessage(message);
       } finally {
         setIsLoading(false);
       }
@@ -82,9 +79,7 @@ export default function ApplicationDetailPage() {
   }, [params.id, router]);
 
   const handleSave = async () => {
-    const token = getAuthToken();
-
-    if (!token || !detail || !editState) {
+    if (!detail || !editState) {
       return;
     }
 
@@ -93,7 +88,7 @@ export default function ApplicationDetailPage() {
     setSuccessMessage(null);
 
     try {
-      const updated = await applicationsApi.update(token, detail.id, {
+      const updated = await applicationsApi.update(detail.id, {
         position: editState.position,
         current_stage: editState.current_stage,
         company_memo: editState.company_memo || null,
@@ -111,7 +106,12 @@ export default function ApplicationDetailPage() {
       );
       setSuccessMessage("Saved");
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Update failed");
+      const message = error instanceof Error ? error.message : "Update failed";
+      if (message === "Unauthorized") {
+        router.replace("/auth");
+        return;
+      }
+      setErrorMessage(message);
     } finally {
       setIsSaving(false);
     }

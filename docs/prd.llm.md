@@ -234,8 +234,8 @@ CREATE TABLE documents (
     id: string;
     email: string;
   };
-  token: string;      // JWT access token
 }
+// Also sets httpOnly cookie: jobtrack_auth
 
 // Response 400 - Validation error
 // Response 409 - Email already exists
@@ -255,15 +255,15 @@ CREATE TABLE documents (
     id: string;
     email: string;
   };
-  token: string;
 }
+// Also sets httpOnly cookie: jobtrack_auth
 
 // Response 401 - Invalid credentials
 ```
 
 #### POST /api/auth/logout
 ```typescript
-// Headers: Authorization: Bearer <token>
+// Auth: httpOnly cookie (jobtrack_auth)
 // Response 200
 { message: "Logged out successfully" }
 ```
@@ -274,7 +274,7 @@ CREATE TABLE documents (
 
 #### GET /api/applications
 ```typescript
-// Headers: Authorization: Bearer <token>
+// Auth: httpOnly cookie (jobtrack_auth)
 // Query params (optional): stage, search
 
 // Response 200
@@ -447,7 +447,7 @@ CREATE TABLE documents (
 
 #### GET /api/dashboard
 ```typescript
-// Headers: Authorization: Bearer <token>
+// Auth: httpOnly cookie (jobtrack_auth)
 
 // Response 200
 {
@@ -956,7 +956,7 @@ import { createApplication } from '@/lib/db';
 export async function POST(request: NextRequest) {
   try {
     // Auth check
-    const token = request.headers.get('authorization')?.replace('Bearer ', '');
+    const token = request.cookies.get('jobtrack_auth')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -1000,11 +1000,9 @@ export async function POST(request: NextRequest) {
 // hooks/useApplications.ts
 import useSWR from 'swr';
 
-const fetcher = (url: string) => 
+const fetcher = (url: string) =>
   fetch(url, {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem('token')}`,
-    },
+    credentials: 'include',
   }).then(res => res.json());
 
 export function useApplications() {

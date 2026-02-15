@@ -1,17 +1,10 @@
-"use client";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { AUTH_COOKIE_NAME } from "@/lib/auth/jwt";
 
-import { getAuthToken } from "@/lib/auth/token";
-
-export default function HomePage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    const token = getAuthToken();
-    router.replace(token ? "/dashboard" : "/auth");
-  }, [router]);
-
-  return <div className="min-h-screen bg-slate-50" />;
+export default async function HomePage() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
+  redirect(token ? "/dashboard" : "/auth");
 }

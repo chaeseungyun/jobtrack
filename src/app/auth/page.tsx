@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { authApi } from "@/lib/api/client";
-import { getAuthToken, setAuthToken } from "@/lib/auth/token";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -30,12 +29,6 @@ export default function AuthPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (getAuthToken()) {
-      router.replace("/dashboard");
-    }
-  }, [router]);
-
   const handleSubmit = async (mode: "login" | "register") => {
     const form = mode === "login" ? loginForm : registerForm;
 
@@ -43,12 +36,12 @@ export default function AuthPage() {
     setIsSubmitting(true);
 
     try {
-      const response =
-        mode === "login"
-          ? await authApi.login(form)
-          : await authApi.register(form);
+      if (mode === "login") {
+        await authApi.login(form);
+      } else {
+        await authApi.register(form);
+      }
 
-      setAuthToken(response.token);
       router.replace("/dashboard");
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : "Request failed");

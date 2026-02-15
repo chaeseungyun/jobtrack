@@ -9,7 +9,6 @@ type Method = "GET" | "POST" | "PATCH" | "DELETE";
 
 interface ApiOptions {
   method?: Method;
-  token?: string | null;
   body?: unknown;
 }
 
@@ -18,7 +17,6 @@ interface AuthResponse {
     id: string;
     email: string;
   };
-  token: string;
 }
 
 export type ApplicationDetail = ApplicationRow & {
@@ -39,10 +37,10 @@ const parseErrorMessage = async (response: Response): Promise<string> => {
 
 const request = async <T>(path: string, options: ApiOptions = {}): Promise<T> => {
   const response = await fetch(path, {
+    credentials: "include",
     method: options.method ?? "GET",
     headers: {
       "Content-Type": "application/json",
-      ...(options.token ? { Authorization: `Bearer ${options.token}` } : {}),
     },
     ...(options.body ? { body: JSON.stringify(options.body) } : {}),
   });
@@ -69,15 +67,11 @@ export const authApi = {
       method: "POST",
       body: payload,
     }),
-  logout: (token: string) =>
-    request<{ ok: true }>("/api/auth/logout", {
-      method: "POST",
-      token,
-    }),
+  logout: () => request<{ message: string }>("/api/auth/logout", { method: "POST" }),
 };
 
 export const applicationsApi = {
-  list: (token: string, params?: { stage?: StageType; search?: string }) => {
+  list: (params?: { stage?: StageType; search?: string }) => {
     const search = new URLSearchParams();
     if (params?.stage) {
       search.set("stage", params.stage);
@@ -87,16 +81,10 @@ export const applicationsApi = {
     }
 
     const suffix = search.size > 0 ? `?${search.toString()}` : "";
-    return request<{ applications: ApplicationRow[] }>(`/api/applications${suffix}`, {
-      token,
-    });
+    return request<{ applications: ApplicationRow[] }>(`/api/applications${suffix}`);
   },
-  get: (token: string, id: string) =>
-    request<ApplicationDetail>(`/api/applications/${id}`, {
-      token,
-    }),
+  get: (id: string) => request<ApplicationDetail>(`/api/applications/${id}`),
   update: (
-    token: string,
     id: string,
     body: Partial<
       Pick<
@@ -107,7 +95,6 @@ export const applicationsApi = {
   ) =>
     request<ApplicationRow>(`/api/applications/${id}`, {
       method: "PATCH",
-      token,
       body,
     }),
 };

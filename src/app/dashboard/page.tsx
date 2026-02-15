@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 
 import { applicationsApi, type ApplicationDetail } from "@/lib/api/client";
 import { STAGE_LABELS } from "@/lib/app/stages";
-import { getAuthToken } from "@/lib/auth/token";
 import type { ApplicationRow } from "@/lib/supabase/types";
 
 import { AppShell } from "@/components/app/app-shell";
@@ -37,26 +36,19 @@ export default function DashboardPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = getAuthToken();
-
-    if (!token) {
-      router.replace("/auth");
-      return;
-    }
-
     const load = async () => {
       setIsLoading(true);
       setErrorMessage(null);
 
       try {
-        const listResult = await applicationsApi.list(token);
+        const listResult = await applicationsApi.list();
         setApplications(listResult.applications);
 
         const detailTargets = listResult.applications.slice(0, 5);
         const details = await Promise.all(
           detailTargets.map((application) =>
             applicationsApi
-              .get(token, application.id)
+              .get(application.id)
               .catch(() => null as ApplicationDetail | null)
           )
         );
@@ -87,7 +79,12 @@ export default function DashboardPage() {
 
         setUpcoming(upcomingEvents);
       } catch (error) {
-        setErrorMessage(error instanceof Error ? error.message : "Failed to load");
+        const message = error instanceof Error ? error.message : "Failed to load";
+        if (message === "Unauthorized") {
+          router.replace("/auth");
+          return;
+        }
+        setErrorMessage(message);
       } finally {
         setIsLoading(false);
       }

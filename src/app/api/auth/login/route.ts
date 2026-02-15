@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { signAuthToken } from "@/lib/auth/jwt";
+import {
+  AUTH_COOKIE_MAX_AGE_SECONDS,
+  AUTH_COOKIE_NAME,
+  signAuthToken,
+} from "@/lib/auth/jwt";
 import { verifyPassword } from "@/lib/auth/password";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -55,13 +59,22 @@ export async function POST(request: NextRequest) {
       email: user.email,
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       user: {
         id: user.id,
         email: user.email,
       },
-      token,
     });
+
+    response.cookies.set(AUTH_COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: AUTH_COOKIE_MAX_AGE_SECONDS,
+    });
+
+    return response;
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Internal server error";

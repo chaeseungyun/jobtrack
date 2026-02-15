@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 import {
-  extractBearerToken,
+  AUTH_COOKIE_NAME,
   type AuthTokenPayload,
   verifyAuthToken,
 } from "@/lib/auth/jwt";
@@ -11,7 +11,7 @@ type AuthResult =
   | { ok: false; response: NextResponse };
 
 export const requireAuth = (request: NextRequest): AuthResult => {
-  const token = extractBearerToken(request.headers.get("authorization"));
+  const token = request.cookies.get(AUTH_COOKIE_NAME)?.value ?? null;
 
   if (!token) {
     return {

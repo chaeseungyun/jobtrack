@@ -108,7 +108,7 @@
 - 실제 사용자가 브라우저에서 핵심 흐름 수행 가능
 
 진행 메모
-- [x] `/auth` 로그인/회원가입 탭 구현 및 JWT localStorage 유지
+- [x] `/auth` 로그인/회원가입 탭 구현 및 JWT httpOnly 쿠키 기반 인증 전환
 - [x] `/dashboard` 지표 카드 + 다가오는 일정(상위 지원서 이벤트 기반)
 - [x] `/board` 단계별 칸반 뷰
 - [x] `/applications/[id]` 상세 조회 + stage/memo/position 수정
