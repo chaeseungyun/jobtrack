@@ -82,15 +82,15 @@ const request = async <T>(path: string, options: ApiOptions = {}): Promise<T> =>
   const isFormData = options.body instanceof FormData;
   const hasBody = options.body !== undefined;
 
+  const headers: Record<string, string> = {
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
+    ...(options.headers as Record<string, string>),
+  };
+
   const response = await fetch(path, {
     credentials: "include",
     method: options.method ?? "GET",
-    headers: isFormData
-      ? options.headers
-      : {
-          "Content-Type": "application/json",
-          ...options.headers,
-        },
+    headers,
     ...(hasBody
       ? {
           body: isFormData ? (options.body as FormData) : JSON.stringify(options.body),
