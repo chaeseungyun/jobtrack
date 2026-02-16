@@ -12,6 +12,7 @@ type Method = "GET" | "POST" | "PATCH" | "DELETE";
 interface ApiOptions {
   method?: Method;
   body?: unknown;
+  headers?: HeadersInit;
 }
 
 interface AuthResponse {
@@ -51,13 +52,23 @@ const parseErrorMessage = async (response: Response): Promise<string> => {
 };
 
 const request = async <T>(path: string, options: ApiOptions = {}): Promise<T> => {
+  const isFormData = options.body instanceof FormData;
+  const hasBody = options.body !== undefined;
+
   const response = await fetch(path, {
     credentials: "include",
     method: options.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    ...(options.body ? { body: JSON.stringify(options.body) } : {}),
+    headers: isFormData
+      ? options.headers
+      : {
+          "Content-Type": "application/json",
+          ...options.headers,
+        },
+    ...(hasBody
+      ? {
+          body: isFormData ? (options.body as FormData) : JSON.stringify(options.body),
+        }
+      : {}),
   });
 
   if (!response.ok) {
@@ -116,5 +127,21 @@ export const applicationsApi = {
     request<ApplicationRow>(`/api/applications/${id}`, {
       method: "PATCH",
       body,
+    }),
+};
+
+export const documentsApi = {
+  upload: (applicationId: string, file: File) => {
+    const formData = new FormData();
+    formData.set("file", file);
+
+    return request<DocumentRow>(`/api/applications/${applicationId}/documents`, {
+      method: "POST",
+      body: formData,
+    });
+  },
+  remove: (documentId: string) =>
+    request<void>(`/api/documents/${documentId}`, {
+      method: "DELETE",
     }),
 };

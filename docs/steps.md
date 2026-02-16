@@ -120,15 +120,31 @@
 ---
 
 ## Step 6. 파일 업로드/다운로드 구현
-- [ ] PDF만 업로드 허용
-- [ ] 10MB 제한 검증
-- [ ] Supabase Storage 연동
+- [x] PDF만 업로드 허용
+- [x] 10MB 제한 검증
+- [x] Supabase Storage 연동
+
+개발 계획안 (2026-02-16 기준, Storage 설정 완료 전제)
+- 범위 정의
+  - [x] 신규 인프라 작업 없이 애플리케이션 레이어(UI/API 클라이언트/문서)만 구현
+  - [x] 기존 Step4 문서 API(`POST /api/applications/[id]/documents`, `DELETE /api/documents/[id]`) 재사용
+- 구현 순서
+  - [x] 1) API 클라이언트 확장: `src/lib/api/client.ts`에 문서 업로드/삭제 메서드 추가(FormData 업로드)
+  - [x] 2) 상세 페이지 UI 연결: `src/app/applications/[id]`에 문서 업로드 입력, 업로드 실행, 문서 목록/삭제 액션 추가
+  - [x] 3) 상태 동기화: 업로드/삭제 성공 시 상세 화면의 문서 목록 즉시 갱신
+  - [x] 4) 예외 처리: 파일 없음, PDF 아님, 10MB 초과, 인증 실패, 서버 오류 메시지 표시
+  - [x] 5) OpenAPI/문서 동기화: 계약 변경이 있으면 `public/openapi.json`, `docs/progress.md` 동시 반영
+- 검증 계획
+  - [x] 정상: PDF(<=10MB) 업로드 201, 목록 반영, 삭제 204
+  - [x] 비정상: 비-PDF 400, 10MB 초과 400, 인증 없음 401, 타 사용자 리소스 404
+  - [x] 회귀: `/applications/[id]` 기존 수정 기능(position/stage/memo) 정상 동작 확인
+  - [x] 완료 기준: `pnpm build` 성공
 
 산출물
 - 이력서/포트폴리오 업로드 기능
 
 완료 기준
-- 업로드/조회/삭제 동작 및 예외 처리 완료
+- [x] 업로드/조회/삭제 동작 및 예외 처리 완료
 
 ---
 

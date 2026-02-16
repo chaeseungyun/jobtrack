@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 
 import { requireServerAuth } from "@/lib/auth/session";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { ApplicationRow, EventRow } from "@/lib/supabase/types";
+import type { ApplicationRow, DocumentRow, EventRow } from "@/lib/supabase/types";
 
 import { ApplicationDetailForm } from "@/app/applications/[id]/_components/application-detail-form.client";
 import { AppShell } from "@/components/app/app-shell";
@@ -49,8 +49,19 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
     .order("scheduled_at", { ascending: true })
     .returns<EventRow[]>();
 
+  const { data: documents, error: documentsError } = await supabase
+    .from("documents")
+    .select("*")
+    .eq("application_id", id)
+    .order("created_at", { ascending: false })
+    .returns<DocumentRow[]>();
+
   if (eventsError) {
     throw new Error(eventsError.message);
+  }
+
+  if (documentsError) {
+    throw new Error(documentsError.message);
   }
 
   return (
@@ -66,7 +77,10 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
       </div>
 
       <div className="grid gap-4 lg:grid-cols-5">
-        <ApplicationDetailForm initialApplication={application} />
+        <ApplicationDetailForm
+          initialApplication={application}
+          initialDocuments={documents ?? []}
+        />
 
         <Card className="lg:col-span-2">
           <CardHeader>

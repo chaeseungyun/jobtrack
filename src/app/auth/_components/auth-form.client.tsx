@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { authApi } from "@/lib/api/client";
 
@@ -22,12 +23,18 @@ const INITIAL_FORM: AuthFormState = {
   password: "",
 };
 
+const AUTH_TOAST_ID = {
+  loginSuccess: "auth-login-success",
+  registerSuccess: "auth-register-success",
+  loginError: "auth-login-error",
+  registerError: "auth-register-error",
+} as const;
+
 export function AuthForm() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"login" | "register">("login");
   const [loginForm, setLoginForm] = useState<AuthFormState>(INITIAL_FORM);
   const [registerForm, setRegisterForm] = useState<AuthFormState>(INITIAL_FORM);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const authMutation = useMutation({
     mutationFn: async (mode: "login" | "register") => {
@@ -40,11 +47,17 @@ export function AuthForm() {
 
       await authApi.register(form);
     },
-    onSuccess: () => {
+    onSuccess: (_, mode) => {
+      toast.success(mode === "login" ? "Signed in" : "Account created", {
+        id: mode === "login" ? AUTH_TOAST_ID.loginSuccess : AUTH_TOAST_ID.registerSuccess,
+      });
       router.replace("/dashboard");
     },
-    onError: (error) => {
-      setErrorMessage(error instanceof Error ? error.message : "Request failed");
+    onError: (error, mode) => {
+      const message = error instanceof Error ? error.message : "Request failed";
+      toast.error(message, {
+        id: mode === "login" ? AUTH_TOAST_ID.loginError : AUTH_TOAST_ID.registerError,
+      });
     },
   });
 
@@ -100,10 +113,7 @@ export function AuthForm() {
                 <Button
                   className="w-full"
                   disabled={authMutation.isPending}
-                  onClick={() => {
-                    setErrorMessage(null);
-                    authMutation.mutate("login");
-                  }}
+                  onClick={() => authMutation.mutate("login")}
                 >
                   {authMutation.isPending ? "Signing in..." : "Sign in"}
                 </Button>
@@ -137,21 +147,12 @@ export function AuthForm() {
                 <Button
                   className="w-full"
                   disabled={authMutation.isPending}
-                  onClick={() => {
-                    setErrorMessage(null);
-                    authMutation.mutate("register");
-                  }}
+                  onClick={() => authMutation.mutate("register")}
                 >
                   {authMutation.isPending ? "Creating account..." : "Create account"}
                 </Button>
               </TabsContent>
             </Tabs>
-
-            {errorMessage ? (
-              <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {errorMessage}
-              </p>
-            ) : null}
           </CardContent>
         </Card>
       </div>

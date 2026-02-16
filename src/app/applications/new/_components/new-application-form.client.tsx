@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 import { applicationsApi } from "@/lib/api/client";
 import {
@@ -77,10 +78,14 @@ const INITIAL_FORM: FormState = {
   deadline: "",
 };
 
+const CREATE_TOAST_ID = {
+  success: "application-create-success",
+  error: "application-create-error",
+} as const;
+
 export function NewApplicationForm() {
   const router = useRouter();
   const [form, setForm] = useState<FormState>(INITIAL_FORM);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const createMutation = useMutation({
     mutationFn: () => {
@@ -115,6 +120,7 @@ export function NewApplicationForm() {
       });
     },
     onSuccess: (created) => {
+      toast.success("Application created", { id: CREATE_TOAST_ID.success });
       router.replace(`/applications/${created.id}`);
     },
     onError: (error) => {
@@ -125,7 +131,7 @@ export function NewApplicationForm() {
         return;
       }
 
-      setErrorMessage(message);
+      toast.error(message, { id: CREATE_TOAST_ID.error });
     },
   });
 
@@ -135,12 +141,6 @@ export function NewApplicationForm() {
         <CardTitle>New Application</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {errorMessage ? (
-          <p className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {errorMessage}
-          </p>
-        ) : null}
-
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="company_name">Company</Label>
@@ -289,10 +289,7 @@ export function NewApplicationForm() {
 
         <Button
           disabled={createMutation.isPending}
-          onClick={() => {
-            setErrorMessage(null);
-            createMutation.mutate();
-          }}
+          onClick={() => createMutation.mutate()}
         >
           {createMutation.isPending ? "Creating..." : "Create Application"}
         </Button>
