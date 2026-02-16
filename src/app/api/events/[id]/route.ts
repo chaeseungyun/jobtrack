@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAuth } from "@/lib/auth/request";
+import { eventService } from "@/lib/services/event.service";
 import { assertEventOwnership } from "@/lib/supabase/ownership";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { updateEventSchema } from "@/lib/validation/step4";
@@ -40,21 +41,9 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const { data, error } = await supabase
-      .from("events")
-      .update(parsed.data)
-      .eq("id", id)
-      .select("*")
-      .single();
+    const updated = await eventService.update(supabase, id, parsed.data);
 
-    if (error || !data) {
-      return NextResponse.json(
-        { error: error?.message ?? "Failed to update event" },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(data);
+    return NextResponse.json(updated);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Internal server error";
@@ -80,11 +69,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const { error } = await supabase.from("events").delete().eq("id", id);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    await eventService.remove(supabase, id);
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

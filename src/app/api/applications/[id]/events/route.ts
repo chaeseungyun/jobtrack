@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAuth } from "@/lib/auth/request";
+import { eventService } from "@/lib/services/event.service";
 import { assertApplicationOwnership } from "@/lib/supabase/ownership";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { EventRow } from "@/lib/supabase/types";
 import { createEventSchema } from "@/lib/validation/step4";
 
 interface RouteContext {
@@ -16,8 +16,8 @@ export async function GET(_request: NextRequest, context: RouteContext) {
   if (auth.ok === false) {
     return auth.response;
   }
-
   const { id } = await context.params;
+  
   const supabase = createServerSupabaseClient();
 
   try {
@@ -27,21 +27,9 @@ export async function GET(_request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const { data, error } = await supabase
-      .from("events")
-      .select("*")
-      .eq("application_id", id)
-      .order("scheduled_at", { ascending: true })
-      .returns<EventRow[]>();
+    const data = await eventService.listByApplicationId(supabase, id);
 
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(data ?? []);
+    return NextResponse.json(data);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Internal server error";
@@ -81,21 +69,10 @@ export async function POST(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const { data, error } = await supabase
-      .from("events")
-      .insert({
-        application_id: id,
-        ...parsed.data,
-      })
-      .select("*")
-      .single();
-
-    if (error || !data) {
-      return NextResponse.json(
-        { error: error?.message ?? "Failed to create event" },
-        { status: 500 }
-      );
-    }
+    const data = await eventService.create(supabase, {
+      application_id: id,
+      ...parsed.data,
+    });
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {

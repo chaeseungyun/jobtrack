@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAuth } from "@/lib/auth/request";
+import { applicationService } from "@/lib/services/application.service";
+import { documentService } from "@/lib/services/document.service";
+import { eventService } from "@/lib/services/event.service";
 import { assertApplicationOwnership } from "@/lib/supabase/ownership";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { updateApplicationSchema } from "@/lib/validation/step4";
@@ -26,38 +29,20 @@ export async function GET(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const [{ data: application, error: applicationError }, { data: events, error: eventsError }, { data: documents, error: documentsError }] = await Promise.all([
-      supabase.from("applications").select("*").eq("id", id).single(),
-      supabase
-        .from("events")
-        .select("*")
-        .eq("application_id", id)
-        .order("scheduled_at", { ascending: true }),
-      supabase
-        .from("documents")
-        .select("*")
-        .eq("application_id", id)
-        .order("created_at", { ascending: false }),
+    const [application, events, documents] = await Promise.all([
+      applicationService.getById(supabase, id, auth.payload.sub),
+      eventService.listByApplicationId(supabase, id),
+      documentService.listByApplicationId(supabase, id),
     ]);
 
-    if (applicationError || !application) {
-      return NextResponse.json(
-        { error: applicationError?.message ?? "Not found" },
-        { status: 404 }
-      );
-    }
-
-    if (eventsError || documentsError) {
-      return NextResponse.json(
-        { error: eventsError?.message ?? documentsError?.message ?? "Fetch failed" },
-        { status: 500 }
-      );
+    if (!application) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     return NextResponse.json({
       ...application,
-      events: events ?? [],
-      documents: documents ?? [],
+      events,
+      documents,
     });
   } catch (error) {
     const message =
@@ -98,21 +83,14 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const { data, error } = await supabase
-      .from("applications")
-      .update(parsed.data)
-      .eq("id", id)
-      .select("*")
-      .single();
+    const updated = await applicationService.update(
+      supabase,
+      id,
+      auth.payload.sub,
+      parsed.data
+    );
 
-    if (error || !data) {
-      return NextResponse.json(
-        { error: error?.message ?? "Update failed" },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json(data);
+    return NextResponse.json(updated);
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Internal server error";
@@ -138,11 +116,7 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const { error } = await supabase.from("applications").delete().eq("id", id);
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
+    await applicationService.remove(supabase, id, auth.payload.sub);
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {

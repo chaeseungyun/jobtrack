@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAuth } from "@/lib/auth/request";
+import { documentService } from "@/lib/services/document.service";
 import { assertApplicationOwnership } from "@/lib/supabase/ownership";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -51,40 +52,19 @@ export async function POST(request: NextRequest, context: RouteContext) {
     const storagePath = `${auth.payload.sub}/${id}/${Date.now()}-${safeName}`;
     const fileBuffer = Buffer.from(await fileValue.arrayBuffer());
 
-    const { error: uploadError } = await supabase.storage
-      .from("documents")
-      .upload(storagePath, fileBuffer, {
-        contentType: PDF_MIME_TYPE,
-        upsert: false,
-      });
+    const fileUrl = await documentService.uploadStorage(
+      supabase,
+      storagePath,
+      fileBuffer,
+      PDF_MIME_TYPE
+    );
 
-    if (uploadError) {
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
-    }
-
-    const { data: urlData } = supabase.storage
-      .from("documents")
-      .getPublicUrl(storagePath);
-
-    const fileUrl = urlData.publicUrl || storagePath;
-
-    const { data: document, error: documentError } = await supabase
-      .from("documents")
-      .insert({
-        application_id: id,
-        file_name: safeName,
-        file_size: fileValue.size,
-        file_url: fileUrl,
-      })
-      .select("*")
-      .single();
-
-    if (documentError || !document) {
-      return NextResponse.json(
-        { error: documentError?.message ?? "Failed to save document metadata" },
-        { status: 500 }
-      );
-    }
+    const document = await documentService.create(supabase, {
+      application_id: id,
+      file_name: safeName,
+      file_size: fileValue.size,
+      file_url: fileUrl,
+    });
 
     return NextResponse.json(document, { status: 201 });
   } catch (error) {

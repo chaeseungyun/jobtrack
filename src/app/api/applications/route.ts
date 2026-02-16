@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAuth } from "@/lib/auth/request";
+import { applicationService } from "@/lib/services/application.service";
+import { eventService } from "@/lib/services/event.service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   applicationsListQuerySchema,
@@ -24,30 +26,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    let query = supabase
-      .from("applications")
-      .select("*")
-      .eq("user_id", auth.payload.sub)
-      .order("created_at", { ascending: false });
+    const data = await applicationService.list(supabase, auth.payload.sub, {
+      stage: queryParsed.data.stage,
+      search: queryParsed.data.search,
+    });
 
-    if (queryParsed.data.stage) {
-      query = query.eq("current_stage", queryParsed.data.stage);
-    }
-
-    if (queryParsed.data.search) {
-      const keyword = queryParsed.data.search;
-      query = query.or(
-        `company_name.ilike.%${keyword}%,position.ilike.%${keyword}%`
-      );
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    return NextResponse.json({ applications: data ?? [] });
+    return NextResponse.json({ applications: data });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Internal server error";
@@ -82,32 +66,18 @@ export async function POST(request: NextRequest) {
   const supabase = createServerSupabaseClient();
 
   try {
-    const { data: application, error: applicationError } = await supabase
-      .from("applications")
-      .insert({
-        ...applicationInput,
-        user_id: auth.payload.sub,
-      })
-      .select("*")
-      .single();
-
-    if (applicationError || !application) {
-      return NextResponse.json(
-        { error: applicationError?.message ?? "Failed to create application" },
-        { status: 500 }
-      );
-    }
+    const application = await applicationService.create(
+      supabase,
+      auth.payload.sub,
+      applicationInput
+    );
 
     if (deadline) {
-      const { error: eventError } = await supabase.from("events").insert({
+      await eventService.create(supabase, {
         application_id: application.id,
         event_type: "deadline",
         scheduled_at: deadline,
       });
-
-      if (eventError) {
-        return NextResponse.json({ error: eventError.message }, { status: 500 });
-      }
     }
 
     return NextResponse.json(application, { status: 201 });

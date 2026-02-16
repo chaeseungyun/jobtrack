@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { requireAuth } from "@/lib/auth/request";
+import { documentService } from "@/lib/services/document.service";
 import { assertDocumentOwnership } from "@/lib/supabase/ownership";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -52,23 +53,10 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
     const storagePath = extractStoragePath(ownership.fileUrl ?? "");
 
     if (storagePath) {
-      const { error: removeError } = await supabase.storage
-        .from("documents")
-        .remove([storagePath]);
-
-      if (removeError) {
-        return NextResponse.json({ error: removeError.message }, { status: 500 });
-      }
+      await documentService.removeStorage(supabase, storagePath);
     }
 
-    const { error: deleteError } = await supabase
-      .from("documents")
-      .delete()
-      .eq("id", id);
-
-    if (deleteError) {
-      return NextResponse.json({ error: deleteError.message }, { status: 500 });
-    }
+    await documentService.remove(supabase, id);
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
