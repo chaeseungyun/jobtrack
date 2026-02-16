@@ -1,7 +1,9 @@
 import type {
   ApplicationRow,
+  CareerType,
   DocumentRow,
   EventRow,
+  SourceType,
   StageType,
 } from "@/lib/supabase/types";
 
@@ -23,6 +25,19 @@ export type ApplicationDetail = ApplicationRow & {
   events: EventRow[];
   documents: DocumentRow[];
 };
+
+export interface CreateApplicationPayload {
+  company_name: string;
+  position: string;
+  career_type: CareerType;
+  job_url?: string | null;
+  source?: SourceType | null;
+  merit_tags?: string[];
+  current_stage?: StageType;
+  company_memo?: string | null;
+  cover_letter?: string | null;
+  deadline?: string;
+}
 
 const parseErrorMessage = async (response: Response): Promise<string> => {
   const fallback = `Request failed (${response.status})`;
@@ -71,6 +86,11 @@ export const authApi = {
 };
 
 export const applicationsApi = {
+  create: (payload: CreateApplicationPayload) =>
+    request<ApplicationRow>("/api/applications", {
+      method: "POST",
+      body: payload,
+    }),
   list: (params?: { stage?: StageType; search?: string }) => {
     const search = new URLSearchParams();
     if (params?.stage) {

@@ -98,7 +98,7 @@
 - [x] 로그인/회원가입 화면
 - [x] 대시보드 화면(지표 + 다가오는 일정)
 - [x] 칸반 보드 화면(단계별 파이프라인 가시화)
-- [ ] 지원서 등록 화면
+- [x] 지원서 등록 화면
 - [x] 지원서 상세/수정 화면
 
 산출물
@@ -115,7 +115,7 @@
 - [x] Server Components first 전환(`/dashboard`, `/board`, `/applications/[id]` 서버 렌더링)
 - [x] 인터랙션 전용 Client Island 분리(`src/app/**/_components/*.client.tsx`, `src/components/islands/*.client.tsx`)
 - [x] 클라이언트 데이터 요청 구간 React Query 적용(로그인/회원가입, 저장, 로그아웃 mutation)
-- [ ] 지원서 등록 전용 UI는 다음 작업 단위에서 구현
+- [x] `/applications/new` 지원서 등록 전용 UI + 생성 후 상세페이지 이동 연결
 
 ---
 
