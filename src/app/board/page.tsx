@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { STAGE_LABELS, STAGE_ORDER } from "@/lib/app/stages";
 import { requireServerAuth } from "@/lib/auth/session";
+import { applicationService } from "@/lib/services/application.service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ApplicationRow, StageType } from "@/lib/supabase/types";
 
@@ -17,18 +18,7 @@ export default async function BoardPage() {
   let applications: ApplicationRow[] = [];
 
   try {
-    const { data, error } = await supabase
-      .from("applications")
-      .select("*")
-      .eq("user_id", auth.sub)
-      .order("created_at", { ascending: false })
-      .returns<ApplicationRow[]>();
-
-    if (error) {
-      throw new Error(error.message);
-    }
-
-    applications = data ?? [];
+    applications = await applicationService.list(supabase, auth.sub);
   } catch (error) {
     errorMessage = error instanceof Error ? error.message : "Failed to load";
   }

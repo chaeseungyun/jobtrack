@@ -2,6 +2,8 @@ import Link from "next/link";
 
 import { STAGE_LABELS } from "@/lib/app/stages";
 import { requireServerAuth } from "@/lib/auth/session";
+import { applicationService } from "@/lib/services/application.service";
+import { eventService } from "@/lib/services/event.service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ApplicationRow } from "@/lib/supabase/types";
 
@@ -34,37 +36,17 @@ export default async function DashboardPage() {
   let upcoming: UpcomingItem[] = [];
 
   try {
-    const { data: applicationRows, error: applicationsError } = await supabase
-      .from("applications")
-      .select("*")
-      .eq("user_id", auth.sub)
-      .order("created_at", { ascending: false })
-      .returns<ApplicationRow[]>();
-
-    if (applicationsError) {
-      throw new Error(applicationsError.message);
-    }
-
-    applications = applicationRows ?? [];
+    applications = await applicationService.list(supabase, auth.sub);
 
     const targetApplications = applications.slice(0, 5);
     const targetIds = targetApplications.map((application) => application.id);
 
     if (targetIds.length > 0) {
-      const { data: upcomingEvents, error: eventsError } = await supabase
-        .from("events")
-        .select("id,application_id,event_type,scheduled_at")
-        .in("application_id", targetIds)
-        .gte("scheduled_at", new Date().toISOString())
-        .order("scheduled_at", { ascending: true });
-
-      if (eventsError) {
-        throw new Error(eventsError.message);
-      }
+      const upcomingEvents = await eventService.listUpcoming(supabase, targetIds);
 
       const applicationMap = new Map(targetApplications.map((item) => [item.id, item]));
 
-      upcoming = (upcomingEvents ?? [])
+      upcoming = upcomingEvents
         .map((event) => {
           const application = applicationMap.get(event.application_id);
 
@@ -196,3 +178,4 @@ export default async function DashboardPage() {
     </AppShell>
   );
 }
+
