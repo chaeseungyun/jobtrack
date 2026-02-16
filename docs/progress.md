@@ -15,6 +15,9 @@
   - 생성 성공 시 `/applications/[id]` 리다이렉트 연결
   - 상단 내비게이션에 `New` 링크 추가
   - `docs/steps.md` 진행 상태 동기화
+  - Step 6 착수: 상세 페이지 문서 업로드/다운로드/삭제 UI 연결
+  - `documentsApi.upload/remove` 추가 및 기존 문서 API(`POST /api/applications/[id]/documents`, `DELETE /api/documents/[id]`) 연동
+  - 상세 페이지 서버 조회에 `documents` 로드 추가 및 클라이언트 초기 문서 목록 주입
 - In Progress:
   - 없음
 - Blocked:
@@ -39,6 +42,8 @@
     - `src/app/applications/new/_components/new-application-form.client.tsx`
     - `src/lib/api/client.ts`
     - `src/components/app/app-shell.tsx`
+    - `src/app/applications/[id]/page.tsx`
+    - `src/app/applications/[id]/_components/application-detail-form.client.tsx`
     - `docs/steps.md`
   - 스펙/문서 동기화:
     - UI 작업 범위 반영(`docs/steps.md`)
@@ -48,8 +53,8 @@
     - 로그인 상태에서 `/applications/new` 접근 가능
     - 유효 입력 제출 시 생성 성공 후 `/applications/[id]` 이동
 - 아키텍처/품질 지표
-  - Build: 별도 기록 예정
-  - 타입/진단(LSP): 별도 기록 예정
+  - Build: pass (`pnpm build`)
+  - 타입/진단(LSP): 변경 파일 진단 통과
   - `use client` 라우트 수(전/후): 라우트 페이지 직접 증가는 없음(폼 island 추가)
   - `localStorage` 인증 참조 건수(전/후): 변화 없음(0 유지)
   - 인증 계약 지표:
