@@ -3,68 +3,75 @@
 ## 2026-02-16
 
 ### 1) 오늘의 목표
-- 
-- 
-- 
+- 지원서 등록 전용 UI(`/applications/new`) 구현
+- Server Components first 구조를 유지한 신규 페이지 추가
+- 기존 Step4 생성 API와 UI 연결 및 검증
 
 ### 2) 작업 내용
 - Done:
-  - 
+  - `/applications/new` 페이지 추가(서버 컴포넌트)
+  - 등록 폼 Client Island 추가 및 React Query mutation 연결
+  - `applicationsApi.create` 추가 후 `POST /api/applications` 연동
+  - 생성 성공 시 `/applications/[id]` 리다이렉트 연결
+  - 상단 내비게이션에 `New` 링크 추가
+  - `docs/steps.md` 진행 상태 동기화
 - In Progress:
-  - 
+  - 없음
 - Blocked:
   - 없음
 
 ### 3) 개발 판단 로그
-- 주제:
+- 주제: 등록 화면 구현 방식
 - 선택지:
-  - A:
-  - B:
-- 최종 결정:
+  - A: `/applications/new`를 전체 클라이언트 페이지로 구현
+  - B: 페이지는 서버 컴포넌트, 폼만 Client Island로 구현
+- 최종 결정: B안
 - 판단 근거(왜):
-  1. 
-  2. 
+  1. 기존 server-components-first 원칙 유지
+  2. 인터랙션(입력/제출)만 클라이언트로 분리해 번들 경계 최소화
 - 예상 리스크:
-  - 
+  - `deadline` 입력값의 ISO datetime 변환/검증 불일치 가능성
 
 ### 4) 검증/지표
 - 코드/문서 변경 추적
   - 변경 파일(핵심):
-    - 
+    - `src/app/applications/new/page.tsx`
+    - `src/app/applications/new/_components/new-application-form.client.tsx`
+    - `src/lib/api/client.ts`
+    - `src/components/app/app-shell.tsx`
+    - `docs/steps.md`
   - 스펙/문서 동기화:
-    - 
+    - UI 작업 범위 반영(`docs/steps.md`)
 - 기능 검증(회귀 포함)
-  - API health:
+  - API health: 기존 정상 유지
   - 핵심 시나리오:
-    - 
+    - 로그인 상태에서 `/applications/new` 접근 가능
+    - 유효 입력 제출 시 생성 성공 후 `/applications/[id]` 이동
 - 아키텍처/품질 지표
-  - Build:
-  - 타입/진단(LSP):
-  - `use client` 라우트 수(전/후):
-  - `localStorage` 인증 참조 건수(전/후):
+  - Build: 별도 기록 예정
+  - 타입/진단(LSP): 별도 기록 예정
+  - `use client` 라우트 수(전/후): 라우트 페이지 직접 증가는 없음(폼 island 추가)
+  - `localStorage` 인증 참조 건수(전/후): 변화 없음(0 유지)
   - 인증 계약 지표:
-    - `token` 응답 필드 제거 여부:
-    - `Set-Cookie(jobtrack_auth)` 확인:
-    - 보호 API 쿠키 없음/있음 결과:
+    - 기존 cookie 인증 계약 유지(추가 변경 없음)
 - 운영 지표
-  - 배포 후 오류 보고 건수:
-  - 생산성 지표(작업 소요 시간/재시도 횟수):
+  - 배포 후 오류 보고 건수: 미배포
+  - 생산성 지표(작업 소요 시간/재시도 횟수): 기록 예정
 
 ### 5) 학습 로그
 - 배운 점:
-  - 
+  - 신규 페이지 추가 시 서버 페이지 + 클라이언트 폼 island 분리 패턴으로 클라이언트 번들 최소화
 - 근거(문서/실험):
-  - 
+  - 기존 `/applications/[id]` 패턴 재사용 + 생성 API 연계 테스트
 - 다음에 적용할 점:
-  - 
+  - 입력 스키마(`createApplicationSchema`) 기반 폼 필드 매핑 체크리스트를 사전에 고정
 
 ### 6) 다음 액션
-- [ ] 
-- [ ] 
+- 
 
 ### 7) 이력서/포트폴리오용 요약 포인트
-- 
-- 
+- App Router 기반 server-components-first 구조에서 `/applications/new` 생성 플로우를 추가하고, 폼 인터랙션만 Client Island로 분리해 아키텍처 일관성을 유지
+- 기존 Step4 생성 API를 재사용해 프론트-API 연결을 확장하고, 생성 성공 후 상세 페이지로 이어지는 사용자 플로우를 완성
 
 ## 2026-02-15
 ### 1) 오늘의 목표
