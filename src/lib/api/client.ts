@@ -2,6 +2,7 @@ import type {
   ApplicationRow,
   CareerType,
   DocumentRow,
+  EventType,
   EventRow,
   SourceType,
   StageType,
@@ -38,6 +39,32 @@ export interface CreateApplicationPayload {
   company_memo?: string | null;
   cover_letter?: string | null;
   deadline?: string;
+}
+
+export interface UpdateApplicationPayload {
+  company_name?: string;
+  position?: string;
+  career_type?: CareerType;
+  job_url?: string | null;
+  source?: SourceType | null;
+  merit_tags?: string[];
+  current_stage?: StageType;
+  company_memo?: string | null;
+  cover_letter?: string | null;
+}
+
+export interface CreateEventPayload {
+  event_type: EventType;
+  scheduled_at: string;
+  location?: string | null;
+  interview_round?: number | null;
+}
+
+export interface UpdateEventPayload {
+  event_type?: EventType;
+  scheduled_at?: string;
+  location?: string | null;
+  interview_round?: number | null;
 }
 
 const parseErrorMessage = async (response: Response): Promise<string> => {
@@ -117,16 +144,30 @@ export const applicationsApi = {
   get: (id: string) => request<ApplicationDetail>(`/api/applications/${id}`),
   update: (
     id: string,
-    body: Partial<
-      Pick<
-        ApplicationRow,
-        "position" | "company_memo" | "current_stage" | "job_url" | "cover_letter"
-      >
-    >
+    body: UpdateApplicationPayload
   ) =>
     request<ApplicationRow>(`/api/applications/${id}`, {
       method: "PATCH",
       body,
+    }),
+};
+
+export const eventsApi = {
+  list: (applicationId: string) =>
+    request<EventRow[]>(`/api/applications/${applicationId}/events`),
+  create: (applicationId: string, payload: CreateEventPayload) =>
+    request<EventRow>(`/api/applications/${applicationId}/events`, {
+      method: "POST",
+      body: payload,
+    }),
+  update: (eventId: string, payload: UpdateEventPayload) =>
+    request<EventRow>(`/api/events/${eventId}`, {
+      method: "PATCH",
+      body: payload,
+    }),
+  remove: (eventId: string) =>
+    request<void>(`/api/events/${eventId}`, {
+      method: "DELETE",
     }),
 };
 
