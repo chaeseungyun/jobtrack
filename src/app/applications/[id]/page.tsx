@@ -1,30 +1,25 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 
 import { requireServerAuth } from "@/lib/auth/session";
+import { applicationEventsQueryKey, fetchApplicationEvents } from "@/lib/query/applications";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ApplicationRow, DocumentRow, EventRow } from "@/lib/supabase/types";
 
 import { ApplicationDetailForm } from "@/app/applications/[id]/_components/application-detail-form.client";
+import { ApplicationEventsCard } from "@/app/applications/[id]/_components/application-events-card.client";
 import { AppShell } from "@/components/app/app-shell";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface ApplicationDetailPageProps {
   params: Promise<{ id: string }>;
 }
 
-const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  month: "short",
-  day: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-
 export default async function ApplicationDetailPage({ params }: ApplicationDetailPageProps) {
   const auth = await requireServerAuth();
   const { id } = await params;
   const supabase = createServerSupabaseClient();
+  const queryClient = new QueryClient();
 
   const { data: application, error: applicationError } = await supabase
     .from("applications")
@@ -42,12 +37,10 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
     notFound();
   }
 
-  const { data: events, error: eventsError } = await supabase
-    .from("events")
-    .select("*")
-    .eq("application_id", id)
-    .order("scheduled_at", { ascending: true })
-    .returns<EventRow[]>();
+  const events = await queryClient.fetchQuery<EventRow[]>({
+    queryKey: applicationEventsQueryKey(id),
+    queryFn: () => fetchApplicationEvents(id),
+  });
 
   const { data: documents, error: documentsError } = await supabase
     .from("documents")
@@ -55,10 +48,6 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
     .eq("application_id", id)
     .order("created_at", { ascending: false })
     .returns<DocumentRow[]>();
-
-  if (eventsError) {
-    throw new Error(eventsError.message);
-  }
 
   if (documentsError) {
     throw new Error(documentsError.message);
@@ -76,34 +65,17 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
         </Link>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-5">
-        <ApplicationDetailForm
-          initialApplication={application}
-          initialDocuments={documents ?? []}
-        />
+      <HydrationBoundary state={dehydrate(queryClient)}>
+        <div className="grid gap-4 lg:grid-cols-5">
+          <ApplicationDetailForm
+            initialApplication={application}
+            initialEvents={events}
+            initialDocuments={documents ?? []}
+          />
 
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Events</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {(events ?? []).map((event) => (
-              <div key={event.id} className="rounded-md border border-slate-200 p-3">
-                <div className="mb-1 flex items-center justify-between gap-2">
-                  <Badge variant="outline">{event.event_type}</Badge>
-                  <span className="text-xs text-slate-500">
-                    {DATE_FORMATTER.format(new Date(event.scheduled_at))}
-                  </span>
-                </div>
-                <p className="text-sm text-slate-600">{event.location ?? "-"}</p>
-              </div>
-            ))}
-            {(events ?? []).length === 0 ? (
-              <p className="text-sm text-slate-500">No events yet.</p>
-            ) : null}
-          </CardContent>
-        </Card>
-      </div>
+          <ApplicationEventsCard applicationId={id} />
+        </div>
+      </HydrationBoundary>
     </AppShell>
   );
 }

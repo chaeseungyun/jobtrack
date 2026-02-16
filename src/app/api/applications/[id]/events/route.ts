@@ -3,10 +3,51 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/request";
 import { assertApplicationOwnership } from "@/lib/supabase/ownership";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import type { EventRow } from "@/lib/supabase/types";
 import { createEventSchema } from "@/lib/validation/step4";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
+}
+
+export async function GET(_request: NextRequest, context: RouteContext) {
+  const auth = requireAuth(_request);
+
+  if (auth.ok === false) {
+    return auth.response;
+  }
+
+  const { id } = await context.params;
+  const supabase = createServerSupabaseClient();
+
+  try {
+    const isOwned = await assertApplicationOwnership(supabase, id, auth.payload.sub);
+
+    if (!isOwned) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("application_id", id)
+      .order("scheduled_at", { ascending: true })
+      .returns<EventRow[]>();
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json(data ?? []);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Internal server error";
+
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
 
 export async function POST(request: NextRequest, context: RouteContext) {
