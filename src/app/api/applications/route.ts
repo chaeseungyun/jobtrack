@@ -71,8 +71,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  console.log(body)
-
   const parsed = createApplicationSchema.safeParse(body);
 
   if (!parsed.success) {
