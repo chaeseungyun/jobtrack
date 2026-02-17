@@ -24,6 +24,12 @@
   - React Query SSR Hydration 도입: 서버 prefetch(`fetchQuery`) + `HydrationBoundary` 연동으로 초기 렌더링 최적화
   - `QueryClient` 전역 설정 업데이트 (`staleTime: 0`, `gcTime: 60s`)
   - `application/new` 플로우 개선: 생성 성공 직후 선택된 파일 자동 업로드 체인 구현 및 에러 핸들링 분리
+  - 데이터 아키텍처 단순화 및 원자성 확보:
+    - `deadline` 마감일은 지원서 리소스의 일부로 통합 관리 (메인 폼에서 Atomic Update)
+    - 코딩 테스트, 면접 등 기타 다중 일정 관리를 위한 전용 Event API(`POST/PATCH/DELETE /api/events/[id]`) 복구 및 표준화
+    - 상세 페이지 Events 카드에 "Add Event" 및 개별 일정 수정/삭제 UI 추가
+    - `EventType` 확장: `coding_test`, `etc` 추가로 실무 트래킹 대응
+    - 서버 컴포넌트 및 클라이언트 아일랜드 간의 단일 데이터 소스(`applicationDetailQueryKey`) 공유 유지 및 최적화
 - In Progress:
   - 없음
 - Blocked:
@@ -31,46 +37,35 @@
 
 ### 3) 개발 판단 로그
 - 주제: 등록 화면 구현 방식
-- 선택지:
-  - A: `/applications/new`를 전체 클라이언트 페이지로 구현
-  - B: 페이지는 서버 컴포넌트, 폼만 Client Island로 구현
-- 최종 결정: B안
+@@
+- 주제: 이벤트 리소스 통합 및 저장 원자성 확보
+- 최종 결정: 마감일 통합(Form) + 다중 일정 분리(Card Action) 하이브리드 구조
 - 판단 근거(왜):
-  1. 기존 server-components-first 원칙 유지
-  2. 인터랙션(입력/제출)만 클라이언트로 분리해 번들 경계 최소화
-
-- 주제: 상세 페이지 리팩터링 및 데이터 페칭 최적화
-- 최종 결정: 컴포넌트 책임 분리 + 전용 API 엔드포인트 신설
-- 판단 근거(왜):
-  1. `ApplicationDetailForm`이 폼 관리, 이벤트 동기화, 문서 관리를 모두 담당하여 코드 복잡도가 과도하게 높았음
-  2. 이벤트 조회 시 지원서 전체 정보를 다시 가져오는 overfetch 문제 해결 필요
-  3. 서버와 클라이언트가 동일한 데이터 fetch 로직을 공유하도록 하여 hydration 정합성 확보
+  1. 가장 중요한 데이터인 `deadline`은 지원서 수정 시 한꺼번에 저장(Atomic)되어야 정합성이 보장됨.
+  2. 반면 코딩 테스트나 면접 등은 가변적인 다중 일정임으로, 개별적인 생성/수정/삭제 액션이 필요함.
+  3. 이를 위해 마감일은 지원서 PATCH 보디에 포함하고, 그 외 일정은 독립된 `api/events`를 통해 관리하는 구조로 이원화하여 사용성과 확장성을 모두 확보함.
 
 ### 4) 검증/지표
 - 코드/문서 변경 추적
   - 변경 파일(핵심):
-    - `src/app/applications/_components/application-form-fields.client.tsx` (공용 필드 UI)
-    - `src/app/applications/[id]/_components/application-documents-panel.client.tsx` (문서 관리 분리)
-    - `src/app/api/applications/[id]/events/route.ts` (GET 추가)
-    - `src/lib/api/client.ts` (API 클라이언트 확장)
-    - `src/lib/query/applications.ts` (쿼리 fetcher 통일)
-    - `src/app/providers.tsx` (QueryClient 설정)
-    - `src/app/applications/[id]/page.tsx` (서버 prefetch 및 hydration 연동)
-    - `src/app/applications/new/_components/new-application-form.client.tsx` (업로드 체인 적용)
-    - `src/app/applications/[id]/_components/application-detail-form.client.tsx` (상태 단일화 및 구조 단순화)
+    - `src/lib/supabase/domain.types.ts` (EventType 확장)
+    - `src/app/api/events/[id]/route.ts` (독립 Event CRUD 복구)
+    - `src/app/applications/[id]/_components/application-events-card.client.tsx` (다중 일정 관리 UI 구현)
+    - `src/lib/api/client.ts` (eventsApi 복구 및 타입 통합)
+    - `public/openapi.json` (통합 및 복구된 API 스펙 반영)
   - 스펙/문서 동기화:
     - UI 작업 범위 반영(`docs/steps.md`)
 - 기능 검증(회귀 포함)
   - API health: 기존 정상 유지
   - 핵심 시나리오:
-    - 로그인 상태에서 `/applications/new` 접근 가능
-    - 유효 입력 제출 시 생성 성공 후 `/applications/[id]` 이동
-    - 파일 선택 후 생성 시 지원서 생성 + 파일 업로드 자동 수행 및 성공 확인
-    - 상세 페이지 수정 시 우측 Events 카드 즉시 반영(React Query 캐시 연동)
+    - 상세 페이지 메인 폼 저장 시 마감일 원자적 업데이트 확인
+    - Events 카드에서 "Add Event"를 통한 면접/코딩테스트 일정 추가 확인
+    - 개별 일정 수정 및 삭제 시 메인 데이터 캐시와 동기화 확인
 - 아키텍처/품질 지표
   - Build: pass (`pnpm build`)
   - 타입/진단(LSP): 변경 파일 진단 통과
-  - `use client` 라우트 수(전/후): 라우트 페이지 직접 증가는 없음(폼 island 추가)
+  - `use client` 라우트 수(전/후): 변화 없음
+
 
   - `localStorage` 인증 참조 건수(전/후): 변화 없음(0 유지)
   - 인증 계약 지표:
