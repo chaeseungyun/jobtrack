@@ -5,9 +5,9 @@ import { useRouter } from "next/navigation";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { applicationsApi, eventsApi } from "@/lib/api/client";
+import { applicationsApi, type ApplicationDetail } from "@/lib/api/client";
 import { STAGE_LABELS, STAGE_ORDER } from "@/lib/app/stages";
-import { applicationEventsQueryKey } from "@/lib/query/applications";
+import { applicationDetailQueryKey } from "@/lib/query/applications";
 import type { ApplicationRow, DocumentRow, EventRow } from "@/lib/supabase/types";
 
 import {
@@ -19,9 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ApplicationDocumentsPanel } from "./application-documents-panel.client";
 
 interface ApplicationDetailFormProps {
-  initialApplication: ApplicationRow;
-  initialEvents: EventRow[];
-  initialDocuments: DocumentRow[];
+  initialApplication: ApplicationDetail;
 }
 
 const DETAIL_TOAST_ID = {
@@ -47,18 +45,19 @@ const toDatetimeLocalValue = (iso: string) => {
 
 export function ApplicationDetailForm({
   initialApplication,
-  initialEvents,
-  initialDocuments,
 }: ApplicationDetailFormProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const applicationId = initialApplication.id;
+  const initialEvents = initialApplication.events;
+  const initialDocuments = initialApplication.documents;
   const initialDeadlineEvent = initialEvents.find((event) => event.event_type === "deadline") ?? null;
   const initialMeritTags = Array.isArray(initialApplication.merit_tags)
     ? initialApplication.merit_tags
         .filter((tag): tag is string => typeof tag === "string")
         .join(", ")
     : "";
+
   const [form, setForm] = useState<ApplicationFormValues>({
     company_name: initialApplication.company_name,
     position: initialApplication.position,
@@ -71,7 +70,6 @@ export function ApplicationDetailForm({
     cover_letter: initialApplication.cover_letter ?? "",
     deadline: initialDeadlineEvent ? toDatetimeLocalValue(initialDeadlineEvent.scheduled_at) : "",
   });
-  const [deadlineEventId, setDeadlineEventId] = useState<string | null>(initialDeadlineEvent?.id ?? null);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -88,6 +86,8 @@ export function ApplicationDetailForm({
         throw new Error("Merit tags can include up to 10 items");
       }
 
+      const deadlineIso = form.deadline ? new Date(form.deadline).toISOString() : null;
+
       const updated = await applicationsApi.update(applicationId, {
         company_name: form.company_name.trim(),
         position: form.position.trim(),
@@ -98,43 +98,12 @@ export function ApplicationDetailForm({
         company_memo: form.company_memo.trim() ? form.company_memo.trim() : null,
         job_url: form.job_url.trim() ? form.job_url.trim() : null,
         cover_letter: form.cover_letter.trim() ? form.cover_letter.trim() : null,
+        deadline: deadlineIso,
       });
 
-      const deadlineIso = form.deadline ? new Date(form.deadline).toISOString() : null;
-      let nextDeadlineEventId = deadlineEventId;
-      let upsertedDeadlineEvent: EventRow | null = null;
-      let removedDeadlineEventId: string | null = null;
-
-      if (deadlineIso && deadlineEventId) {
-        const updatedDeadline = await eventsApi.update(deadlineEventId, { scheduled_at: deadlineIso });
-        upsertedDeadlineEvent = updatedDeadline;
-      } else if (deadlineIso && !deadlineEventId) {
-        const createdDeadline = await eventsApi.create(applicationId, {
-          event_type: "deadline",
-          scheduled_at: deadlineIso,
-        });
-        nextDeadlineEventId = createdDeadline.id;
-        upsertedDeadlineEvent = createdDeadline;
-      } else if (!deadlineIso && deadlineEventId) {
-        await eventsApi.remove(deadlineEventId);
-        removedDeadlineEventId = deadlineEventId;
-        nextDeadlineEventId = null;
-      }
-
-      return {
-        updated,
-        nextDeadlineEventId,
-        upsertedDeadlineEvent,
-        removedDeadlineEventId,
-      };
+      return updated;
     },
-    onSuccess: ({
-      updated,
-      nextDeadlineEventId,
-      upsertedDeadlineEvent,
-      removedDeadlineEventId,
-    }) => {
-      setDeadlineEventId(nextDeadlineEventId);
+    onSuccess: (updated) => {
       setForm((prev) => ({
         ...prev,
         company_name: updated.company_name,
@@ -150,40 +119,8 @@ export function ApplicationDetailForm({
         cover_letter: updated.cover_letter ?? "",
       }));
 
-      if (upsertedDeadlineEvent || removedDeadlineEventId) {
-        queryClient.setQueryData<EventRow[]>(
-          applicationEventsQueryKey(applicationId),
-          (previousEvents = []) => {
-            let nextEvents = previousEvents;
-
-            if (removedDeadlineEventId) {
-              nextEvents = nextEvents.filter((event) => event.id !== removedDeadlineEventId);
-            }
-
-            if (upsertedDeadlineEvent) {
-              const existingIndex = nextEvents.findIndex(
-                (event) => event.id === upsertedDeadlineEvent.id
-              );
-
-              if (existingIndex === -1) {
-                nextEvents = [...nextEvents, upsertedDeadlineEvent];
-              } else {
-                nextEvents = nextEvents.map((event) =>
-                  event.id === upsertedDeadlineEvent.id ? upsertedDeadlineEvent : event
-                );
-              }
-            }
-
-            return [...nextEvents].sort(
-              (a, b) =>
-                new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime()
-            );
-          }
-        );
-      }
-
       void queryClient.invalidateQueries({
-        queryKey: applicationEventsQueryKey(applicationId),
+        queryKey: applicationDetailQueryKey(applicationId),
       });
 
       toast.success("Saved", { id: DETAIL_TOAST_ID.saveSuccess });
@@ -230,4 +167,3 @@ export function ApplicationDetailForm({
     </Card>
   );
 }
-

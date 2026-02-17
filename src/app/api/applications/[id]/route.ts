@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAuth } from "@/lib/auth/request";
 import { applicationService } from "@/lib/services/application.service";
 import { documentService } from "@/lib/services/document.service";
-import { eventService } from "@/lib/services/event.service";
 import { assertApplicationOwnership } from "@/lib/supabase/ownership";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import { updateApplicationSchema } from "@/lib/validation/step4";
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
     const [application, events, documents] = await Promise.all([
       applicationService.getById(supabase, id, auth.payload.sub),
-      eventService.listByApplicationId(supabase, id),
+      applicationService.listEventsByApplicationId(supabase, id),
       documentService.listByApplicationId(supabase, id),
     ]);
 
@@ -83,11 +82,13 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
+    const { deadline, ...rest } = parsed.data;
+
     const updated = await applicationService.update(
       supabase,
       id,
       auth.payload.sub,
-      parsed.data
+      { ...rest, deadline: deadline ?? undefined }
     );
 
     return NextResponse.json(updated);

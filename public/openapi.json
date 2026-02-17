@@ -236,7 +236,7 @@
         }
       },
       "patch": {
-        "summary": "Update application",
+        "summary": "Update application (includes deadline management)",
         "security": [
           {
             "CookieAuth": []
@@ -304,9 +304,9 @@
         }
       }
     },
-    "/api/applications/{id}/events": {
-      "get": {
-        "summary": "List events for application",
+    "/api/applications/{id}/documents": {
+      "post": {
+        "summary": "Upload document for application",
         "security": [
           {
             "CookieAuth": []
@@ -317,30 +317,47 @@
             "$ref": "#/components/parameters/ApplicationId"
           }
         ],
-        "responses": {
-          "200": {
-            "description": "Events list",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Event"
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "file"
+                ],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
                   }
                 }
               }
             }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Document"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid file"
           },
           "401": {
             "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not found"
           }
         }
-      },
+      }
+    },
+    "/api/events/{id}": {
       "post": {
-        "summary": "Create event for application",
+        "summary": "Create event for application (id=applicationId)",
         "security": [
           {
             "CookieAuth": []
@@ -348,7 +365,13 @@
         ],
         "parameters": [
           {
-            "$ref": "#/components/parameters/ApplicationId"
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
@@ -363,7 +386,7 @@
         },
         "responses": {
           "201": {
-            "description": "Created event",
+            "description": "Event created",
             "content": {
               "application/json": {
                 "schema": {
@@ -377,16 +400,11 @@
           },
           "401": {
             "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not found"
           }
         }
-      }
-    },
-    "/api/events/{id}": {
+      },
       "patch": {
-        "summary": "Update event",
+        "summary": "Update event (id=eventId)",
         "security": [
           {
             "CookieAuth": []
@@ -394,7 +412,13 @@
         ],
         "parameters": [
           {
-            "$ref": "#/components/parameters/EventId"
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
@@ -409,7 +433,7 @@
         },
         "responses": {
           "200": {
-            "description": "Updated event",
+            "description": "Event updated",
             "content": {
               "application/json": {
                 "schema": {
@@ -430,7 +454,7 @@
         }
       },
       "delete": {
-        "summary": "Delete event",
+        "summary": "Delete event (id=eventId)",
         "security": [
           {
             "CookieAuth": []
@@ -438,67 +462,18 @@
         ],
         "parameters": [
           {
-            "$ref": "#/components/parameters/EventId"
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
           "204": {
-            "description": "Deleted"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Not found"
-          }
-        }
-      }
-    },
-    "/api/applications/{id}/documents": {
-      "post": {
-        "summary": "Upload PDF document",
-        "security": [
-          {
-            "CookieAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/ApplicationId"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "file"
-                ],
-                "properties": {
-                  "file": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Uploaded document",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Document"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid file"
+            "description": "Event deleted"
           },
           "401": {
             "description": "Unauthorized"
@@ -608,8 +583,10 @@
         "type": "string",
         "enum": [
           "deadline",
+          "coding_test",
+          "interview",
           "result",
-          "interview"
+          "etc"
         ]
       },
       "RegisterRequest": {
@@ -830,6 +807,11 @@
           },
           "cover_letter": {
             "type": "string",
+            "nullable": true
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time",
             "nullable": true
           }
         }

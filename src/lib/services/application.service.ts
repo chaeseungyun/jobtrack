@@ -1,5 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import type { ApplicationRow, StageType, CareerType, SourceType } from "@/lib/supabase/types";
+import type {
+  ApplicationRow,
+  StageType,
+  CareerType,
+  SourceType,
+  EventRow,
+  EventType,
+} from "@/lib/supabase/types";
 
 export interface CreateApplicationInput {
   company_name: string;
@@ -23,6 +30,22 @@ export interface UpdateApplicationInput {
   current_stage?: StageType;
   company_memo?: string | null;
   cover_letter?: string | null;
+  deadline?: string | null;
+}
+
+export interface CreateEventInput {
+  application_id: string;
+  event_type: EventType;
+  scheduled_at: string;
+  location?: string | null;
+  interview_round?: number | null;
+}
+
+export interface UpdateEventInput {
+  event_type?: EventType;
+  scheduled_at?: string;
+  location?: string | null;
+  interview_round?: number | null;
 }
 
 export const applicationService = {
@@ -79,15 +102,35 @@ export const applicationService = {
   },
 
   async update(supabase: SupabaseClient, id: string, userId: string, input: UpdateApplicationInput) {
+    const { deadline, ...applicationUpdate } = input;
+
     const { data, error } = await supabase
       .from("applications")
-      .update(input)
+      .update(applicationUpdate)
       .eq("id", id)
       .eq("user_id", userId)
       .select("*")
       .single();
 
     if (error) throw error;
+
+    if (deadline !== undefined) {
+      const events = await applicationService.listEventsByApplicationId(supabase, id);
+      const existingDeadline = events.find((e) => e.event_type === "deadline");
+
+      if (deadline && existingDeadline) {
+        await applicationService.updateEvent(supabase, existingDeadline.id, { scheduled_at: deadline });
+      } else if (deadline && !existingDeadline) {
+        await applicationService.createEvent(supabase, {
+          application_id: id,
+          event_type: "deadline",
+          scheduled_at: deadline,
+        });
+      } else if (!deadline && existingDeadline) {
+        await applicationService.removeEvent(supabase, existingDeadline.id);
+      }
+    }
+
     return data as ApplicationRow;
   },
 
@@ -100,4 +143,57 @@ export const applicationService = {
 
     if (error) throw error;
   },
+
+  async listEventsByApplicationId(supabase: SupabaseClient, applicationId: string) {
+    const { data, error } = await supabase
+      .from("events")
+      .select("*")
+      .eq("application_id", applicationId)
+      .order("scheduled_at", { ascending: true })
+      .returns<EventRow[]>();
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async listUpcomingEvents(supabase: SupabaseClient, applicationIds: string[]) {
+    const { data, error } = await supabase
+      .from("events")
+      .select("id,application_id,event_type,scheduled_at")
+      .in("application_id", applicationIds)
+      .gte("scheduled_at", new Date().toISOString())
+      .order("scheduled_at", { ascending: true });
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async createEvent(supabase: SupabaseClient, input: CreateEventInput) {
+    const { data, error } = await supabase
+      .from("events")
+      .insert(input)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return data as EventRow;
+  },
+
+  async updateEvent(supabase: SupabaseClient, id: string, input: UpdateEventInput) {
+    const { data, error } = await supabase
+      .from("events")
+      .update(input)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+    return data as EventRow;
+  },
+
+  async removeEvent(supabase: SupabaseClient, id: string) {
+    const { error } = await supabase.from("events").delete().eq("id", id);
+    if (error) throw error;
+  },
 };
+

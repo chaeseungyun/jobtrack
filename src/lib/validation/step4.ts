@@ -32,7 +32,6 @@ export const createApplicationSchema = z.object({
 });
 
 export const updateApplicationSchema = createApplicationSchema
-  .omit({ deadline: true })
   .partial()
   .refine((value) => Object.keys(value).length > 0, {
     message: "At least one field is required",

@@ -3,12 +3,11 @@ import { notFound } from "next/navigation";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 
 import { requireServerAuth } from "@/lib/auth/session";
-import { applicationEventsQueryKey } from "@/lib/query/applications";
+import { applicationDetailQueryKey } from "@/lib/query/applications";
 import { applicationService } from "@/lib/services/application.service";
 import { documentService } from "@/lib/services/document.service";
-import { eventService } from "@/lib/services/event.service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { DocumentRow, EventRow } from "@/lib/supabase/types";
+import type { DocumentRow } from "@/lib/supabase/types";
 
 import { ApplicationDetailForm } from "@/app/applications/[id]/_components/application-detail-form.client";
 import { ApplicationEventsCard } from "@/app/applications/[id]/_components/application-events-card.client";
@@ -24,19 +23,26 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
   const supabase = createServerSupabaseClient();
   const queryClient = new QueryClient();
 
-  const [application, documents] = await Promise.all([
-    applicationService.getById(supabase, id, auth.sub).catch(() => null),
-    documentService.listByApplicationId(supabase, id),
-  ]);
+  const applicationDetail = await queryClient.fetchQuery({
+    queryKey: applicationDetailQueryKey(id),
+    queryFn: async () => {
+      const [application, events, documents] = await Promise.all([
+        applicationService.getById(supabase, id, auth.sub),
+        applicationService.listEventsByApplicationId(supabase, id),
+        documentService.listByApplicationId(supabase, id),
+      ]);
 
-  if (!application) {
+      return {
+        ...application,
+        events,
+        documents,
+      };
+    },
+  });
+
+  if (!applicationDetail) {
     notFound();
   }
-
-  const events = await queryClient.fetchQuery<EventRow[]>({
-    queryKey: applicationEventsQueryKey(id),
-    queryFn: () => eventService.listByApplicationId(supabase, id),
-  });
 
   return (
     <AppShell
@@ -53,9 +59,7 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
       <HydrationBoundary state={dehydrate(queryClient)}>
         <div className="grid gap-4 lg:grid-cols-5">
           <ApplicationDetailForm
-            initialApplication={application}
-            initialEvents={events}
-            initialDocuments={documents as DocumentRow[]}
+            initialApplication={applicationDetail}
           />
 
           <ApplicationEventsCard applicationId={id} />

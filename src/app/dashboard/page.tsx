@@ -3,7 +3,6 @@ import Link from "next/link";
 import { STAGE_LABELS } from "@/lib/app/stages";
 import { requireServerAuth } from "@/lib/auth/session";
 import { applicationService } from "@/lib/services/application.service";
-import { eventService } from "@/lib/services/event.service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { ApplicationRow } from "@/lib/supabase/types";
 
@@ -42,7 +41,7 @@ export default async function DashboardPage() {
     const targetIds = targetApplications.map((application) => application.id);
 
     if (targetIds.length > 0) {
-      const upcomingEvents = await eventService.listUpcoming(supabase, targetIds);
+      const upcomingEvents = await applicationService.listUpcomingEvents(supabase, targetIds);
 
       const applicationMap = new Map(targetApplications.map((item) => [item.id, item]));
 
@@ -178,4 +177,3 @@ export default async function DashboardPage() {
     </AppShell>
   );
 }
-

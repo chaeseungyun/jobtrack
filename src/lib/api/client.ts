@@ -51,6 +51,7 @@ export interface UpdateApplicationPayload {
   current_stage?: StageType;
   company_memo?: string | null;
   cover_letter?: string | null;
+  deadline?: string | null;
 }
 
 export interface CreateEventPayload {
@@ -153,10 +154,8 @@ export const applicationsApi = {
 };
 
 export const eventsApi = {
-  list: (applicationId: string) =>
-    request<EventRow[]>(`/api/applications/${applicationId}/events`),
   create: (applicationId: string, payload: CreateEventPayload) =>
-    request<EventRow>(`/api/applications/${applicationId}/events`, {
+    request<EventRow>(`/api/events/${applicationId}`, {
       method: "POST",
       body: payload,
     }),

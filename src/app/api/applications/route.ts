@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireAuth } from "@/lib/auth/request";
 import { applicationService } from "@/lib/services/application.service";
-import { eventService } from "@/lib/services/event.service";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
   applicationsListQuerySchema,
@@ -73,7 +72,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (deadline) {
-      await eventService.create(supabase, {
+      await applicationService.createEvent(supabase, {
         application_id: application.id,
         event_type: "deadline",
         scheduled_at: deadline,

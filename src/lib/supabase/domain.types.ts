@@ -17,7 +17,7 @@ export const STAGE_TYPES = [
   "final_pass",
   "rejected",
 ] as const;
-export const EVENT_TYPES = ["deadline", "result", "interview"] as const;
+export const EVENT_TYPES = ["deadline", "coding_test", "interview", "result", "etc"] as const;
 
 export type CareerType = (typeof CAREER_TYPES)[number];
 export type SourceType = (typeof SOURCE_TYPES)[number];
