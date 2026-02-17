@@ -23,10 +23,7 @@ interface AuthResponse {
   };
 }
 
-export type ApplicationDetail = ApplicationRow & {
-  events: EventRow[];
-  documents: DocumentRow[];
-};
+export type ApplicationDetail = Required<Pick<ApplicationRow, "events" | "documents">> & ApplicationRow;
 
 export interface CreateApplicationPayload {
   company_name: string;

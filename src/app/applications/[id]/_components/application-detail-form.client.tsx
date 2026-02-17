@@ -49,8 +49,10 @@ export function ApplicationDetailForm({
   const router = useRouter();
   const queryClient = useQueryClient();
   const applicationId = initialApplication.id;
+  
   const initialEvents = initialApplication.events;
   const initialDocuments = initialApplication.documents;
+  
   const initialDeadlineEvent = initialEvents.find((event) => event.event_type === "deadline") ?? null;
   const initialMeritTags = Array.isArray(initialApplication.merit_tags)
     ? initialApplication.merit_tags

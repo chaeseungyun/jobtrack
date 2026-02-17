@@ -40,6 +40,8 @@ export type ApplicationRow = Omit<
   career_type: CareerType;
   source: SourceType | null;
   current_stage: StageType;
+  events?: EventRow[];
+  documents?: DocumentRow[];
 };
 
 export type ApplicationInsert = Omit<
