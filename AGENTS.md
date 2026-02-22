@@ -34,3 +34,4 @@
 ## Preload Context
 - docs/steps.md
 - docs/prd.md
+- docs/architecture.md
