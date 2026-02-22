@@ -24,7 +24,7 @@
 | 분류 | 기술 | 선정 근거 (Rationale) |
 | :--- | :--- | :--- |
 | **Frontend** | Next.js 16 (App Router) | Server Components를 통한 성능 최적화 및 풀스택 개발 효율성. |
-| **State** | TanStack Query | 서버 데이터 캐싱/동기화 체계화 및 로딩 UX 개선. |
+| **State** | TanStack Query | 서버 데이터 캐싱/동기화 체계화 및 로딩 UX 개선. server components와 역할 분리 |
 | **Backend** | Next.js API Routes | BFF 패턴 구현 및 Vercel 인프라 최적 활용. |
 | **Database** | Supabase (Postgres) | 통합 인프라 제공을 통한 초기 개발 속도 확보. |
 | **Auth** | Custom JWT / Supabase Auth (V2) | 인증 원리 학습 후 관리형 서비스로의 단계적 전환. |
@@ -58,23 +58,34 @@ src/
 - **Read**: Page (Server Component) -> Service -> Repository -> Supabase
 - **Write**: Client Component (React Query) -> API Route (BFF) -> Service -> Repository -> Supabase
 
-### 4.2 데이터베이스 스키마 (ERD 요약)
-- **users**: 사용자 기본 정보 및 자격 증명.
-- **applications**: 지원서 메인 정보 (기업명, 직무, 상태 등).
-- **application_events**: 면접, 마감일 등 일정 정보 (Remind 플래그 포함).
-- **documents**: 지원서 관련 첨부 파일 메타데이터.
+### 4.2 데이터베이스 상세 설계 (Relational Design)
+
+| 테이블 | 컬럼 (핵심) | 제약 조건 및 관계 |
+| :--- | :--- | :--- |
+| **users** | `id`, `email`, `password_hash` | `email`: UNIQUE / PK: `id` |
+| **applications** | `id`, `user_id`, `company_name` | FK: `user_id` → `users.id` (Cascade) |
+| **events** | `id`, `application_id`, `event_type` | FK: `application_id` → `applications.id` (Cascade) |
+| **documents** | `id`, `application_id`, `file_url` | FK: `application_id` → `applications.id` (Cascade) |
+
+> **Note**: Cascade behavior (ON DELETE CASCADE) 및 Unique 제약 조건은 Supabase Dashboard에서 설정하며, 코드베이스의 `database.generated.ts`에 반영되어 있다.
 
 ---
 
 ## 5. 인증 및 보안 (Auth & Security)
 
-### 5.1 인증 메커니즘
-- **V1 (Current)**: HttpOnly Cookie 기반의 자체 JWT 관리 로직. 
-  - `jsonwebtoken` 라이브러리를 사용한 Stateless 인증.
-- **V2 (Planned)**: Supabase Auth 전환을 통한 OAuth 및 세션 관리 고도화.
-- **보안 원칙**: 
-  - API Route 접근 시 반드시 JWT 세션 검증.
-  - 모든 리소스 접근 시 `user_id`를 통한 소유권 검증 필수.
+### 5.1 토큰 및 세션 전략 (Token Strategy)
+
+- **Access Token**: JWT 기반 (유효기간: 7일).
+  - `jsonwebtoken` 라이브러리를 통해 서버에서 직접 발급 및 검증 (`lib/auth/jwt.ts`).
+  - `expiresIn: "7d"` 설정을 통해 수명을 관리하며, HttpOnly 쿠키(`jobtrack_auth`)에 저장.
+- **Refresh Token**: 현재 미사용 (보안 및 구현 단순화).
+- **만료 처리 및 재시도 (Expiration & Retry)**:
+  - **만료 시**: 서버는 `401 Unauthorized`를 반환(verifyAuthToken 실패 시).
+  - **클라이언트 대응**: API 응답에서 401 에러 감지 시, 클라이언트 사이드에서 사용자를 `/auth` 페이지로 리다이렉트하여 재로그인을 유도한다.
+
+### 5.2 보안 원칙
+- API Route 접근 시 반드시 JWT 세션 검증 (`requireAuth` 미들웨어).
+- 모든 리소스 접근 시 `user_id`를 통한 소유권 검증 필수.
 
 ---
 
@@ -97,6 +108,6 @@ src/
 
 ## 8. 로드맵 (Technical Roadmap)
 
-- **[V2-NEXT] Repository 패턴 도입**: DB 의존성 분리를 위한 데이터 접근 계층 추상화.
+- **[V2-NEXT] Repository 패턴 도입**: DB 의존성 분리를 위한 데이터 접근 계층 추상화. controller -> service -> repository 구조 도입
 - **[V2-PLANNED] Auth 추상화**: `IAuthService` 도입 및 Supabase Auth 마이그레이션.
 - **[V2-PLANNED] 알림 서비스 독립화**: NotificationService 추출 및 단위 테스트 강화.
