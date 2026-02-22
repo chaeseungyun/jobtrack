@@ -33,4 +33,4 @@
 
 ## Preload Context
 - docs/steps.md
-- docs/prd.llm.md
+- docs/prd.md

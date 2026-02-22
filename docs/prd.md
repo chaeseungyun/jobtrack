@@ -1,534 +1,107 @@
-# JobTrack - Job Application & Interview Schedule Management Board
+# JobTrack 통합 제품 요구사항 정의서 (Integrated PRD)
 
-## 1. Project Overview
-
-### 1.1 Project Name
-JobTrack (Working Title: JobQuest)
-
-### 1.2 One-Line Description
-An integrated management board that oversees the entire process from job application writing to final acceptance, ensuring you never miss important deadlines, announcement dates, or interview schedules through automated notifications.
-
-### 1.3 Problem Definition (Why)
-
-#### Real-World Problems
-- **Missed Deadlines**: Frequently missing application deadlines or interview schedules because information is scattered across multiple job sites (Saramin, JobKorea, company career pages)
-- **Difficulty Tracking Status**: Hard to see at a glance which stage each application is in when managing 10, 20+ companies
-- **Information Scattered**: Company research, interview prep, contact info scattered across notes, Excel, emails, and KakaoTalk
-- **Repeated Mistakes**: Making the same mistakes in interviews or accidentally re-applying to the same company because you can't track what you've already done
-
-#### Target Users
-- **Primary Target**: Job seekers who have started their job search (new graduates and experienced hires)
-- **Secondary Target**: Current employees preparing to switch jobs (future expansion)
-
-#### Success Metrics
-1. **Usability**: 0% missed application deadlines
-2. **Retention**: 3+ visits per week (checking/updating schedules)
-3. **Quality**: Zero API error reports for 7 days post-deployment
+> **문서 관리 규칙**
+> - **단일 진실 공급원 (SSOT)**: 모든 기획, 설계, 의사결정 내역은 본 문서(`docs/prd.md`)에 통합 관리한다.
+> - **대상**: 본 문서는 개발자(사람)와 AI(LLM)가 프로젝트의 전체 맥락을 파악하고 일관된 결정을 내리기 위한 기초 자료로 활용된다.
+> - **기록 원칙**: 비즈니스 요구사항, 기술적 요구사항, 의사결정 판단 근거(Rationale)를 반드시 포함한다.
+> - **버전 관리**: V1(MVP), V2(고도화) 등 단계별 진행 상황을 상태 태그(`[DONE]`, `[PLANNING]`, `[NEXT]`)로 명확히 구분한다.
+> - **언어**: 모든 내용은 한글 작성을 원칙으로 한다.
 
 ---
 
-## 2. MVP Scope Definition
-
-### 2.1 MVP Core Goal (2-3 Day Development)
-**"Never miss an application deadline and visualize your entire job search progress at a glance"**
-
-### 2.2 Included Features (Essential)
-| Feature | Description | Rationale |
-|---------|-------------|-----------|
-| **Account Management** | Email/password login | Integrate notification channel (email) with account for operational simplicity. Email chosen over username for password reset, uniqueness, and scalability |
-| **Application CRUD** | Register/view/edit/delete company application info | Core data. Start managing from the moment you apply |
-| **Kanban Board** | Interest → Applied → Document Pass → Coding Test/Assignment → Nth Interview → Final Acceptance | Visualize progress by stage. Interview rounds handled as numeric fields for structural simplicity |
-| **Schedule Management** | Register and get alerts for deadlines, announcement dates, and interviews | D-3, D-1 email alerts to prevent actual missed deadlines (per user requirements) |
-| **Dashboard** | Total applications, acceptance status, upcoming schedules | Essential for motivation and priority judgment |
-| **File Management** | Resume/portfolio PDF upload | Manage required documents in one place |
-
-### 2.3 Excluded Features (Post v1.1)
-| Feature | Exclusion Reason |
-|---------|-----------------|
-| Template Auto-Generation | Exceeds MVP development scope. Memo feature serves as alternative |
-| Multi-user/Team Sharing | Outside single-user MVP scope |
-| Mobile App | Implement responsive web first. App decided after usability validation |
-| Statistics/Reports | Dashboard basic metrics sufficient |
-| External Calendar Integration (Google/Apple) | Schedule alerts covered by email. Low ROI for complexity |
+## 1. 프로젝트 개요 (Project Overview)
+- **이름**: JobTrack
+- **목표**: "취업 준비생이 지원 현황을 한눈에 파악하고, 중요한 면접/코테 일정을 놓치지 않도록 돕는 자동화된 관리 플랫폼"
+- **핵심 가치**: 일정 누락 방지, 지원 파이프라인 시각화, 서류 통합 관리.
+- **V2 목표**: **"Architecture for Tomorrow"** - 인프라 의존성 제거(DIP), 확장성 확보, 운영 안정성을 위한 아키텍처 고도화 및 유저 경험 개선.
 
 ---
 
-## 3. User Experience (UX) Definition
+## 2. 핵심 아키텍처 및 기술 스택 (Architecture & Tech Stack)
 
-### 3.1 User Scenarios
+### 2.1 아키텍처 전략
+- **Layered Architecture (V2 Transition)**: `Controller -> Service -> Repository`의 3계층 구조를 지향한다.
+  - **Rationale**: 의존성 역전 원칙(DIP)을 적용하여 도메인 로직과 인프라(Supabase SDK 등)를 분리한다. 이는 향후 DB 교체나 서버 분리(NestJS 등) 시 UI와 비즈니스 로직 수정을 최소화하기 위함이다.
+- **BFF (Backend For Frontend) Pattern**: Next.js API Routes를 클라이언트와 데이터베이스 사이의 중계 레이어로 활용한다.
+  - **Rationale**: 보안(Secret 관리) 및 데이터 가공 로직을 서버측에 집중시켜 프론트엔드의 복잡도를 낮추고 안정적인 API 계약을 유지한다.
 
-#### Scenario 1: Discovering a New Job Posting
-1. Find new posting on Saramin
-2. Access JobTrack and click "Add New Application"
-3. Enter company name, position, deadline, and job posting URL
-4. Save with stage: "Interest"
-5. Verify it appears on Dashboard under "This Week's Deadlines"
-
-#### Scenario 2: Status Update After Application
-1. Complete actual application on company website
-2. Find the application in JobTrack
-3. Move stage to "Applied"
-4. Upload application confirmation email as PDF
-5. Save cover letter content in memo field
-
-#### Scenario 3: Interview Schedule Registration & Alerts
-1. Receive document pass email
-2. Change stage to "Document Pass" in JobTrack
-3. Register interview schedule (date, time, location/link)
-4. System automatically sends email alerts at D-3 and D-1
-5. Review preparation notes before interview
-
-#### Scenario 4: Weekly Planning
-1. Access dashboard
-2. Check interview/deadline schedules in "This Week's Schedule" panel
-3. Plan preparation priorities accordingly
-4. Check pending applications on Kanban board
-
-### 3.2 Core Screen Structure
-
-| Screen | Description | Core Features |
-|--------|-------------|---------------|
-| **Login/Register** | Email/password based auth | JWT token auth, password encryption |
-| **Dashboard (Main)** | Overall status and this week's schedule | Total applications, stage statistics, 5 upcoming schedules |
-| **Kanban Board** | Application management by stage | Drag-and-drop or stage change, application card display |
-| **Application Detail** | Individual application info and history | Info edit, event (schedule) management, file upload, memo |
-| **New Application** | New application registration form | Required/optional field separation, quick registration |
-
-### 3.3 Information Architecture (IA)
-
-```
-JobTrack
-├── Auth
-│   ├── Login
-│   └── Register
-├── Dashboard (Main Page)
-│   ├── Summary Cards (Total/Document Pass/Interviewing)
-│   ├── Upcoming Schedules (Deadlines/Announcements/Interviews)
-│   └── Quick Navigation (New Application/Board)
-├── Kanban Board
-│   ├── Stage Columns (Interest ~ Final Acceptance)
-│   ├── Application Cards
-│   └── Filter/Sort
-└── Application Management
-    ├── Application List
-    ├── New/Edit Application
-    └── Application Detail
-        ├── Basic Info
-        ├── Event (Schedule) Management
-        ├── File Attachments
-        └── Memo/Cover Letter
-```
+### 2.2 기술 스택 및 선정 근거
+| 분류 | 기술 | 선정 근거 (Rationale) |
+| :--- | :--- | :--- |
+| **Frontend** | Next.js 16 (App Router) | 풀스택 학습 효율이 높고, Server Components를 통해 초기 렌더링 성능(LCP)과 SEO 최적화가 용이함. |
+| **State** | TanStack Query | 서버 데이터 캐싱/동기화를 체계화하고, SSR Hydration 패턴을 통해 로딩 사용자 경험(UX)을 개선함. |
+| **Backend** | Supabase | Auth, DB(Postgres), Storage를 통합 제공받아 초기 개발 속도를 높이고 RLS 보안 모델을 학습하기 최적임. |
+| **Styling** | Tailwind CSS 4 | CSS 변수 기반 토큰을 통해 다크모드 및 테마 확장이 용이하며 빠른 UI 반복 개발이 가능함. |
+| **Messaging** | Resend + Svix | 트랜잭션 이메일 발송과 웹훅 검증을 통한 데이터 정합성(발송 상태 업데이트 등) 확보가 직관적임. |
+| **Testing** | Vitest | V2의 핵심인 서비스/리포지토리 레이어의 단위 테스트를 위해 빠르고 경량화된 테스트 환경을 구축함. |
 
 ---
 
-## 4. Feature Details
+## 3. 정보 아키텍처 (Information Architecture)
 
-### 4.1 Authentication System
+### 3.1 사용자 경로 및 페이지 구조
+- **공개 페이지 (Public)**:
+  - `/` : 서비스 소개 및 기능 안내 (랜딩 페이지)
+  - `/auth` : 로그인 및 회원가입 (Tabs 전환 방식)
+  - `/swagger` : API 명세서 및 인터랙티브 테스트 도구
+- **보호 페이지 (Protected)**:
+  - `/dashboard` : 핵심 지표(지원 수 등) 및 다가오는 일정 요약
+  - `/board` : 지원 단계별 칸반 보드 (드래그 앤 드롭 지원)
+  - `/applications/new` : 신규 지원서 등록 폼
+  - `/applications/[id]` : 지원서 상세 정보, 일정(면접/코테) 관리, PDF 서류 관리
 
-#### Email-Based Login Rationale
-**Comparison of Options:**
-| Method | Pros | Cons | Decision |
-|--------|------|------|----------|
-| **Email (Selected)** | Easy password reset, integrated notification channel, duplicate prevention | Longer input | **Selected** - Operational simplicity priority |
-| Username | Shorter input, anonymity | Difficult recovery if password lost, separate notification channel needed | Lower priority |
-| Social Login (Google) | High convenience | Increased implementation complexity, exceeds MVP scope | v1.1 consideration |
-
-#### Requirements
-- JWT-based authentication (Access Token)
-- Password bcrypt hashing (security requirement)
-- Auto-login (local storage token persistence)
-
-### 4.2 Application Data Model
-
-#### Required Fields (Mandatory)
-| Field | Type | Description |
-|-------|------|-------------|
-| Company Name | String | Name of company applied to |
-| Position | String | Job title/position applied for |
-| Career Type | Enum | New Graduate/Experienced/Any |
-| Deadline | Date | Application deadline date |
-| Current Stage | Enum | Interest/Applied/Document Pass/Coding Test/Interview/Final Acceptance |
-
-#### Optional Fields (Optional)
-| Field | Type | Description |
-|-------|------|-------------|
-| Job URL | String | Original posting link (Wanted/Saramin, etc.) |
-| Source | Enum | Saramin/JobKorea/Company Website/LinkedIn/Other |
-| Merit Tags | Array | High Salary/Flexible Work/Remote/Free Lunch/Stock Options, etc. (max 3) |
-| Company Memo | Text | Free-form notes for company research, preparation items |
-| Cover Letter | Text | Full text of written cover letter |
-
-#### Merit Tag Rationale
-**Reasons for Inclusion:**
-1. **Priority Judgment**: Criteria for deciding which companies to focus on when viewing multiple postings simultaneously
-2. **Data for Future**: Foundation for future filtering (e.g., "Show only companies with flexible work")
-3. **2-3 Day Development**: UI/DB complexity managed through preset tag limitation (max 3)
-
-**Constraints:**
-- Preset list provided (no free input) → Data consistency assurance
-- Max 3 selections → Prevent excessive information input
-
-### 4.3 Stage Definitions
-
-| Stage | Code | Description |
-|-------|------|-------------|
-| Interest | INTEREST | Posting discovered, preparing |
-| Applied | APPLIED | Actual application completed |
-| Document Pass | DOCUMENT_PASS | Document screening passed |
-| Coding Test/Assignment | ASSIGNMENT | Coding test or assignment stage |
-| Nth Interview | INTERVIEW | Interview in progress (round field indicates stage number) |
-| Final Acceptance | FINAL_PASS | Final acceptance |
-| Rejected | REJECTED | Rejected (no stage movement but recorded) |
-
-**Interview Round Handling:**
-- Stage unified as "Interview"
-- Separate `interview_round` field stores round number (1, 2, 3...)
-- Scalability: Covers up to 4th, 5th interviews while maintaining simple DB structure
-
-### 4.4 Event (Schedule) Management
-
-Events represent "application-related schedules occurring on specific dates".
-
-#### Event Types
-| Type | Description | Alert Target |
-|------|-------------|--------------|
-| Deadline | Application deadline | D-3, D-1 |
-| Announcement | Expected announcement date for document/test/interview results | D-3, D-1 |
-| Interview | Actual interview schedule | D-3, D-1 |
-
-#### Event Data
-| Field | Type | Description |
-|-------|------|-------------|
-| Event Type | Enum | Deadline/Announcement/Interview |
-| Schedule Date | DateTime | Event occurrence date/time |
-| Location/Link | String | Interview location or video conference link |
-| Interview Round | Integer | Round number if interview (1st, 2nd...) |
-| Alert Status | Object | D-3 alert sent, D-1 alert sent |
-
-**Null Allowed:** Announcement dates are often undecided, so null is permitted
-
-### 4.5 Notification System
-
-#### Notification Channel: Email Rationale
-| Channel | Pros | Cons | MVP Decision |
-|---------|------|------|--------------|
-| **Email (Selected)** | Simple implementation, many free solutions, users check daily | Possible delivery delays | **Selected** - Free tier (Resend) available |
-| App Push | Instant | No mobile app (web push browser-dependent) | Excluded |
-| SMS/Kakao | High reach | Costs incurred, complex implementation | v1.1 consideration |
-
-#### Alert Timing
-- **D-3**: "Deadline/Announcement/Interview in 3 days"
-- **D-1**: "Deadline/Announcement/Interview tomorrow"
-
-#### Notification Dispatch Mechanism
-- Scheduler: Runs hourly (serverless function or cron job)
-- Target: Unsent alerts + D-3/D-1 applicable events
-- Duplicate prevention: Update `notified_d3`/`notified_d1` flags after sending
-
-### 4.6 Dashboard Structure
-
-#### Left: Summary Cards
-| Card | Content |
-|------|---------|
-| Total Applications | Total count of all applications |
-| Document Pass Count | Count with stage 'Document Pass' or higher |
-| Interview In Progress | Count with stage 'Interview' |
-
-#### Right: Upcoming Schedules Panel
-| Section | Display Content | Sort |
-|---------|-----------------|------|
-| Approaching Deadlines | Deadlines within D-7 | Deadline ascending |
-| Expected Announcements | Announcements within D-7 | Announcement date ascending |
-| Scheduled Interviews | Interviews within D-7 | Interview date ascending |
-
-**Nearest Date Priority:** Display 5 nearest schedules from today
-
-### 4.7 File Management
-
-#### Application Files
-- **Type**: PDF only (resumes, portfolios, submitted documents)
-- **Size**: Max 10MB per file
-- **Storage**: Supabase Storage (free tier: 1GB)
-- **DB Storage**: File URL and metadata (filename, size, upload date)
+### 3.2 데이터 흐름 및 상태 관리
+- **조회 (Read)**: Page (Server Component) -> Service -> Repository -> Supabase
+- **명령 (Write/Update)**: Client Island (React Query) -> API Route (BFF) -> Service -> Repository -> Supabase
 
 ---
 
-## 5. Technology Stack & Deployment
+## 4. 기능 명세 및 진척도 (Feature Set & Evolution)
 
-### 5.1 Recommended Stack (Free Tier Focus)
+### 4.1 인증 및 보안 (Auth & Security)
+- **[V1-DONE] 커스텀 JWT 인증**: HttpOnly Cookie 기반의 자체 JWT 관리 로직 구현.
+  - **Rationale**: 인증의 기본 원리(Stateless, Security) 학습을 위해 직접 구현.
+- **[V2-PLANNING] Supabase Auth 전환**: 소셜 로그인(OAuth) 및 MFA 대응을 위한 관리형 서비스 도입.
+  - **Rationale**: 운영 효율성과 확장성을 위해 검증된 솔루션으로 마이그레이션.
+- **[V2-PLANNING] Auth 추상화**: `IAuthService` 인터페이스 도입으로 벤더 종속성 제거.
 
-| Area | Selection | Rationale |
-|------|-----------|-----------|
-| **Frontend** | Next.js 14 (App Router) | SSR/SSG support, Vercel deployment optimized, abundant React learning resources |
-| **Styling** | Tailwind CSS + shadcn/ui | Rapid development, easy maintenance, design consistency |
-| **UI Components** | shadcn/ui | Headless UI-based, excellent accessibility, Tailwind integration, easy customization |
-| **Package Manager** | pnpm | Faster install speed, disk space efficiency, deterministic lockfile for team consistency |
-| **Backend** | Next.js API Routes | Full-stack framework for integrated development, no separate server needed |
-| **Database** | Supabase (PostgreSQL) | Free tier (500MB), real-time features, integrated auth/storage |
-| **File Storage** | Supabase Storage | DB integration, 1GB free, easy access control |
-| **Email** | Resend | 100 emails/day free, developer-friendly, easy Supabase integration |
-| **Deployment** | Vercel | Free tier, Next.js native, CI/CD automation, custom domain support |
-| **Scheduler** | Vercel Cron Jobs or GitHub Actions | Notification batch processing |
+### 4.2 지원서 및 일정 관리 (Applications & Events)
+- **[V1-DONE] 지원서 CRUD**: 기업명, 직무, 상태 등 기본 정보 트래킹.
+- **[V1-DONE] 칸반 보드**: 지원 단계를 시각적으로 관리 (`/board`).
+- **[V1-DONE] 일정 자동 리마인더**: Cron을 통한 D-3, D-1 이메일 알림 발송.
+- **[V1-DONE] 리마인더 안정성**: Resend 웹훅을 통한 발송 성공 확인 및 DB 플래그 업데이트.
+- **[V2-NEXT] Repository 패턴 적용**: `ApplicationRepository`, `EventRepository` 구현으로 DB 의존성 분리.
+- **[V2-PLANNING] 알림 서비스 독립화**: Cron 로직을 `NotificationService`로 추출하여 단위 테스트 수행.
 
-### 5.2 shadcn/ui Details
+### 4.3 문서 관리 (Documents)
+- **[V1-DONE] PDF 업로드/삭제**: Supabase Storage 연동 및 10MB 제한 적용.
+- **[V2-PLANNING] 스토리지 추상화**: 파일 저장 로직을 Repository로 캡슐화하여 인프라 전환성 확보.
 
-#### Selection Rationale
-| Comparison | shadcn/ui | Chakra UI | Material UI |
-|------------|-----------|-----------|-------------|
-| **Next.js 14 Compatibility** | ✅ Perfect support | ⚠️ App Router in progress | ⚠️ Complex setup |
-| **Tailwind Integration** | ✅ Native | ❌ Own CSS-in-JS | ❌ Own styling |
-| **Bundle Size** | ✅ Only needed components (copy method) | ❌ Full library | ❌ Full library |
-| **Customization** | ✅ Direct code modification | ⚠️ Theme overrides | ⚠️ Theme overrides |
-| **Accessibility** | ✅ Radix UI-based | ✅ Compliant | ✅ Compliant |
-
-**Core Advantage:** shadcn/ui is not a "library" but a "component collection". Using `pnpm dlx shadcn@latest add button` copies code into your project, providing complete customization freedom and zero runtime overhead.
-
-#### Installation & Setup
-```bash
-# 1. Initialize Next.js project, then initialize shadcn/ui
-pnpm dlx shadcn@latest init
-
-# Configuration choices:
-# - style: default (recommended)
-# - base-color: slate (neutral colors suitable for productivity tools)
-# - css variables: yes (dark mode preparation)
-
-# 2. Install components needed for MVP
-pnpm dlx shadcn@latest add button card badge dialog input label select textarea tabs separator avatar dropdown-menu toast
-```
-
-#### Component Usage List
-| Feature Area | Components | Purpose |
-|--------------|------------|---------|
-| **Auth** | `button`, `input`, `label`, `card` | Login/Register forms |
-| **Dashboard** | `card`, `badge`, `tabs`, `separator`, `avatar` | Stats cards, schedule lists |
-| **Kanban Board** | `card`, `badge`, `button`, `dialog` | Application cards, stage movement |
-| **Application Management** | `input`, `textarea`, `select`, `label`, `button`, `dialog` | Registration/Edit forms |
-| **File Upload** | `button`, `card` | PDF upload UI |
-| **Alerts** | `toast` (sonner), `badge` | Success/error messages |
-
-#### Design Guidelines
-```css
-/* Aesthetic Direction: Industrial/Utilitarian */
-/* Clean and functional design suitable for productivity tools */
-
-/* Colors */
-- Primary: slate-600 (neutral, professional)
-- Accent: blue-600 (information, action)
-- Success: emerald-600 (acceptance, completion)
-- Warning: amber-600 (approaching, caution)
-- Danger: red-600 (rejection, error)
-
-/* Typography */
-- Sans-serif system font (Geist or Inter)
-- Size hierarchy: Clear heading/body/secondary text distinction
-
-/* Spacing */
-- Consistent 4px/8px grid system
-- Information density: Medium-high (productivity tool characteristic)
-
-/* Interactions */
-- Clear hover states
-- Smooth transitions (transition-all duration-200)
-- Explicit loading state display
-```
-
-### 5.3 Alternative Comparison
-
-| Alternative | Pros | Cons | Decision |
-|-------------|------|------|----------|
-| **EC2 + RDS (Alternative)** | AWS learning, complete control | Complex setup, free tier limits (12 months), operational burden | Over-investment for MVP |
-| **Firebase** | Real-time, full-stack integration | NoSQL (complex queries difficult), vendor lock-in | PostgreSQL preferred for data structure |
-| **PlanetScale** | MySQL, serverless | Free tier limits, fewer features than Supabase | PostgreSQL better for JSON/Array handling |
-
-### 5.4 Deployment Architecture
-
-```
-[User]
-   ↓
-[Vercel Edge Network]
-   ↓
-[Next.js App]
-   ├── Frontend (React + shadcn/ui) → User Browser
-   └── API Routes → Business Logic
-       ↓
-[Supabase]
-   ├── PostgreSQL → Data Storage
-   └── Storage → PDF Files
-       ↓
-[Resend] → Email Dispatch
-
-[Scheduler] (Vercel Cron)
-   └── Hourly alert check → Resend
-```
+### 4.4 마케팅 및 UX (Marketing & UX)
+- **[V2-PLANNING] 정적 랜딩 페이지**: 비로그인 유저에게 서비스 가치 전달.
+- **[V2-PLANNING] 전역 다크모드**: CSS 변수 정리를 통한 표준 다크모드 테마 스위칭 지원.
+- **[V2-PLANNING] 공용 Footer**: 프로젝트 신뢰도를 위한 링크 및 연락처 정보 제공.
 
 ---
 
-## 6. Database Schema
-
-### 6.1 Table Structure
-
-#### users
-```sql
-- id: UUID (PK)
-- email: VARCHAR (Unique)
-- password_hash: VARCHAR (bcrypt)
-- created_at: TIMESTAMP
-- updated_at: TIMESTAMP
-```
-
-#### applications
-```sql
-- id: UUID (PK)
-- user_id: UUID (FK → users)
-- company_name: VARCHAR (Required)
-- position: VARCHAR (Required)
-- career_type: ENUM ('new', 'experienced', 'any') (Required)
-- job_url: VARCHAR
-- source: ENUM ('saramin', 'jobkorea', 'company', 'linkedin', 'etc')
-- merit_tags: JSON (['high_salary', 'flexible', 'remote', ...])
-- current_stage: ENUM ('interest', 'applied', 'document_pass', 'assignment', 'interview', 'final_pass', 'rejected') (Required)
-- company_memo: TEXT
-- cover_letter: TEXT
-- created_at: TIMESTAMP
-- updated_at: TIMESTAMP
-```
-
-#### events
-```sql
-- id: UUID (PK)
-- application_id: UUID (FK → applications)
-- event_type: ENUM ('deadline', 'result', 'interview') (Required)
-- scheduled_at: TIMESTAMP (Required)
-- location: VARCHAR
-- interview_round: INTEGER (if interview)
-- notified_d3: BOOLEAN (default: false)
-- notified_d1: BOOLEAN (default: false)
-- created_at: TIMESTAMP
-- updated_at: TIMESTAMP
-```
-
-#### documents
-```sql
-- id: UUID (PK)
-- application_id: UUID (FK → applications)
-- file_name: VARCHAR
-- file_url: VARCHAR
-- file_size: INTEGER
-- created_at: TIMESTAMP
-```
-
-### 6.2 Key Indexes
-- `applications(user_id, current_stage)` - For kanban queries
-- `events(scheduled_at, notified_d3, notified_d1)` - For alert scanning
-- `events(application_id, event_type)` - For application-specific schedule queries
+## 5. 기술 제약 및 운영 규칙 (Constraints & Rules)
+- **보안**: `.env` 시크릿값 노출 금지, API Route 접근 시 반드시 JWT 세션 검증.
+- **성능**: Server Components 우선 적용, 클라이언트 상호작용이 필요한 경우에만 Client Island 사용.
+- **데이터**: 모든 리소스 접근 시 `user_id`를 통한 소유권 검증(Ownership) 필수.
+- **문서화**: API 변경 시 `public/openapi.json` 즉시 업데이트 및 Swagger 동기화.
 
 ---
 
-## 7. Development Timeline (2-3 Days)
-
-### Day 1: Core Structure & CRUD
-| Time | Task | Deliverable |
-|------|------|-------------|
-| 0-2h | Project setup (Next.js + shadcn/ui + Supabase integration) | Development environment |
-| 2-4h | Authentication (Login/Register/Logout) | JWT auth complete |
-| 4-6h | DB schema creation & basic APIs | Tables created, basic CRUD APIs |
-| 6-8h | Application registration/view/edit/delete | Application management features |
-
-### Day 2: Visualization & Files
-| Time | Task | Deliverable |
-|------|------|-------------|
-| 0-3h | Kanban board implementation | Stage-movable board |
-| 3-5h | Dashboard + This Week's Schedule panel | Main screen complete |
-| 5-7h | PDF upload/download | File management features |
-| 7-8h | Event (schedule) registration/management | Deadline/announcement/interview input |
-
-### Day 3: Notifications & Deployment
-| Time | Task | Deliverable |
-|------|------|-------------|
-| 0-3h | Email notification system (Resend integration) | D-3/D-1 alerts dispatch |
-| 3-4h | Scheduler setup (Cron job) | Hourly alert checks |
-| 4-6h | Vercel deployment & domain connection | Production environment |
-| 6-8h | Real data testing (20-30 entries) | Bug fixes & stabilization |
-
-### Buffer
-- Day 3 after 8h: Unexpected bug fixes and completion criteria verification
+## 6. 데이터베이스 스키마 (Database Schema)
+- **users**: id, email, password_hash, created_at
+- **applications**: id, user_id, company_name, position, career_type, source, status, created_at
+- **application_events**: id, application_id, type(interview/deadline/test), scheduled_at, notified_d1, notified_d3
+- **documents**: id, user_id, application_id, name, storage_path, type
 
 ---
 
-## 8. Definition of Done
-
-### 8.1 Functional Completion Criteria
-- [ ] Login/Register/Logout working normally
-- [ ] Application CRUD (Create/Read/Update/Delete) without errors
-- [ ] Stage movement on Kanban board working normally
-- [ ] Events (deadlines/announcements/interviews) registration and viewing possible
-- [ ] Dashboard accurately displays statistics and upcoming schedules
-- [ ] PDF file upload/download possible
-
-### 8.2 Quality Criteria
-- [ ] **Zero API error reports for 7 days post-deployment**
-- [ ] All API response times under 2 seconds (excluding network conditions)
-- [ ] Basic usability on mobile browsers (responsive)
-- [ ] Password encrypted storage (bcrypt)
-
-### 8.3 Learning Goals Achievement
-- [ ] Full-stack web app development experience (Frontend + Backend + DB)
-- [ ] Cloud deployment & operations experience (Vercel + Supabase)
-- [ ] Email alert/scheduler implementation experience
-- [ ] Real user (yourself) feedback-based improvement experience
-
----
-
-## 9. Risks & Mitigation
-
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| MVP features incomplete in 3 days | Medium | Medium | Priority adjustment (PDF upload → v1.1 possible) |
-| Email spam filtering | Medium | Medium | Resend domain verification, clear sender address |
-| Supabase free tier limit exceeded | Low | Medium | Monitoring, migrate to paid plan if needed |
-| Complex query performance issues | Low | Low | Proper index setup, materialized view if needed |
-
----
-
-## 10. Future Expansion Plan (v1.1+)
-
-### Short-term (Within 1-2 weeks)
-- Template feature: Save and load cover letter question templates
-- Responsive improvements: Mobile usability optimization
-- Enhanced statistics: Monthly application trends, acceptance rate analysis
-
-### Mid-term (Within 1 month)
-- Social login: Google account integration
-- External calendar integration: Google Calendar integration
-- Search/Filter: Company name, position, merit tag filtering
-
-### Long-term (Within 3 months)
-- Multi-user: Share progress with family/friends
-- Public API: Integration with other services
-- Mobile app: React Native or PWA
-
----
-
-## 11. References & Learning Materials
-
-### Official Documentation
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Supabase Documentation](https://supabase.com/docs)
-- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
-- [shadcn/ui Documentation](https://ui.shadcn.com/docs)
-- [Resend Documentation](https://resend.com/docs)
-
-### Learning Points
-1. **Full-stack Integration**: Next.js App Router and Supabase integration patterns
-2. **UI Components**: shadcn/ui component customization and extension
-3. **Serverless Deployment**: API Routes and Cron Jobs on Vercel
-4. **Email System**: Transactional email dispatch and scheduling
-5. **File Management**: Cloud storage integration and access control
-6. **Auth Security**: JWT token management and password hashing
-
----
-
-**Document Version**: v1.0 (MVP)
-**Created**: 2026-02-13
-**Next Review**: 7 days post-MVP deployment
+## 7. 로드맵 (Feature Status Roadmap)
+- [V2-NEXT] Task 1: Application 도메인 리팩토링 (Repositories 도입)
+- [V2-PLANNED] Task 2: Auth 추상화 및 Supabase Auth 마이그레이션
+- [V2-PLANNED] Task 3: 알림 시스템 독립화 및 단위 테스트 구축
+- [V2-PLANNED] Task 4: 랜딩 페이지 및 UI 고도화 (다크모드 포함)
