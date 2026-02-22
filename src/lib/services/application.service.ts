@@ -195,5 +195,48 @@ export const applicationService = {
     const { error } = await supabase.from("events").delete().eq("id", id);
     if (error) throw error;
   },
+
+  async findEventsForNotification(supabase: SupabaseClient, daysBefore: number) {
+    const targetDate = new Date();
+    targetDate.setUTCDate(targetDate.getUTCDate() + daysBefore);
+    const dateStr = targetDate.toISOString().split("T")[0];
+
+    const notifiedColumn = daysBefore === 3 ? "notified_d3" : "notified_d1";
+
+    const { data, error } = await supabase
+      .from("events")
+      .select(`
+        *,
+        applications!inner(
+          company_name,
+          position,
+          users!inner(email)
+        )
+      `)
+      .eq(notifiedColumn, false)
+      .gte("scheduled_at", `${dateStr}T00:00:00Z`)
+      .lte("scheduled_at", `${dateStr}T23:59:59Z`)
+      .returns<(EventRow & { 
+        applications: { 
+          company_name: string; 
+          position: string; 
+          users: { email: string } 
+        } 
+      })[]>();
+
+    if (error) throw error;
+    return data ?? [];
+  },
+
+  async confirmNotification(supabase: SupabaseClient, eventId: string, daysBefore: number) {
+    const notifiedColumn = daysBefore === 3 ? "notified_d3" : "notified_d1";
+
+    const { error } = await supabase
+      .from("events")
+      .update({ [notifiedColumn]: true })
+      .eq("id", eventId);
+
+    if (error) throw error;
+  },
 };
 

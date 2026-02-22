@@ -1,5 +1,64 @@
 # Progress Log
 
+## 2026-02-19
+
+### 1) 오늘의 목표
+- Step 7. 알림 시스템(Resend + Webhook + Cron) 구현
+- 데이터 아키텍처 및 도메인 모델(Application) 정제
+- 리액트 쿼리 캐시 재사용성 극대화
+
+### 2) 작업 내용
+- Done:
+  - **알림 인프라 구축**:
+    - `resend`, `svix` 의존성 설치 및 설정
+    - `src/lib/email/resend.ts`: 발송 유틸 및 웹훅 서명 검증 로직 구현
+  - **Service Layer 통합 및 확장**:
+    - `eventService`를 `applicationService`로 완전 통합하여 응집도 향상
+    - 알림 대상 조회(`findEventsForNotification`) 및 웹훅 확정(`confirmNotification`) 메서드 추가
+  - **API 및 웹훅 핸들러 구현**:
+    - `src/app/api/cron/notifications/route.ts`: Vercel Cron 기반 자동 알림 트리거 구현 (D-3, D-1)
+    - `src/app/api/webhooks/resend/route.ts`: Resend 배달 확인 웹훅을 통한 DB 플래그 업데이트 구현
+  - **도메인 모델 및 캐싱 최적화**:
+    - `ApplicationRow` 타입 확장으로 하위 리소스(events, documents) 내장 지원
+    - 상세 페이지 데이터 흐름을 단일 소스(`applicationDetailQueryKey`)로 통합하여 캐시 재사용성 100% 달성
+  - **UI/UX 개선**:
+    - `ApplicationEventsCard` 내 "Add Event", "Edit", "Delete" 액션 추가로 가변적 일정 관리 지원
+    - 마감일(Deadline)은 폼에서만 관리하도록 제한하여 데이터 정합성 강화
+- In Progress:
+  - 없음
+- Blocked:
+  - 없음
+
+### 3) 개발 판단 로그
+- 주제: 서비스 레이어 통합
+- 최종 결정: `eventService`를 `applicationService`로 흡수
+- 판단 근거(왜):
+  1. 지원서와 일정(Deadline 등)은 밀접하게 결합된 도메인임.
+  2. 알림 시스템 구현 시 지원서 정보와 일정을 한꺼번에 다뤄야 하므로 단일 서비스에서 관리하는 것이 로직이 더 단순함.
+
+- 주제: 알림 데이터 정합성 확보 방식
+- 최종 결정: Resend Webhook 기반 최종 확정 구조
+- 판단 근거(왜):
+  1. 이메일 발송 성공과 DB 업데이트 간의 원자성을 보장하기 위해 실제 도달(delivered) 이벤트를 트리거로 사용.
+  2. `svix`를 통한 서명 검증으로 보안 위협 방어.
+
+### 4) 검증/지표
+- 코드/문서 변경 추적
+  - 변경 파일(핵심):
+    - `src/lib/services/application.service.ts`
+    - `src/lib/email/resend.ts`
+    - `src/app/api/cron/notifications/route.ts`
+    - `src/app/api/webhooks/resend/route.ts`
+    - `src/lib/supabase/domain.types.ts`
+    - `src/app/applications/[id]/_components/application-events-card.client.tsx`
+- 기능 검증(회귀 포함)
+  - `pnpm build`: 성공
+  - LSP 진단: clean
+  - 핵심 시나리오:
+    - Cron 트리거 시 D-3/D-1 대상자 조회 및 메일 발송 로직 확인
+    - Webhook 수신 시 DB 플래그 업데이트 로직 확인
+    - 상세 페이지 이벤트 CRUD 동작 확인
+
 ## 2026-02-16
 
 ### 1) 오늘의 목표

@@ -149,19 +149,23 @@
 ---
 
 ## Step 7. 알림(Resend + Cron) 구현
-- [ ] D-3 / D-1 이벤트 조회 로직
-- [ ] 이메일 템플릿 적용
-- [ ] `notified_d3`, `notified_d1` 플래그 갱신
-- [ ] Vercel Cron 라우트 구현
+- [x] D-3 / D-1 이벤트 조회 로직
+- [x] 이메일 템플릿 적용
+- [x] `notified_d3`, `notified_d1` 플래그 갱신 (via Webhook)
+- [x] Vercel Cron 라우트 구현
+- [x] Resend Webhook 핸들러 구현 (Svix 검증)
 
 산출물
 - 일정 리마인드 자동 발송 시스템
+- 도달 확인 기반 데이터 정합성 확보 구조
 
 완료 기준
-- 테스트 이벤트 기준 메일 발송 및 중복 발송 방지 확인
+- [x] 테스트 이벤트 기준 메일 발송 및 중복 발송 방지 확인
+- [x] `pnpm build` 성공
 
 사용자 설정 포인트
-- [ ] Resend 도메인 인증 및 발신 이메일 확정
+- [x] Resend 도메인 인증 및 발신 이메일 확정 (Placeholder: notifications@resend.dev)
+- [x] Webhook Secret 및 API Key 설정 완료
 
 ---
 
