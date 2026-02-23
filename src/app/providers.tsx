@@ -2,14 +2,10 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState } from "react";
-
+import { ThemeProvider as NextThemesProvider } from "next-themes"
 import { Toaster } from "@/components/ui/sonner";
 
-interface ProvidersProps {
-  children: React.ReactNode;
-}
-
-export function Providers({ children }: ProvidersProps) {
+export function Providers({ children, ...props }: React.ComponentProps<typeof NextThemesProvider>) {
   const [queryClient] = useState(
     () =>
       new QueryClient({
@@ -24,8 +20,10 @@ export function Providers({ children }: ProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
-      <Toaster position="top-right"/>
+      <NextThemesProvider {...props}>
+        {children}
+        <Toaster position="top-right"/>
+      </NextThemesProvider>
     </QueryClientProvider>
   );
 }

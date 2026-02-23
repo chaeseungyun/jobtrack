@@ -37,7 +37,7 @@ export default async function BoardPage() {
       activePath="/board"
     >
       {errorMessage ? (
-        <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {errorMessage}
         </p>
       ) : null}
@@ -55,14 +55,14 @@ export default async function BoardPage() {
                 <Link
                   key={application.id}
                   href={`/applications/${application.id}`}
-                  className="block rounded-md border border-slate-200 p-3 transition hover:bg-slate-50"
+                  className="block rounded-md border border-border p-3 transition hover:bg-muted"
                 >
-                  <p className="font-medium text-slate-900">{application.company_name}</p>
-                  <p className="text-sm text-slate-600">{application.position}</p>
+                  <p className="font-medium text-foreground">{application.company_name}</p>
+                  <p className="text-sm text-muted-foreground">{application.position}</p>
                 </Link>
               ))}
               {grouped[stage].length === 0 ? (
-                <p className="text-sm text-slate-400">항목이 없습니다.</p>
+                <p className="text-sm text-muted-foreground">항목이 없습니다.</p>
               ) : null}
             </CardContent>
           </Card>

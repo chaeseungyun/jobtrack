@@ -82,7 +82,7 @@ export default async function DashboardPage() {
       activePath="/dashboard"
     >
       {errorMessage ? (
-        <p className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+        <p className="mb-4 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
           {errorMessage}
         </p>
       ) : null}
@@ -90,28 +90,28 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-slate-600">전체 지원서</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">전체 지원서</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold text-slate-900">{applications.length}</p>
+            <p className="text-3xl font-semibold text-foreground">{applications.length}</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-slate-600">서류합격</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">서류합격</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold text-slate-900">
+            <p className="text-3xl font-semibold text-foreground">
               {stageCounts.document_pass ?? 0}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-slate-600">면접 진행 중</CardTitle>
+            <CardTitle className="text-sm text-muted-foreground">면접 진행 중</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-semibold text-slate-900">{interviewCount}</p>
+            <p className="text-3xl font-semibold text-foreground">{interviewCount}</p>
           </CardContent>
         </Card>
       </div>
@@ -123,23 +123,23 @@ export default async function DashboardPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {upcoming.length === 0 ? (
-              <p className="text-sm text-slate-500">예정된 일정이 없습니다.</p>
+              <p className="text-sm text-muted-foreground">예정된 일정이 없습니다.</p>
             ) : null}
             {upcoming.map((item) => (
               <div
                 key={item.id}
-                className="rounded-md border border-slate-200 bg-slate-50 p-3"
+                className="rounded-md border border-border bg-muted p-3"
               >
                 <div className="mb-1 flex items-center justify-between gap-2">
                   <Badge variant="outline">{item.type}</Badge>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-muted-foreground">
                     {DATE_FORMATTER.format(new Date(item.at))}
                   </span>
                 </div>
-                <p className="font-medium text-slate-900">{item.companyName}</p>
-                <p className="text-sm text-slate-600">{item.position}</p>
+                <p className="font-medium text-foreground">{item.companyName}</p>
+                <p className="text-sm text-muted-foreground">{item.position}</p>
                 <Link
-                  className="mt-2 inline-block text-xs font-medium text-slate-900 underline"
+                  className="mt-2 inline-block text-xs font-medium text-foreground underline"
                   href={`/applications/${item.applicationId}`}
                 >
                   상세 보기
@@ -158,17 +158,17 @@ export default async function DashboardPage() {
               <Link
                 key={application.id}
                 href={`/applications/${application.id}`}
-                className="block rounded-md border border-slate-200 p-3 transition hover:bg-slate-50"
+                className="block rounded-md border border-border p-3 transition hover:bg-muted"
               >
-                <p className="font-medium text-slate-900">{application.company_name}</p>
-                <p className="text-sm text-slate-600">{application.position}</p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="font-medium text-foreground">{application.company_name}</p>
+                <p className="text-sm text-muted-foreground">{application.position}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
                   {STAGE_LABELS[application.current_stage]}
                 </p>
               </Link>
             ))}
             {!applications.length ? (
-              <p className="text-sm text-slate-500">등록된 지원서가 없습니다.</p>
+              <p className="text-sm text-muted-foreground">등록된 지원서가 없습니다.</p>
             ) : null}
           </CardContent>
         </Card>

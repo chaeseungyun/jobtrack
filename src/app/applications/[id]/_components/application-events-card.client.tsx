@@ -151,12 +151,12 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
           {events.map((event) => (
             <div
               key={event.id}
-              className="group relative rounded-md border border-slate-200 p-3 transition-colors hover:bg-slate-50"
+              className="group relative rounded-md border border-border p-3 transition-colors hover:bg-muted"
             >
               <div className="mb-1 flex items-center justify-between gap-2">
                 <Badge variant="outline">{EVENT_TYPE_LABELS[event.event_type]}</Badge>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-muted-foreground">
                     {DATE_FORMATTER.format(new Date(event.scheduled_at))}
                   </span>
                   <DropdownMenu>
@@ -193,10 +193,10 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
                   </DropdownMenu>
                 </div>
               </div>
-              <p className="text-sm text-slate-600">{event.location ?? "-"}</p>
+              <p className="text-sm text-muted-foreground">{event.location ?? "-"}</p>
             </div>
           ))}
-          {events.length === 0 ? <p className="text-sm text-slate-500">등록된 일정이 없습니다.</p> : null}
+          {events.length === 0 ? <p className="text-sm text-muted-foreground">등록된 일정이 없습니다.</p> : null}
         </CardContent>
       </Card>
 

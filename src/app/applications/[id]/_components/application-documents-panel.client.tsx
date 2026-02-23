@@ -104,8 +104,8 @@ export function ApplicationDocumentsPanel({
   });
 
   return (
-    <div className="space-y-3 rounded-md border border-slate-200 p-3">
-      <p className="text-sm font-medium text-slate-900">문서</p>
+    <div className="space-y-3 rounded-md border border-border p-3">
+      <p className="text-sm font-medium text-foreground">문서</p>
 
       <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
         <Input
@@ -130,10 +130,10 @@ export function ApplicationDocumentsPanel({
         {documents.map((document) => (
           <div
             key={document.id}
-            className="flex items-center justify-between gap-3 rounded-md border border-slate-200 px-3 py-2"
+            className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-2"
           >
             <a
-              className="truncate text-sm font-medium text-slate-700 underline"
+              className="truncate text-sm font-medium text-foreground underline"
               href={document.file_url}
               target="_blank"
               rel="noreferrer"
@@ -141,7 +141,7 @@ export function ApplicationDocumentsPanel({
               {document.file_name}
             </a>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-slate-500">
+              <span className="text-xs text-muted-foreground">
                 {formatFileSize(document.file_size)}
               </span>
               <Button
@@ -159,7 +159,7 @@ export function ApplicationDocumentsPanel({
           </div>
         ))}
         {documents.length === 0 ? (
-          <p className="text-sm text-slate-500">등록된 문서가 없습니다.</p>
+          <p className="text-sm text-muted-foreground">등록된 문서가 없습니다.</p>
         ) : null}
       </div>
     </div>

@@ -48,7 +48,7 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
       activePath="/board"
     >
       <div className="mb-4 flex items-center justify-between gap-2">
-        <Link className="text-sm font-medium text-slate-700 underline" href="/board">
+        <Link className="text-sm font-medium text-muted-foreground underline" href="/board">
           보드로 돌아가기
         </Link>
       </div>

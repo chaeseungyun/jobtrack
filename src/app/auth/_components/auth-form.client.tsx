@@ -62,11 +62,11 @@ export function AuthForm() {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-100 via-white to-slate-100 px-4 py-10 sm:py-16">
+    <div className="min-h-screen bg-gradient-to-b from-muted via-background to-muted px-4 py-10 sm:py-16">
       <div className="mx-auto w-full max-w-md">
         <div className="mb-6 text-center">
-          <h1 className="text-3xl font-semibold text-slate-900">JobTrack</h1>
-          <p className="mt-2 text-sm text-slate-600">
+          <h1 className="text-3xl font-semibold text-foreground">JobTrack</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
             지원서, 면접, 마감일을 한곳에서 관리하세요.
           </p>
         </div>
