@@ -9,9 +9,129 @@
 ## 1. 아키텍처 전략 (Architecture Strategy)
 
 ### 1.1 계층형 아키텍처 (Layered Architecture)
-- **구조**: `Controller (Route Handlers) -> Service -> Repository`
+- **구조**: `Controller (Route Handlers / Server Components) -> Service -> Repository -> DB`
 - **목적**: 의존성 역전 원칙(DIP)을 적용하여 도메인 로직을 인프라(Supabase SDK 등)로부터 분리한다. 
-- **Rationale**: 향후 DB 교체나 프레임워크 전환 시 비즈니스 로직 수정을 최소화하기 위함이다.
+- **Rationale**: 향후 DB 교체나 프레임워크 전환(NestJS 등) 시 비즈니스 로직 수정을 최소화하기 위함이다.
+- **레이어 규칙 (예외 없음)**:
+  - **Controller** (Route Handler / Server Component): HTTP 요청/응답 처리, 인증 검증, 입력 유효성 검사. 비즈니스 로직 포함 금지.
+  - **Service** (class 기반): 비즈니스 로직 캡슐화. Repository 인터페이스를 생성자 주입(Constructor Injection)으로 받는다.
+  - **Repository Interface** (`domain/repositories/`): Supabase 비종속적인 도메인 언어로 정의된 데이터 접근 계약.
+  - **Repository Implementation** (`infrastructure/repositories/`): Supabase SDK를 사용한 구체 구현체.
+- **DI 전략 (Domain-specific Container)**:
+  - 도메인별 컨테이너 팩토리 함수(`containers/`)가 Supabase 클라이언트 생성 → Repository 인스턴스화 → Service 인스턴스화를 수행한다.
+  - Controller에서 `const { applicationService } = createApplicationContainer()` 형태로 사용하여 보일러플레이트를 최소화한다.
+- **에러 처리**:
+  - `AppError` 경량 에러 클래스(`domain/errors.ts`)로 도메인 에러를 표현한다.
+  - Controller에서 `toErrorResponse(error)` 헬퍼(`api/response.ts`)를 통해 AppError를 HTTP 응답으로 변환한다.
+#### 코드 예제: 지원서 목록 조회 플로우
+
+> `GET /api/applications` 요청이 각 레이어를 통과하는 과정을 실제 코드에서 발췌하여 보여준다.
+
+**1. Controller** (`app/api/applications/route.ts`) — HTTP 관심사만 처리:
+
+```typescript
+export async function GET(request: NextRequest) {
+  const auth = requireAuth(request);              // 인증 검증
+  if (auth.ok === false) return auth.response;
+
+  const params = Object.fromEntries(request.nextUrl.searchParams.entries());
+  const queryParsed = applicationsListQuerySchema.safeParse(params);  // 입력 검증
+  if (!queryParsed.success) {
+    return NextResponse.json({ error: "Invalid query parameters" }, { status: 400 });
+  }
+
+  const { applicationService } = createApplicationContainer();  // DI Container
+
+  try {
+    const data = await applicationService.list(auth.payload.sub, {  // Service 호출
+      stage: queryParsed.data.stage,
+      search: queryParsed.data.search,
+    });
+    return NextResponse.json({ applications: data });
+  } catch (error) {
+    return toErrorResponse(error);  // AppError → HTTP 응답 변환
+  }
+}
+```
+
+**2. Service** (`lib/services/ApplicationService.ts`) — 비즈니스 로직 캡슐화:
+
+```typescript
+export class ApplicationService {
+  constructor(
+    private readonly applicationRepo: IApplicationRepository,  // Interface 의존
+    private readonly eventRepo: IEventRepository,
+  ) {}
+
+  async list(
+    userId: string,
+    params?: { stage?: StageType; search?: string },
+  ): Promise<ApplicationRow[]> {
+    return this.applicationRepo.findMany(userId, params);  // Repository 호출
+  }
+}
+```
+
+**3. Repository Interface** (`lib/domain/repositories/application.repository.ts`) — DB 비종속 계약:
+
+```typescript
+export interface IApplicationRepository {
+  findMany(
+    userId: string,
+    params?: { stage?: StageType; search?: string },
+  ): Promise<ApplicationRow[]>;
+  findById(id: string, userId: string): Promise<ApplicationRow | null>;
+  existsForUser(id: string, userId: string): Promise<boolean>;
+  create(userId: string, input: CreateApplicationInput): Promise<ApplicationRow>;
+  update(id: string, userId: string, input: UpdateApplicationInput): Promise<ApplicationRow>;
+  remove(id: string, userId: string): Promise<void>;
+}
+```
+
+**4. Repository Implementation** (`lib/infrastructure/repositories/SupabaseApplicationRepository.ts`) — Supabase 구체 구현:
+
+```typescript
+export class SupabaseApplicationRepository implements IApplicationRepository {
+  constructor(private readonly supabase: SupabaseClient) {}
+
+  async findMany(
+    userId: string,
+    params?: { stage?: StageType; search?: string },
+  ): Promise<ApplicationRow[]> {
+    let query = this.supabase
+      .from("applications")
+      .select("*")
+      .eq("user_id", userId)  // 소유권 필터 강제
+      .order("created_at", { ascending: false });
+
+    if (params?.stage) query = query.eq("current_stage", params.stage);
+    if (params?.search) {
+      query = query.or(
+        `company_name.ilike.%${params.search}%,position.ilike.%${params.search}%`,
+      );
+    }
+
+    const { data, error } = await query.returns<ApplicationRow[]>();
+    if (error) throw error;
+    return data ?? [];
+  }
+}
+```
+
+**5. Container** (`lib/containers/application.container.ts`) — DI 조립:
+
+```typescript
+export function createApplicationContainer() {
+  const supabase = createServerSupabaseClient();
+  const applicationRepo = new SupabaseApplicationRepository(supabase);
+  const eventRepo = new SupabaseEventRepository(supabase);
+
+  return {
+    applicationService: new ApplicationService(applicationRepo, eventRepo),
+    eventService: new EventService(eventRepo, applicationRepo),
+  };
+}
+```
 
 ### 1.2 BFF (Backend For Frontend) 패턴
 - **구조**: Next.js API Routes를 클라이언트와 데이터베이스 사이의 중계 레이어로 활용한다.
@@ -37,15 +157,22 @@
 ```text
 src/
 ├── app/                  # Next.js App Router (Pages & API Routes)
-│   ├── api/              # BFF API Routes
-│   └── (routes)/         # UI Pages
+│   ├── api/              # BFF API Routes (Controller 역할)
+│   └── (routes)/         # UI Pages (Server Components = Read-only Controller)
 ├── components/           # UI Components
 │   ├── ui/               # shadcn/ui 원자 컴포넌트
 │   └── app/              # 도메인 특정 컴포넌트
 ├── lib/                  # 핵심 로직 및 유틸리티
+│   ├── api/              # HTTP 응답 헬퍼 (toErrorResponse 등)
 │   ├── auth/             # 인증 및 보안 (JWT, 세션)
-│   ├── services/         # 비즈니스 로직 (Application, Email 등)
-│   ├── supabase/         # DB 클라이언트 및 데이터 접근
+│   ├── containers/       # 도메인별 DI 컨테이너 팩토리
+│   ├── domain/           # 도메인 계층
+│   │   ├── errors.ts     # AppError 경량 에러 클래스
+│   │   └── repositories/ # Repository 인터페이스 (Supabase 비종속)
+│   ├── infrastructure/   # 인프라 계층
+│   │   └── repositories/ # Supabase Repository 구현체
+│   ├── services/         # 비즈니스 로직 (class 기반 Service)
+│   ├── supabase/         # DB 클라이언트 및 생성 타입
 │   └── validation/       # Zod 기반 요청 검증
 └── types/                # 공용 타입 정의
 ```
@@ -85,7 +212,7 @@ src/
 
 ### 5.2 보안 원칙
 - API Route 접근 시 반드시 JWT 세션 검증 (`requireAuth` 미들웨어).
-- 모든 리소스 접근 시 `user_id`를 통한 소유권 검증 필수.
+- 모든 리소스 접근 시 `user_id`를 통한 소유권 검증 필수 (Repository 레벨에서 userId 조건 강제).
 
 ---
 
@@ -108,6 +235,6 @@ src/
 
 ## 8. 로드맵 (Technical Roadmap)
 
-- **[V2-NEXT] Repository 패턴 도입**: DB 의존성 분리를 위한 데이터 접근 계층 추상화. controller -> service -> repository 구조 도입
+- **[V2-DONE] Repository 패턴 도입**: interface 기반 Repository + class 기반 Service + 도메인별 Container로 3계층 아키텍처 완성.
+- **[V2-DONE] 알림 서비스 독립화**: NotificationService 추출 완료. 단위 테스트 강화는 추후 진행.
 - **[V2-PLANNED] Auth 추상화**: `IAuthService` 도입 및 Supabase Auth 마이그레이션.
-- **[V2-PLANNED] 알림 서비스 독립화**: NotificationService 추출 및 단위 테스트 강화.
