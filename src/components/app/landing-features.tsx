@@ -49,7 +49,7 @@ export function LandingFeatures() {
         {FEATURES.map((feature, index) => (
           <Card
             key={feature.title}
-            className={`animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both motion-reduce:animate-none transition-all hover:shadow-md hover:-translate-y-0.5 ${DELAY_CLASS[index]}`}
+            className={`group animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both motion-reduce:animate-none transition-all hover:shadow-md hover:-translate-y-0.5 ${DELAY_CLASS[index]}`}
           >
             <CardHeader className="space-y-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-muted transition-colors duration-200 group-hover:bg-accent">
