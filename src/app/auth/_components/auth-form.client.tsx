@@ -85,72 +85,80 @@ export function AuthForm() {
                 <TabsTrigger value="register">회원가입</TabsTrigger>
               </TabsList>
 
-              <TabsContent value="login" className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="login-email">이메일</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={loginForm.email}
-                    onChange={(event) =>
-                      setLoginForm((prev) => ({ ...prev, email: event.target.value }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="login-password">비밀번호</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="8자 이상"
-                    value={loginForm.password}
-                    onChange={(event) =>
-                      setLoginForm((prev) => ({ ...prev, password: event.target.value }))
-                    }
-                  />
-                </div>
-                <Button
-                  className="w-full"
-                  disabled={authMutation.isPending}
-                  onClick={() => authMutation.mutate("login")}
-                >
-                  {authMutation.isPending ? "로그인 중..." : "로그인"}
-                </Button>
+              <TabsContent value="login">
+                <form className="space-y-4" onSubmit={(e) => {
+                  e.preventDefault();
+                  authMutation.mutate("login");
+                }}>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email">이메일</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={loginForm.email}
+                      onChange={(event) =>
+                        setLoginForm((prev) => ({ ...prev, email: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password">비밀번호</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="8자 이상"
+                      value={loginForm.password}
+                      onChange={(event) =>
+                        setLoginForm((prev) => ({ ...prev, password: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <Button
+                    className="w-full"
+                    disabled={authMutation.isPending}
+                  >
+                    {authMutation.isPending ? "로그인 중..." : "로그인"}
+                  </Button>
+                </form>
               </TabsContent>
 
-              <TabsContent value="register" className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="register-email">이메일</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={registerForm.email}
-                    onChange={(event) =>
-                      setRegisterForm((prev) => ({ ...prev, email: event.target.value }))
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="register-password">비밀번호</Label>
-                  <Input
-                    id="register-password"
-                    type="password"
-                    placeholder="8자 이상"
-                    value={registerForm.password}
-                    onChange={(event) =>
-                      setRegisterForm((prev) => ({ ...prev, password: event.target.value }))
-                    }
-                  />
-                </div>
-                <Button
-                  className="w-full"
-                  disabled={authMutation.isPending}
-                  onClick={() => authMutation.mutate("register")}
-                >
-                  {authMutation.isPending ? "계정 생성 중..." : "계정 만들기"}
-                </Button>
+              <TabsContent value="register">
+                <form className="space-y-4" onSubmit={(e) => {
+                  e.preventDefault();
+                  authMutation.mutate("register");
+                }}>
+                  <div className="space-y-2">
+                    <Label htmlFor="register-email">이메일</Label>
+                    <Input
+                      id="register-email"
+                      type="email"
+                      placeholder="you@example.com"
+                      value={registerForm.email}
+                      onChange={(event) =>
+                        setRegisterForm((prev) => ({ ...prev, email: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="register-password">비밀번호</Label>
+                    <Input
+                      id="register-password"
+                      type="password"
+                      placeholder="8자 이상"
+                      value={registerForm.password}
+                      onChange={(event) =>
+                        setRegisterForm((prev) => ({ ...prev, password: event.target.value }))
+                      }
+                    />
+                  </div>
+                  <Button
+                    className="w-full"
+                    disabled={authMutation.isPending}
+                  >
+                    {authMutation.isPending ? "계정 생성 중..." : "계정 만들기"}
+                  </Button>
+                </form>
               </TabsContent>
             </Tabs>
           </CardContent>
