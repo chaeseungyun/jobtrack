@@ -2,8 +2,7 @@ import Link from "next/link";
 
 import { STAGE_LABELS, STAGE_ORDER } from "@/lib/app/stages";
 import { requireServerAuth } from "@/lib/auth/session";
-import { applicationService } from "@/lib/services/application.service";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createApplicationContainer } from "@/lib/containers/application.container";
 import type { ApplicationRow, StageType } from "@/lib/supabase/types";
 
 import { AppShell } from "@/components/app/app-shell";
@@ -12,13 +11,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function BoardPage() {
   const auth = await requireServerAuth();
-  const supabase = createServerSupabaseClient();
+  const { applicationService } = createApplicationContainer();
 
   let errorMessage: string | null = null;
   let applications: ApplicationRow[] = [];
 
   try {
-    applications = await applicationService.list(supabase, auth.sub);
+    applications = await applicationService.list(auth.sub);
   } catch (error) {
     errorMessage = error instanceof Error ? error.message : "Failed to load";
   }
@@ -28,7 +27,7 @@ export default async function BoardPage() {
       acc[stage] = applications.filter((application) => application.current_stage === stage);
       return acc;
     },
-    {} as Record<StageType, ApplicationRow[]>
+    {} as Record<StageType, ApplicationRow[]>,
   );
 
   return (

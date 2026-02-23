@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { toErrorResponse } from "@/lib/api/response";
 import { requireAuth } from "@/lib/auth/request";
-import { applicationService } from "@/lib/services/application.service";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createApplicationContainer } from "@/lib/containers/application.container";
 import {
   applicationsListQuerySchema,
   createApplicationSchema,
@@ -15,8 +15,6 @@ export async function GET(request: NextRequest) {
     return auth.response;
   }
 
-  const supabase = createServerSupabaseClient();
-
   const params = Object.fromEntries(request.nextUrl.searchParams.entries());
   const queryParsed = applicationsListQuerySchema.safeParse(params);
 
@@ -24,18 +22,17 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Invalid query parameters" }, { status: 400 });
   }
 
+  const { applicationService } = createApplicationContainer();
+
   try {
-    const data = await applicationService.list(supabase, auth.payload.sub, {
+    const data = await applicationService.list(auth.payload.sub, {
       stage: queryParsed.data.stage,
       search: queryParsed.data.search,
     });
 
     return NextResponse.json({ applications: data });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return toErrorResponse(error);
   }
 }
 
@@ -61,29 +58,17 @@ export async function POST(request: NextRequest) {
   }
 
   const { deadline, ...applicationInput } = parsed.data;
-
-  const supabase = createServerSupabaseClient();
+  const { applicationService } = createApplicationContainer();
 
   try {
     const application = await applicationService.create(
-      supabase,
       auth.payload.sub,
-      applicationInput
+      applicationInput,
+      deadline,
     );
-
-    if (deadline) {
-      await applicationService.createEvent(supabase, {
-        application_id: application.id,
-        event_type: "deadline",
-        scheduled_at: deadline,
-      });
-    }
 
     return NextResponse.json(application, { status: 201 });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return toErrorResponse(error);
   }
 }

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { toErrorResponse } from "@/lib/api/response";
 import {
   AUTH_COOKIE_MAX_AGE_SECONDS,
   AUTH_COOKIE_NAME,
   signAuthToken,
 } from "@/lib/auth/jwt";
-import { hashPassword } from "@/lib/auth/password";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createAuthContainer } from "@/lib/containers/auth.container";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,64 +24,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
+  const email = body.email?.trim().toLowerCase();
+  const password = body.password;
+
+  if (!email || !password || !EMAIL_REGEX.test(email) || password.length < 8) {
+    return NextResponse.json(
+      { error: "Invalid email or password format" },
+      { status: 400 },
+    );
+  }
+
+  const { authService } = createAuthContainer();
+
   try {
-    const email = body.email?.trim().toLowerCase();
-    const password = body.password;
-
-    if (!email || !password || !EMAIL_REGEX.test(email) || password.length < 8) {
-      return NextResponse.json(
-        { error: "Invalid email or password format" },
-        { status: 400 }
-      );
-    }
-
-    const supabase = createServerSupabaseClient();
-
-    const { data: existingUser, error: findError } = await supabase
-      .from("users")
-      .select("id")
-      .eq("email", email)
-      .maybeSingle();
-
-    if (findError) {
-      return NextResponse.json({ error: findError.message }, { status: 500 });
-    }
-
-    if (existingUser) {
-      return NextResponse.json({ error: "Email already exists" }, { status: 409 });
-    }
-
-    const passwordHash = await hashPassword(password);
-
-    const { data: createdUser, error: insertError } = await supabase
-      .from("users")
-      .insert({
-        email,
-        password_hash: passwordHash,
-      })
-      .select("id, email")
-      .single();
-
-    if (insertError || !createdUser) {
-      return NextResponse.json(
-        { error: insertError?.message ?? "Failed to create user" },
-        { status: 500 }
-      );
-    }
+    const user = await authService.register(email, password);
 
     const token = signAuthToken({
-      sub: createdUser.id,
-      email: createdUser.email,
+      sub: user.id,
+      email: user.email,
     });
 
     const response = NextResponse.json(
       {
         user: {
-          id: createdUser.id,
-          email: createdUser.email,
+          id: user.id,
+          email: user.email,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
 
     response.cookies.set(AUTH_COOKIE_NAME, token, {
@@ -94,9 +64,6 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return toErrorResponse(error);
   }
 }

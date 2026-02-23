@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
+import { toErrorResponse } from "@/lib/api/response";
 import { requireAuth } from "@/lib/auth/request";
-import { applicationService } from "@/lib/services/application.service";
-import { documentService } from "@/lib/services/document.service";
-import { assertApplicationOwnership } from "@/lib/supabase/ownership";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { createApplicationContainer } from "@/lib/containers/application.container";
+import { createDocumentContainer } from "@/lib/containers/document.container";
 import { updateApplicationSchema } from "@/lib/validation/step4";
 
 interface RouteContext {
@@ -19,35 +18,18 @@ export async function GET(request: NextRequest, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const supabase = createServerSupabaseClient();
+  const { applicationService } = createApplicationContainer();
+  const { documentService } = createDocumentContainer();
 
   try {
-    const isOwned = await assertApplicationOwnership(supabase, id, auth.payload.sub);
-
-    if (!isOwned) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    const [application, events, documents] = await Promise.all([
-      applicationService.getById(supabase, id, auth.payload.sub),
-      applicationService.listEventsByApplicationId(supabase, id),
-      documentService.listByApplicationId(supabase, id),
+    const [detail, documents] = await Promise.all([
+      applicationService.getDetail(id, auth.payload.sub),
+      documentService.listByApplicationId(auth.payload.sub, id),
     ]);
 
-    if (!application) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      ...application,
-      events,
-      documents,
-    });
+    return NextResponse.json({ ...detail, documents });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return toErrorResponse(error);
   }
 }
 
@@ -73,30 +55,19 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const supabase = createServerSupabaseClient();
+  const { applicationService } = createApplicationContainer();
 
   try {
-    const isOwned = await assertApplicationOwnership(supabase, id, auth.payload.sub);
-
-    if (!isOwned) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
     const { deadline, ...rest } = parsed.data;
 
-    const updated = await applicationService.update(
-      supabase,
-      id,
-      auth.payload.sub,
-      { ...rest, deadline: deadline ?? undefined }
-    );
+    const updated = await applicationService.update(id, auth.payload.sub, {
+      ...rest,
+      deadline,
+    });
 
     return NextResponse.json(updated);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return toErrorResponse(error);
   }
 }
 
@@ -108,22 +79,13 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
   }
 
   const { id } = await context.params;
-  const supabase = createServerSupabaseClient();
+  const { applicationService } = createApplicationContainer();
 
   try {
-    const isOwned = await assertApplicationOwnership(supabase, id, auth.payload.sub);
-
-    if (!isOwned) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    await applicationService.remove(supabase, id, auth.payload.sub);
+    await applicationService.remove(id, auth.payload.sub);
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Internal server error";
-
-    return NextResponse.json({ error: message }, { status: 500 });
+    return toErrorResponse(error);
   }
 }

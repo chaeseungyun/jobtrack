@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+
+import { toErrorResponse } from "@/lib/api/response";
+import { createNotificationContainer } from "@/lib/containers/notification.container";
 import { emailService } from "@/lib/services/email.service";
-import { applicationService } from "@/lib/services/application.service";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   const payload = await request.text();
@@ -21,18 +22,16 @@ export async function POST(request: NextRequest) {
       const notificationType = tags.notificationType;
 
       if (eventId && (notificationType === "d1" || notificationType === "d3")) {
-        const supabase = createServerSupabaseClient();
-        const daysBefore = notificationType === "d3" ? 3 : 1;
-        
-        await applicationService.confirmNotification(supabase, eventId, daysBefore);
+        const { notificationService } = createNotificationContainer();
+        await notificationService.confirmWebhookNotification(
+          eventId,
+          notificationType,
+        );
       }
     }
 
     return new NextResponse(null, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Webhook verification failed" },
-      { status: 400 }
-    );
+    return toErrorResponse(error);
   }
 }

@@ -11,7 +11,7 @@ const stageSchema = z.enum([
   "final_pass",
   "rejected",
 ]);
-const eventTypeSchema = z.enum(["deadline", "result", "interview"]);
+const eventTypeSchema = z.enum(["deadline", "coding_test", "interview", "result", "etc"]);
 
 export const applicationsListQuerySchema = z.object({
   stage: stageSchema.optional(),
@@ -28,7 +28,7 @@ export const createApplicationSchema = z.object({
   current_stage: stageSchema.optional(),
   company_memo: z.string().optional().nullable(),
   cover_letter: z.string().optional().nullable(),
-  deadline: z.string().datetime({ offset: true }).optional(),
+  deadline: z.string().datetime({ offset: true }).nullish(),
 });
 
 export const updateApplicationSchema = createApplicationSchema

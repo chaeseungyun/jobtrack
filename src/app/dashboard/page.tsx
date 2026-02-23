@@ -2,9 +2,8 @@ import Link from "next/link";
 
 import { STAGE_LABELS } from "@/lib/app/stages";
 import { requireServerAuth } from "@/lib/auth/session";
-import { applicationService } from "@/lib/services/application.service";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { ApplicationRow } from "@/lib/supabase/types";
+import { createApplicationContainer } from "@/lib/containers/application.container";
+import type { ApplicationRow, EventType } from "@/lib/supabase/types";
 
 import { AppShell } from "@/components/app/app-shell";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +14,7 @@ interface UpcomingItem {
   applicationId: string;
   companyName: string;
   position: string;
-  type: string;
+  type: EventType;
   at: string;
 }
 
@@ -28,20 +27,20 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
 
 export default async function DashboardPage() {
   const auth = await requireServerAuth();
-  const supabase = createServerSupabaseClient();
+  const { applicationService } = createApplicationContainer();
 
   let errorMessage: string | null = null;
   let applications: ApplicationRow[] = [];
   let upcoming: UpcomingItem[] = [];
 
   try {
-    applications = await applicationService.list(supabase, auth.sub);
+    applications = await applicationService.list(auth.sub);
 
     const targetApplications = applications.slice(0, 5);
     const targetIds = targetApplications.map((application) => application.id);
 
     if (targetIds.length > 0) {
-      const upcomingEvents = await applicationService.listUpcomingEvents(supabase, targetIds);
+      const upcomingEvents = await applicationService.listUpcomingEvents(targetIds);
 
       const applicationMap = new Map(targetApplications.map((item) => [item.id, item]));
 

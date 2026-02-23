@@ -3,11 +3,9 @@ import { notFound } from "next/navigation";
 import { dehydrate, HydrationBoundary, QueryClient } from "@tanstack/react-query";
 
 import { requireServerAuth } from "@/lib/auth/session";
+import { createApplicationContainer } from "@/lib/containers/application.container";
+import { createDocumentContainer } from "@/lib/containers/document.container";
 import { applicationDetailQueryKey } from "@/lib/query/applications";
-import { applicationService } from "@/lib/services/application.service";
-import { documentService } from "@/lib/services/document.service";
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import type { DocumentRow } from "@/lib/supabase/types";
 
 import { ApplicationDetailForm } from "@/app/applications/[id]/_components/application-detail-form.client";
 import { ApplicationEventsCard } from "@/app/applications/[id]/_components/application-events-card.client";
@@ -20,21 +18,20 @@ interface ApplicationDetailPageProps {
 export default async function ApplicationDetailPage({ params }: ApplicationDetailPageProps) {
   const auth = await requireServerAuth();
   const { id } = await params;
-  const supabase = createServerSupabaseClient();
+  const { applicationService } = createApplicationContainer();
+  const { documentService } = createDocumentContainer();
   const queryClient = new QueryClient();
 
   const applicationDetail = await queryClient.fetchQuery({
     queryKey: applicationDetailQueryKey(id),
     queryFn: async () => {
-      const [application, events, documents] = await Promise.all([
-        applicationService.getById(supabase, id, auth.sub),
-        applicationService.listEventsByApplicationId(supabase, id),
-        documentService.listByApplicationId(supabase, id),
+      const [applicationWithEvents, documents] = await Promise.all([
+        applicationService.getDetail(id, auth.sub),
+        documentService.listByApplicationId(auth.sub, id),
       ]);
 
       return {
-        ...application,
-        events,
+        ...applicationWithEvents,
         documents,
       };
     },
