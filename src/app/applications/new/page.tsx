@@ -10,13 +10,13 @@ export default async function NewApplicationPage() {
 
   return (
     <AppShell
-      title="Create Application"
-      description="Add a new application and optional deadline in one flow."
+      title="지원서 등록"
+      description="새 지원서와 마감일을 한번에 등록하세요."
       activePath="/applications/new"
     >
       <div className="mb-4 flex items-center justify-between gap-2">
         <Link className="text-sm font-medium text-slate-700 underline" href="/board">
-          Back to board
+          보드로 돌아가기
         </Link>
       </div>
 

@@ -18,7 +18,7 @@ interface UpcomingItem {
   at: string;
 }
 
-const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+const DATE_FORMATTER = new Intl.DateTimeFormat("ko-KR", {
   month: "short",
   day: "numeric",
   hour: "2-digit",
@@ -65,7 +65,7 @@ export default async function DashboardPage() {
         .slice(0, 5);
     }
   } catch (error) {
-    errorMessage = error instanceof Error ? error.message : "Failed to load";
+    errorMessage = error instanceof Error ? error.message : "불러오기 실패";
   }
 
   const stageCounts = applications.reduce<Record<string, number>>((acc, application) => {
@@ -77,8 +77,8 @@ export default async function DashboardPage() {
 
   return (
     <AppShell
-      title="Dashboard"
-      description="Track outcomes and upcoming schedules from one screen."
+      title="대시보드"
+      description="지원 현황과 다가오는 일정을 한눈에 확인하세요."
       activePath="/dashboard"
     >
       {errorMessage ? (
@@ -90,7 +90,7 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-slate-600">Total Applications</CardTitle>
+            <CardTitle className="text-sm text-slate-600">전체 지원서</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-slate-900">{applications.length}</p>
@@ -98,7 +98,7 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-slate-600">Document Pass</CardTitle>
+            <CardTitle className="text-sm text-slate-600">서류합격</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-slate-900">
@@ -108,7 +108,7 @@ export default async function DashboardPage() {
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm text-slate-600">Interviewing</CardTitle>
+            <CardTitle className="text-sm text-slate-600">면접 진행 중</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-semibold text-slate-900">{interviewCount}</p>
@@ -119,11 +119,11 @@ export default async function DashboardPage() {
       <div className="mt-6 grid gap-4 lg:grid-cols-5">
         <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Upcoming Schedule</CardTitle>
+            <CardTitle>다가오는 일정</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {upcoming.length === 0 ? (
-              <p className="text-sm text-slate-500">No scheduled events in tracked items.</p>
+              <p className="text-sm text-slate-500">예정된 일정이 없습니다.</p>
             ) : null}
             {upcoming.map((item) => (
               <div
@@ -142,7 +142,7 @@ export default async function DashboardPage() {
                   className="mt-2 inline-block text-xs font-medium text-slate-900 underline"
                   href={`/applications/${item.applicationId}`}
                 >
-                  Open detail
+                  상세 보기
                 </Link>
               </div>
             ))}
@@ -151,7 +151,7 @@ export default async function DashboardPage() {
 
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Recent Applications</CardTitle>
+            <CardTitle>최근 지원서</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {applications.slice(0, 6).map((application) => (
@@ -168,7 +168,7 @@ export default async function DashboardPage() {
               </Link>
             ))}
             {!applications.length ? (
-              <p className="text-sm text-slate-500">No applications yet.</p>
+              <p className="text-sm text-slate-500">등록된 지원서가 없습니다.</p>
             ) : null}
           </CardContent>
         </Card>

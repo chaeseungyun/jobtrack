@@ -48,13 +48,13 @@ export function AuthForm() {
       await authApi.register(form);
     },
     onSuccess: (_, mode) => {
-      toast.success(mode === "login" ? "Signed in" : "Account created", {
+      toast.success(mode === "login" ? "로그인 완료" : "계정이 생성되었습니다", {
         id: mode === "login" ? AUTH_TOAST_ID.loginSuccess : AUTH_TOAST_ID.registerSuccess,
       });
       router.replace("/dashboard");
     },
     onError: (error, mode) => {
-      const message = error instanceof Error ? error.message : "Request failed";
+      const message = error instanceof Error ? error.message : "요청에 실패했습니다";
       toast.error(message, {
         id: mode === "login" ? AUTH_TOAST_ID.loginError : AUTH_TOAST_ID.registerError,
       });
@@ -67,13 +67,13 @@ export function AuthForm() {
         <div className="mb-6 text-center">
           <h1 className="text-3xl font-semibold text-slate-900">JobTrack</h1>
           <p className="mt-2 text-sm text-slate-600">
-            Manage applications, interviews, and deadlines in one place.
+            지원서, 면접, 마감일을 한곳에서 관리하세요.
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Start with your account</CardTitle>
+            <CardTitle>계정으로 시작하기</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Tabs
@@ -81,13 +81,13 @@ export function AuthForm() {
               onValueChange={(value) => setActiveTab(value as "login" | "register")}
             >
               <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Register</TabsTrigger>
+                <TabsTrigger value="login">로그인</TabsTrigger>
+                <TabsTrigger value="register">회원가입</TabsTrigger>
               </TabsList>
 
               <TabsContent value="login" className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="login-email">Email</Label>
+                  <Label htmlFor="login-email">이메일</Label>
                   <Input
                     id="login-email"
                     type="email"
@@ -99,11 +99,11 @@ export function AuthForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="login-password">Password</Label>
+                  <Label htmlFor="login-password">비밀번호</Label>
                   <Input
                     id="login-password"
                     type="password"
-                    placeholder="8+ characters"
+                    placeholder="8자 이상"
                     value={loginForm.password}
                     onChange={(event) =>
                       setLoginForm((prev) => ({ ...prev, password: event.target.value }))
@@ -115,13 +115,13 @@ export function AuthForm() {
                   disabled={authMutation.isPending}
                   onClick={() => authMutation.mutate("login")}
                 >
-                  {authMutation.isPending ? "Signing in..." : "Sign in"}
+                  {authMutation.isPending ? "로그인 중..." : "로그인"}
                 </Button>
               </TabsContent>
 
               <TabsContent value="register" className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="register-email">Email</Label>
+                  <Label htmlFor="register-email">이메일</Label>
                   <Input
                     id="register-email"
                     type="email"
@@ -133,11 +133,11 @@ export function AuthForm() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="register-password">Password</Label>
+                  <Label htmlFor="register-password">비밀번호</Label>
                   <Input
                     id="register-password"
                     type="password"
-                    placeholder="8+ characters"
+                    placeholder="8자 이상"
                     value={registerForm.password}
                     onChange={(event) =>
                       setRegisterForm((prev) => ({ ...prev, password: event.target.value }))
@@ -149,7 +149,7 @@ export function AuthForm() {
                   disabled={authMutation.isPending}
                   onClick={() => authMutation.mutate("register")}
                 >
-                  {authMutation.isPending ? "Creating account..." : "Create account"}
+                  {authMutation.isPending ? "계정 생성 중..." : "계정 만들기"}
                 </Button>
               </TabsContent>
             </Tabs>

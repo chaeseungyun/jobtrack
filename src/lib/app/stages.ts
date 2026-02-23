@@ -1,13 +1,13 @@
 import type { StageType } from "@/lib/supabase/types";
 
 export const STAGE_LABELS: Record<StageType, string> = {
-  interest: "Interest",
-  applied: "Applied",
-  document_pass: "Document Pass",
-  assignment: "Assignment",
-  interview: "Interview",
-  final_pass: "Final Pass",
-  rejected: "Rejected",
+  interest: "관심",
+  applied: "지원완료",
+  document_pass: "서류합격",
+  assignment: "과제",
+  interview: "면접",
+  final_pass: "최종합격",
+  rejected: "불합격",
 };
 
 export const STAGE_ORDER: StageType[] = [

@@ -38,11 +38,11 @@ const CREATE_TOAST_ID = {
 
 const getFileValidationError = (file: File) => {
   if (file.type !== "application/pdf") {
-    return "Only PDF files are allowed";
+    return "PDF 파일만 업로드할 수 있습니다";
   }
 
   if (file.size > MAX_FILE_SIZE) {
-    return "File size must be 10MB or less";
+    return "파일 크기는 10MB 이하여야 합니다";
   }
 
   return null;
@@ -57,7 +57,7 @@ export function NewApplicationForm() {
   const createMutation = useMutation({
     mutationFn: async () => {
       if (!form.company_name.trim() || !form.position.trim()) {
-        throw new Error("Company and position are required");
+        throw new Error("기업명과 직무는 필수입니다");
       }
 
       const meritTags = form.merit_tags
@@ -66,7 +66,7 @@ export function NewApplicationForm() {
         .filter(Boolean);
 
       if (meritTags.length > 10) {
-        throw new Error("Merit tags can include up to 10 items");
+        throw new Error("장점 태그는 최대 10개까지 가능합니다");
       }
 
       const deadlineIso = form.deadline
@@ -96,7 +96,7 @@ export function NewApplicationForm() {
           try {
             await documentsApi.upload(created.id, selectedFile);
           } catch (error) {
-            uploadError = error instanceof Error ? error.message : "Upload failed";
+            uploadError = error instanceof Error ? error.message : "업로드 실패";
           }
         }
       }
@@ -104,7 +104,7 @@ export function NewApplicationForm() {
       return { created, uploadError };
     },
     onSuccess: ({ created, uploadError }) => {
-      toast.success("Application created", { id: CREATE_TOAST_ID.success });
+      toast.success("지원서가 등록되었습니다", { id: CREATE_TOAST_ID.success });
 
       if (uploadError) {
         toast.error(uploadError, { id: CREATE_TOAST_ID.uploadError });
@@ -113,7 +113,7 @@ export function NewApplicationForm() {
       router.replace(`/applications/${created.id}`);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Failed to create";
+      const message = error instanceof Error ? error.message : "등록에 실패했습니다";
 
       if (message === "Unauthorized") {
         router.replace("/auth");
@@ -127,7 +127,7 @@ export function NewApplicationForm() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>New Application</CardTitle>
+        <CardTitle>새 지원서</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <ApplicationFormFields
@@ -137,11 +137,11 @@ export function NewApplicationForm() {
           }}
           onSubmit={() => createMutation.mutate()}
           isSubmitting={createMutation.isPending}
-          submitLabel="Create Application"
-          submittingLabel="Creating..."
+          submitLabel="지원서 등록"
+          submittingLabel="등록 중..."
           beforeSubmit={
             <div className="space-y-2">
-              <Label htmlFor="document_file">Document PDF (optional)</Label>
+              <Label htmlFor="document_file">문서 PDF (선택사항)</Label>
               <Input
                 id="document_file"
                 ref={fileInputRef}

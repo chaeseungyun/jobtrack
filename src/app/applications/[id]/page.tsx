@@ -43,13 +43,13 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
 
   return (
     <AppShell
-      title="Application Detail"
-      description="Review and update stage, notes, and links from a single view."
+      title="지원서 상세"
+      description="단계, 메모, 링크를 한 화면에서 확인하고 수정하세요."
       activePath="/board"
     >
       <div className="mb-4 flex items-center justify-between gap-2">
         <Link className="text-sm font-medium text-slate-700 underline" href="/board">
-          Back to board
+          보드로 돌아가기
         </Link>
       </div>
 

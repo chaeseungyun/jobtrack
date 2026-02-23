@@ -24,7 +24,7 @@ export function LogoutButton() {
       onClick={() => logoutMutation.mutate()}
       disabled={logoutMutation.isPending}
     >
-      {logoutMutation.isPending ? "Logging out..." : "Logout"}
+      {logoutMutation.isPending ? "로그아웃 중..." : "로그아웃"}
     </Button>
   );
 }

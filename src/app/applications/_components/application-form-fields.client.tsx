@@ -62,17 +62,17 @@ interface ApplicationFormFieldsProps {
 }
 
 const CAREER_LABELS: Record<CareerType, string> = {
-  new: "New",
-  experienced: "Experienced",
-  any: "Any",
+  new: "신입",
+  experienced: "경력",
+  any: "무관",
 };
 
 const SOURCE_LABELS: Record<SourceType, string> = {
-  saramin: "Saramin",
-  jobkorea: "JobKorea",
-  company: "Company Site",
+  saramin: "사람인",
+  jobkorea: "잡코리아",
+  company: "기업 사이트",
   linkedin: "LinkedIn",
-  etc: "Etc",
+  etc: "기타",
 };
 
 const isVisible = (visibleFields: VisibleFields | undefined, key: keyof ApplicationFormValues) => {
@@ -100,7 +100,7 @@ export function ApplicationFormFields({
         <div className="grid gap-4 sm:grid-cols-2">
           {isVisible(visibleFields, "company_name") ? (
             <div className="space-y-2">
-              <Label htmlFor="company_name">Company</Label>
+              <Label htmlFor="company_name">기업명</Label>
               <Input
                 id="company_name"
                 value={values.company_name}
@@ -111,7 +111,7 @@ export function ApplicationFormFields({
 
           {isVisible(visibleFields, "position") ? (
             <div className="space-y-2">
-              <Label htmlFor="position">Position</Label>
+              <Label htmlFor="position">직무</Label>
               <Input
                 id="position"
                 value={values.position}
@@ -128,7 +128,7 @@ export function ApplicationFormFields({
         <div className="grid gap-4 sm:grid-cols-3">
           {isVisible(visibleFields, "career_type") ? (
             <div className="space-y-2">
-              <Label htmlFor="career_type">Career Type</Label>
+              <Label htmlFor="career_type">경력 구분</Label>
               <Select
                 value={values.career_type}
                 onValueChange={(value) => onFieldChange({ career_type: value as CareerType })}
@@ -149,7 +149,7 @@ export function ApplicationFormFields({
 
           {isVisible(visibleFields, "source") ? (
             <div className="space-y-2">
-              <Label htmlFor="source">Source</Label>
+              <Label htmlFor="source">출처</Label>
               <Select
                 value={values.source}
                 onValueChange={(value) => onFieldChange({ source: value as SourceType | "none" })}
@@ -158,7 +158,7 @@ export function ApplicationFormFields({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="none">없음</SelectItem>
                   {SOURCE_TYPES.map((source) => (
                     <SelectItem key={source} value={source}>
                       {SOURCE_LABELS[source]}
@@ -171,7 +171,7 @@ export function ApplicationFormFields({
 
           {isVisible(visibleFields, "current_stage") ? (
             <div className="space-y-2">
-              <Label htmlFor="current_stage">Stage</Label>
+              <Label htmlFor="current_stage">단계</Label>
               <Select
                 value={values.current_stage}
                 onValueChange={(value) => onFieldChange({ current_stage: value as StageType })}
@@ -196,7 +196,7 @@ export function ApplicationFormFields({
         <div className="grid gap-4 sm:grid-cols-2">
           {isVisible(visibleFields, "job_url") ? (
             <div className="space-y-2">
-              <Label htmlFor="job_url">Job URL</Label>
+              <Label htmlFor="job_url">채용 공고 URL</Label>
               <Input
                 id="job_url"
                 value={values.job_url}
@@ -207,7 +207,7 @@ export function ApplicationFormFields({
 
           {isVisible(visibleFields, "deadline") ? (
             <div className="space-y-2">
-              <Label htmlFor="deadline">Deadline</Label>
+              <Label htmlFor="deadline">마감일</Label>
               <Input
                 id="deadline"
                 type="datetime-local"
@@ -221,7 +221,7 @@ export function ApplicationFormFields({
 
       {isVisible(visibleFields, "merit_tags") ? (
         <div className="space-y-2">
-          <Label htmlFor="merit_tags">Merit Tags (comma separated)</Label>
+          <Label htmlFor="merit_tags">장점 태그 (쉼표로 구분)</Label>
           <Input
             id="merit_tags"
             value={values.merit_tags}
@@ -232,7 +232,7 @@ export function ApplicationFormFields({
 
       {isVisible(visibleFields, "company_memo") ? (
         <div className="space-y-2">
-          <Label htmlFor="company_memo">Company Memo</Label>
+          <Label htmlFor="company_memo">기업 메모</Label>
           <Textarea
             id="company_memo"
             value={values.company_memo}
@@ -243,7 +243,7 @@ export function ApplicationFormFields({
 
       {isVisible(visibleFields, "cover_letter") ? (
         <div className="space-y-2">
-          <Label htmlFor="cover_letter">Cover Letter Memo</Label>
+          <Label htmlFor="cover_letter">자기소개서 메모</Label>
           <Textarea
             id="cover_letter"
             value={values.cover_letter}

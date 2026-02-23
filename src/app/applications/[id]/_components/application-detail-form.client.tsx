@@ -76,7 +76,7 @@ export function ApplicationDetailForm({
   const saveMutation = useMutation({
     mutationFn: async () => {
       if (!form.company_name.trim() || !form.position.trim()) {
-        throw new Error("Company and position are required");
+        throw new Error("기업명과 직무는 필수입니다");
       }
 
       const meritTags = form.merit_tags
@@ -85,7 +85,7 @@ export function ApplicationDetailForm({
         .filter(Boolean);
 
       if (meritTags.length > 10) {
-        throw new Error("Merit tags can include up to 10 items");
+        throw new Error("장점 태그는 최대 10개까지 가능합니다");
       }
 
       const deadlineIso = form.deadline ? new Date(form.deadline).toISOString() : null;
@@ -125,10 +125,10 @@ export function ApplicationDetailForm({
         queryKey: applicationDetailQueryKey(applicationId),
       });
 
-      toast.success("Saved", { id: DETAIL_TOAST_ID.saveSuccess });
+      toast.success("저장 완료", { id: DETAIL_TOAST_ID.saveSuccess });
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Update failed";
+      const message = error instanceof Error ? error.message : "수정에 실패했습니다";
 
       if (message === "Unauthorized") {
         router.replace("/auth");
@@ -143,7 +143,7 @@ export function ApplicationDetailForm({
     <Card className="lg:col-span-3">
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
-          <CardTitle>{form.company_name || "Application"}</CardTitle>
+          <CardTitle>{form.company_name || "지원서"}</CardTitle>
           <Badge>{STAGE_LABELS[form.current_stage]}</Badge>
         </div>
       </CardHeader>
@@ -155,8 +155,8 @@ export function ApplicationDetailForm({
           }}
           onSubmit={() => saveMutation.mutate()}
           isSubmitting={saveMutation.isPending}
-          submitLabel="Save changes"
-          submittingLabel="Saving..."
+          submitLabel="변경사항 저장"
+          submittingLabel="저장 중..."
           stageOptions={STAGE_ORDER}
           beforeSubmit={
             <ApplicationDocumentsPanel

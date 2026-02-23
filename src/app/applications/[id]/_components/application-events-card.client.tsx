@@ -39,7 +39,7 @@ interface ApplicationEventsCardProps {
   applicationId: string;
 }
 
-const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+const DATE_FORMATTER = new Intl.DateTimeFormat("ko-KR", {
   month: "short",
   day: "numeric",
   hour: "2-digit",
@@ -47,11 +47,11 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
 });
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
-  deadline: "Deadline",
-  coding_test: "Coding Test",
-  interview: "Interview",
-  result: "Result",
-  etc: "Etc",
+  deadline: "마감",
+  coding_test: "코딩 테스트",
+  interview: "면접",
+  result: "결과",
+  etc: "기타",
 };
 
 interface EventFormState {
@@ -82,7 +82,7 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
 
   const upsertMutation = useMutation({
     mutationFn: async () => {
-      if (!form.scheduled_at) throw new Error("Schedule is required");
+      if (!form.scheduled_at) throw new Error("일정은 필수입니다");
 
       const payload = {
         event_type: form.event_type,
@@ -97,11 +97,11 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: applicationDetailQueryKey(applicationId) });
-      toast.success(editingEventId ? "Event updated" : "Event added");
+      toast.success(editingEventId ? "일정이 수정되었습니다" : "일정이 추가되었습니다");
       handleCloseDialog();
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Action failed");
+      toast.error(error instanceof Error ? error.message : "작업에 실패했습니다");
     },
   });
 
@@ -109,10 +109,10 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
     mutationFn: (id: string) => eventsApi.remove(id),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: applicationDetailQueryKey(applicationId) });
-      toast.success("Event deleted");
+      toast.success("일정이 삭제되었습니다");
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Delete failed");
+      toast.error(error instanceof Error ? error.message : "삭제에 실패했습니다");
     },
   });
 
@@ -142,7 +142,7 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
     <>
       <Card className="lg:col-span-2">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle>Events</CardTitle>
+          <CardTitle>일정</CardTitle>
           <Button variant="ghost" size="icon" onClick={handleOpenAdd}>
             <Plus className="h-4 w-4" />
           </Button>
@@ -174,18 +174,18 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => handleOpenEdit(event)}>
                             <Pencil className="mr-2 h-3.5 w-3.5" />
-                            Edit
+                            수정
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive focus:text-destructive"
                             onClick={() => {
-                              if (confirm("Delete this event?")) {
+                              if (confirm("이 일정을 삭제하시겠습니까?")) {
                                 deleteMutation.mutate(event.id);
                               }
                             }}
                           >
                             <Trash2 className="mr-2 h-3.5 w-3.5" />
-                            Delete
+                            삭제
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </>
@@ -196,18 +196,18 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
               <p className="text-sm text-slate-600">{event.location ?? "-"}</p>
             </div>
           ))}
-          {events.length === 0 ? <p className="text-sm text-slate-500">No events yet.</p> : null}
+          {events.length === 0 ? <p className="text-sm text-slate-500">등록된 일정이 없습니다.</p> : null}
         </CardContent>
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingEventId ? "Edit Event" : "Add Event"}</DialogTitle>
+            <DialogTitle>{editingEventId ? "일정 수정" : "일정 추가"}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="event_type">Type</Label>
+              <Label htmlFor="event_type">유형</Label>
               <Select
                 value={form.event_type}
                 onValueChange={(v) => setForm((p) => ({ ...p, event_type: v as EventType }))}
@@ -225,7 +225,7 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
               </Select>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="scheduled_at">Schedule</Label>
+              <Label htmlFor="scheduled_at">일시</Label>
               <Input
                 id="scheduled_at"
                 type="datetime-local"
@@ -234,10 +234,10 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="location">Location / Link</Label>
+              <Label htmlFor="location">장소 / 링크</Label>
               <Input
                 id="location"
-                placeholder="e.g. Zoom Link or Office address"
+                placeholder="예: Zoom 링크 또는 사무실 주소"
                 value={form.location}
                 onChange={(e) => setForm((p) => ({ ...p, location: e.target.value }))}
               />
@@ -245,13 +245,13 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={handleCloseDialog}>
-              Cancel
+              취소
             </Button>
             <Button
               disabled={upsertMutation.isPending}
               onClick={() => upsertMutation.mutate()}
             >
-              {upsertMutation.isPending ? "Saving..." : "Save"}
+              {upsertMutation.isPending ? "저장 중..." : "저장"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -19,7 +19,7 @@ export default async function BoardPage() {
   try {
     applications = await applicationService.list(auth.sub);
   } catch (error) {
-    errorMessage = error instanceof Error ? error.message : "Failed to load";
+    errorMessage = error instanceof Error ? error.message : "불러오기 실패";
   }
 
   const grouped = STAGE_ORDER.reduce<Record<StageType, ApplicationRow[]>>(
@@ -32,8 +32,8 @@ export default async function BoardPage() {
 
   return (
     <AppShell
-      title="Kanban Board"
-      description="See the whole pipeline by stage and focus on bottlenecks."
+      title="칸반 보드"
+      description="단계별 파이프라인을 한눈에 보고 병목을 파악하세요."
       activePath="/board"
     >
       {errorMessage ? (
@@ -62,7 +62,7 @@ export default async function BoardPage() {
                 </Link>
               ))}
               {grouped[stage].length === 0 ? (
-                <p className="text-sm text-slate-400">No items.</p>
+                <p className="text-sm text-slate-400">항목이 없습니다.</p>
               ) : null}
             </CardContent>
           </Card>

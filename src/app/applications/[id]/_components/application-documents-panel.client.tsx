@@ -46,15 +46,15 @@ export function ApplicationDocumentsPanel({
   const uploadMutation = useMutation({
     mutationFn: () => {
       if (!selectedFile) {
-        throw new Error("File is required");
+        throw new Error("파일을 선택해주세요");
       }
 
       if (selectedFile.type !== "application/pdf") {
-        throw new Error("Only PDF files are allowed");
+        throw new Error("PDF 파일만 업로드할 수 있습니다");
       }
 
       if (selectedFile.size > MAX_FILE_SIZE) {
-        throw new Error("File size must be 10MB or less");
+        throw new Error("파일 크기는 10MB 이하여야 합니다");
       }
 
       return documentsApi.upload(applicationId, selectedFile);
@@ -65,10 +65,10 @@ export function ApplicationDocumentsPanel({
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      toast.success("Uploaded", { id: DOCUMENTS_TOAST_ID.uploadSuccess });
+      toast.success("업로드 완료", { id: DOCUMENTS_TOAST_ID.uploadSuccess });
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Upload failed";
+      const message = error instanceof Error ? error.message : "업로드 실패";
 
       if (message === "Unauthorized") {
         router.replace("/auth");
@@ -86,10 +86,10 @@ export function ApplicationDocumentsPanel({
     },
     onSuccess: (_, documentId) => {
       setDocuments((prev) => prev.filter((document) => document.id !== documentId));
-      toast.success("Deleted", { id: DOCUMENTS_TOAST_ID.deleteSuccess });
+      toast.success("삭제 완료", { id: DOCUMENTS_TOAST_ID.deleteSuccess });
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "Delete failed";
+      const message = error instanceof Error ? error.message : "삭제 실패";
 
       if (message === "Unauthorized") {
         router.replace("/auth");
@@ -105,7 +105,7 @@ export function ApplicationDocumentsPanel({
 
   return (
     <div className="space-y-3 rounded-md border border-slate-200 p-3">
-      <p className="text-sm font-medium text-slate-900">Documents</p>
+      <p className="text-sm font-medium text-slate-900">문서</p>
 
       <div className="grid gap-2 sm:grid-cols-[1fr_auto] sm:items-center">
         <Input
@@ -122,7 +122,7 @@ export function ApplicationDocumentsPanel({
           disabled={uploadMutation.isPending}
           onClick={() => uploadMutation.mutate()}
         >
-          {uploadMutation.isPending ? "Uploading..." : "Upload PDF"}
+          {uploadMutation.isPending ? "업로드 중..." : "PDF 업로드"}
         </Button>
       </div>
 
@@ -152,14 +152,14 @@ export function ApplicationDocumentsPanel({
                 onClick={() => deleteMutation.mutate(document.id)}
               >
                 {deleteMutation.isPending && deletingDocumentId === document.id
-                  ? "Deleting..."
-                  : "Delete"}
+                  ? "삭제 중..."
+                  : "삭제"}
               </Button>
             </div>
           </div>
         ))}
         {documents.length === 0 ? (
-          <p className="text-sm text-slate-500">No documents yet.</p>
+          <p className="text-sm text-slate-500">등록된 문서가 없습니다.</p>
         ) : null}
       </div>
     </div>
