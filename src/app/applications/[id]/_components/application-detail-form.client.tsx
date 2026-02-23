@@ -147,7 +147,7 @@ export function ApplicationDetailForm({
           <Badge>{STAGE_LABELS[form.current_stage]}</Badge>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
         <ApplicationFormFields
           values={form}
           onFieldChange={(patch) => {

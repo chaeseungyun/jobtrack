@@ -95,7 +95,7 @@ export function ApplicationFormFields({
   beforeSubmit,
 }: ApplicationFormFieldsProps) {
   return (
-    <>
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-4">
       {isVisible(visibleFields, "company_name") || isVisible(visibleFields, "position") ? (
         <div className="grid gap-4 sm:grid-cols-2">
           {isVisible(visibleFields, "company_name") ? (
@@ -133,7 +133,7 @@ export function ApplicationFormFields({
                 value={values.career_type}
                 onValueChange={(value) => onFieldChange({ career_type: value as CareerType })}
               >
-                <SelectTrigger id="career_type">
+                <SelectTrigger id="career_type" className="w-full">
                   <SelectValue>{CAREER_LABELS[values.career_type]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -154,7 +154,7 @@ export function ApplicationFormFields({
                 value={values.source}
                 onValueChange={(value) => onFieldChange({ source: value as SourceType | "none" })}
               >
-                <SelectTrigger id="source">
+                <SelectTrigger id="source" className="w-full">
                   <SelectValue>{values.source === "none" ? "없음" : SOURCE_LABELS[values.source]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -176,7 +176,7 @@ export function ApplicationFormFields({
                 value={values.current_stage}
                 onValueChange={(value) => onFieldChange({ current_stage: value as StageType })}
               >
-                <SelectTrigger id="current_stage">
+                <SelectTrigger id="current_stage" className="w-full">
                   <SelectValue>{STAGE_LABELS[values.current_stage]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
@@ -255,9 +255,9 @@ export function ApplicationFormFields({
 
       {beforeSubmit}
 
-      <Button disabled={isSubmitting} onClick={onSubmit}>
+      <Button disabled={isSubmitting}>
         {isSubmitting ? submittingLabel : submitLabel}
       </Button>
-    </>
+    </form>
   );
 }

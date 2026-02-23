@@ -212,7 +212,7 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
                 value={form.event_type}
                 onValueChange={(v) => setForm((p) => ({ ...p, event_type: v as EventType }))}
               >
-                <SelectTrigger id="event_type">
+                <SelectTrigger id="event_type" className="w-full">
                   <SelectValue>{EVENT_TYPE_LABELS[form.event_type]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>

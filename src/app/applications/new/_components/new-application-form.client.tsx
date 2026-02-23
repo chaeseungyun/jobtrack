@@ -129,7 +129,7 @@ export function NewApplicationForm() {
       <CardHeader>
         <CardTitle>새 지원서</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
         <ApplicationFormFields
           values={form}
           onFieldChange={(patch) => {
