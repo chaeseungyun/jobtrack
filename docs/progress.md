@@ -14,6 +14,8 @@
 - 최종 결정:
 - 판단 근거(왜):
 
+### 4) 검증/지표
+
 ### 5) 학습 로그
 -
 
@@ -22,6 +24,58 @@
 
 ### 7) AI 리뷰
 -
+
+## 2026-02-23
+
+### 1) 오늘의 목표
+- layered architecture 도입
+
+### 2) 작업 내용
+- Done:
+  - layered architecture 도입
+- In porgress:
+- Blocked:
+
+### 3) 개발 판단 로그
+- 주제: 백엔드 코드 리팩토링 필요성 검토
+- 선택지:
+  - A: route handler → service 구조 유지
+  - B: 3-Layered Architecture (controller → service → repository) 도입
+- 최종 결정:
+  - B안 채택
+- 판단 근거(왜):
+  1. 변경 비용 통제 필요성
+    - 프로젝트는 현재 serverless 환경(Vercel)에서 실행되나, 향후 서버 분리(Express/Nest) 또는 DB 교체 가능성을 열어두고 있음.
+    - 도메인 로직이 HTTP/DB/Framework에 직접 의존할 경우, 변경 비용이 비선형적으로 증가함.
+  2. 인프라 의존성 분리
+    - 기존 service가 Supabase에 직접 접근하여 인프라 결합도가 높음.
+    - repository interface를 도입함으로써 도메인 계층을 인프라로부터 분리하여 테스트 용이성 및 교체 가능성 확보.
+  3. service가 HTTP에서 분리됨으로써, 다양한 실행 환경에서 재사용 가능.
+  4. 아키텍처 일관성
+    - controller → service → repository로 의존 방향을 고정하여 응집도를 높이고 레이어 간 결합도를 낮춤.
+    - 잠재적 기술 부채 발생 가능성을 감소시킴.
+- 리스크: 보일러 플레이트 증가, 현재 프로젝트 대비 과설계
+
+### 4) 검증/지표
+- 기능 검증(회귀 포함)
+  - `pnpm build`: 성공
+
+### 5) 학습 로그
+- 3-layered architecture는 관심사를 분리하여 변경 전파를 최소화한다.
+  - HTTP 변경이 비즈니스 로직 변경을 유발하지 않아야 한다.
+  - DB 교체가 서비스 로직 수정을 유발하지 않아야 한다.
+- DIP(Dependency Inversion Principle)에 따라
+service는 repository의 구현체가 아니라 추상화(인터페이스)에 의존해야 한다.
+- controller는 HTTP 요청/응답 처리 및 DTO 변환만 담당한다.
+- service layer는 유즈케이스 단위의 비즈니스 로직을 담당하며,
+하나의 유즈케이스는 하나의 트랜잭션 경계를 가진다.
+- repository는 도메인 관점에서 영속성을 추상화하는 계층이며,
+DB 접근 구현 세부사항을 외부로 노출하지 않는다.
+- service가 비대해지지 않으려면 엔티티 단위가 아닌 행위 중심으로 설계해야 한다.
+- next.js api routes를 controller로 사용하고 있는데 server components의 경우 container -> service -> repository 흐름을 따르도록 설계
+
+### 6) 다음 스텝
+- 다크 모드 도입
 
 ## 2026-02-22
 
@@ -144,8 +198,6 @@
   - 없음
 
 ### 3) 개발 판단 로그
-- 주제: 등록 화면 구현 방식
-@@
 - 주제: 이벤트 리소스 통합 및 저장 원자성 확보
 - 최종 결정: 마감일 통합(Form) + 다중 일정 분리(Card Action) 하이브리드 구조
 - 판단 근거(왜):
