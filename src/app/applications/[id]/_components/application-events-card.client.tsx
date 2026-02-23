@@ -156,7 +156,7 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
               <div className="mb-1 flex items-center justify-between gap-2">
                 <Badge variant="outline">{EVENT_TYPE_LABELS[event.event_type]}</Badge>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground" suppressHydrationWarning>
                     {DATE_FORMATTER.format(new Date(event.scheduled_at))}
                   </span>
                   <DropdownMenu>
@@ -213,7 +213,7 @@ export function ApplicationEventsCard({ applicationId }: ApplicationEventsCardPr
                 onValueChange={(v) => setForm((p) => ({ ...p, event_type: v as EventType }))}
               >
                 <SelectTrigger id="event_type">
-                  <SelectValue />
+                  <SelectValue>{EVENT_TYPE_LABELS[form.event_type]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {EVENT_TYPES.filter((t) => t !== "deadline").map((type) => (

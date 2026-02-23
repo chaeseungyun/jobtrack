@@ -134,7 +134,7 @@ export function ApplicationFormFields({
                 onValueChange={(value) => onFieldChange({ career_type: value as CareerType })}
               >
                 <SelectTrigger id="career_type">
-                  <SelectValue />
+                  <SelectValue>{CAREER_LABELS[values.career_type]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {CAREER_TYPES.map((type) => (
@@ -155,7 +155,7 @@ export function ApplicationFormFields({
                 onValueChange={(value) => onFieldChange({ source: value as SourceType | "none" })}
               >
                 <SelectTrigger id="source">
-                  <SelectValue />
+                  <SelectValue>{values.source === "none" ? "없음" : SOURCE_LABELS[values.source]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">없음</SelectItem>
@@ -177,7 +177,7 @@ export function ApplicationFormFields({
                 onValueChange={(value) => onFieldChange({ current_stage: value as StageType })}
               >
                 <SelectTrigger id="current_stage">
-                  <SelectValue />
+                  <SelectValue>{STAGE_LABELS[values.current_stage]}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {stageOptions.map((stage) => (
@@ -213,6 +213,7 @@ export function ApplicationFormFields({
                 type="datetime-local"
                 value={values.deadline}
                 onChange={(event) => onFieldChange({ deadline: event.target.value })}
+                suppressHydrationWarning
               />
             </div>
           ) : null}
