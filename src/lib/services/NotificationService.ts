@@ -4,7 +4,7 @@ import { emailService } from "@/lib/services/email.service";
 export class NotificationService {
   constructor(private readonly eventRepo: IEventRepository) {}
 
-  async processReminders(): Promise<{ d3: number; d1: number }> {
+  async processReminders(): Promise<{ d3: number; d1: number; success: number; failure: number }> {
     const d3Targets = await this.eventRepo.findForNotification(3);
     const d1Targets = await this.eventRepo.findForNotification(1);
 
@@ -57,14 +57,19 @@ export class NotificationService {
     ];
 
     const results = await Promise.allSettled(sendPromises);
+    let successCount = 0;
+    let failureCount = 0;
 
     results.forEach((result) => {
       if (result.status === "rejected") {
         console.error("Failed to send notification:", result.reason);
+        failureCount++;
+      } else {
+        successCount++;
       }
     });
 
-    return { d3: d3Targets.length, d1: d1Targets.length };
+    return { d3: d3Targets.length, d1: d1Targets.length, success: successCount, failure: failureCount };
   }
 
   async confirmWebhookNotification(
