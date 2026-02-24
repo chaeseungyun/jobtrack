@@ -16,7 +16,7 @@ export const emailService = {
     tags: { name: string; value: string }[];
   }) {
     const { data, error } = await resend.emails.send({
-      from: "JobTrack <notifications@resend.dev>",
+      from: "delivered@resend.dev",
       to,
       subject,
       html,
