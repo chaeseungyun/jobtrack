@@ -56,7 +56,13 @@ export class NotificationService {
       ),
     ];
 
-    await Promise.allSettled(sendPromises);
+    const results = await Promise.allSettled(sendPromises);
+
+    results.forEach((result) => {
+      if (result.status === "rejected") {
+        console.error("Failed to send notification:", result.reason);
+      }
+    });
 
     return { d3: d3Targets.length, d1: d1Targets.length };
   }
