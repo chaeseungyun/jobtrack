@@ -1,5 +1,4 @@
 import { Resend } from "resend";
-import { Webhook } from "svix";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -30,13 +29,16 @@ export const emailService = {
     return data;
   },
 
-  verifyResendWebhook(headers: Record<string, string>, payload: string) {
+  verifyResendWebhook(headers: { id: string; timestamp: string; signature: string }, payload: string) {
     const secret = process.env.RESEND_WEBHOOK_SECRET;
     if (!secret) {
       throw new Error("RESEND_WEBHOOK_SECRET is not set");
     }
 
-    const wh = new Webhook(secret);
-    return wh.verify(payload, headers);
+    return resend.webhooks.verify({
+      payload,
+      headers,
+      webhookSecret: secret,
+    });
   },
 };

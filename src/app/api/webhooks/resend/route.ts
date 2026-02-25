@@ -6,27 +6,27 @@ import { emailService } from "@/lib/services/email.service";
 
 export async function POST(request: NextRequest) {
   const payload = await request.text();
-  const headers = {
-    "svix-id": request.headers.get("svix-id") ?? "",
-    "svix-timestamp": request.headers.get("svix-timestamp") ?? "",
-    "svix-signature": request.headers.get("svix-signature") ?? "",
-  };
+  const id = request.headers.get("svix-id");
+  const timestamp = request.headers.get("svix-timestamp");
+  const signature = request.headers.get("svix-signature");
+
+  if (!id || !timestamp || !signature) {
+    return new NextResponse("Missing headers", { status: 400 });
+  }
 
   try {
-    const verified = emailService.verifyResendWebhook(headers, payload) as any;
-    const { type, data } = verified;
+    const event = emailService.verifyResendWebhook({
+      id,
+      timestamp,
+      signature,
+    }, payload);
 
-    if (type === "email.delivered") {
-      const tags = data.tags || {};
-      const eventId = tags.eventId;
-      const notificationType = tags.notificationType;
+    if (event.type === "email.delivered") {
+      const { eventId, notificationType } = event.data.tags || {};
 
       if (eventId && (notificationType === "d1" || notificationType === "d3")) {
         const { notificationService } = createNotificationContainer();
-        await notificationService.confirmWebhookNotification(
-          eventId,
-          notificationType,
-        );
+        await notificationService.confirmWebhookNotification(eventId, notificationType);
       }
     }
 
