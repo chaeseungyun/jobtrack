@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -32,7 +33,11 @@ const AUTH_TOAST_ID = {
 
 export function AuthForm() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"login" | "register">("login");
+  const searchParams = useSearchParams();
+  const requestedMode = searchParams.get("mode");
+  const initialTab = requestedMode === "register" ? "register" : "login";
+
+  const [activeTab, setActiveTab] = useState<"login" | "register">(initialTab);
   const [loginForm, setLoginForm] = useState<AuthFormState>(INITIAL_FORM);
   const [registerForm, setRegisterForm] = useState<AuthFormState>(INITIAL_FORM);
 
@@ -61,6 +66,13 @@ export function AuthForm() {
     },
   });
 
+  const selectMode = (mode: "login" | "register") => {
+    setActiveTab(mode);
+    const newUrl = new URLSearchParams(searchParams.toString());
+    newUrl.set("mode", mode);
+    router.replace(`/auth?${newUrl.toString()}`, { scroll: false });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-muted via-background to-muted px-4 py-10 sm:py-16">
       <div className="mx-auto w-full max-w-md">
@@ -78,7 +90,7 @@ export function AuthForm() {
           <CardContent className="space-y-4">
             <Tabs
               value={activeTab}
-              onValueChange={(value) => setActiveTab(value as "login" | "register")}
+              onValueChange={(value) => selectMode(value as "login" | "register")}
             >
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="login">로그인</TabsTrigger>
@@ -161,6 +173,15 @@ export function AuthForm() {
                 </form>
               </TabsContent>
             </Tabs>
+
+            <div className="text-center">
+              <Link
+                href="/"
+                className="text-sm text-muted-foreground underline-offset-4 transition-colors hover:text-foreground hover:underline"
+              >
+                홈으로 돌아가기
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </div>
