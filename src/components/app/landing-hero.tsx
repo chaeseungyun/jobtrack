@@ -27,10 +27,9 @@ export function LandingHero() {
             <p className="text-sm font-medium text-muted-foreground">
               지원 현황, 일정, 서류를 한 곳에서
             </p>
-            <h1 className="mt-3 text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            <h1 className="mt-3 text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl whitespace-pre-line">
               취업 준비를
-              <span className="text-muted-foreground">
-                {" "}
+              <span className="text-muted-foreground relative whitespace-nowrap">
                 &ldquo;관리&rdquo;로 바꾸는
               </span>
               <br />
