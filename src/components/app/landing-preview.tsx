@@ -31,8 +31,6 @@ const PREVIEW_COLUMNS = [
   },
 ] as const;
 
-const DELAY_CLASS = ["", "delay-75", "delay-150", "delay-200"] as const;
-
 export function LandingPreview() {
   return (
     <section className="pt-16">
@@ -51,7 +49,7 @@ export function LandingPreview() {
         {PREVIEW_COLUMNS.map((column, index) => (
           <Card
             key={column.title}
-            className={`animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both motion-reduce:animate-none transition-all hover:shadow-md hover:-translate-y-0.5 ${DELAY_CLASS[index]}`}
+            className={`animate-in fade-in slide-in-from-bottom-4 duration-700 fill-mode-both motion-reduce:animate-none transition-all hover:shadow-md hover:-translate-y-0.5`}
           >
             <CardHeader className="space-y-2">
               <div className="flex items-center justify-between gap-2">
