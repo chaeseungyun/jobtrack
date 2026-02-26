@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
 
 import { LandingFeatures } from "@/components/app/landing-features";
 import { LandingFooter } from "@/components/app/landing-footer";
@@ -15,19 +14,16 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   const payload = await getServerAuthPayload();
-
-  if (payload) {
-    redirect("/dashboard");
-  }
+  const isAuthenticated = payload !== null;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
-      <LandingHero />
+      <LandingHero isAuthenticated={isAuthenticated} />
       <main className="mx-auto w-full max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
         <LandingFeatures />
         <LandingPreview />
       </main>
-      <LandingFooter />
+      <LandingFooter isAuthenticated={isAuthenticated} />
     </div>
   );
 }

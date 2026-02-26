@@ -1,8 +1,13 @@
 import Link from "next/link";
 
+import { DarkButton } from "@/components/islands/dark-button.client";
 import { Button } from "@/components/ui/button";
 
-export function LandingHero() {
+interface LandingHeroProps {
+  isAuthenticated: boolean;
+}
+
+export function LandingHero({ isAuthenticated }: LandingHeroProps) {
   return (
     <div className="relative">
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -11,12 +16,21 @@ export function LandingHero() {
             JobTrack
           </Link>
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" className="hidden sm:inline-flex">
-              <Link href="/auth">로그인</Link>
-            </Button>
-            <Button asChild size="sm">
-              <Link href="/auth">시작하기</Link>
-            </Button>
+            {isAuthenticated ? (
+              <Button asChild size="sm">
+                <Link href="/dashboard">대시보드로 이동</Link>
+              </Button>
+            ) : (
+              <>
+                <Button asChild variant="ghost" className="hidden sm:inline-flex">
+                  <Link href="/auth?mode=login">로그인</Link>
+                </Button>
+                <Button asChild size="sm">
+                  <Link href="/auth?mode=register">시작하기</Link>
+                </Button>
+              </>
+            )}
+            <DarkButton />
           </div>
         </div>
       </nav>
@@ -43,7 +57,9 @@ export function LandingHero() {
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Button asChild size="lg">
-                <Link href="/auth">무료로 시작하기</Link>
+                <Link href={isAuthenticated ? "/dashboard" : "/auth?mode=register"}>
+                  {isAuthenticated ? "대시보드로 이동" : "무료로 시작하기"}
+                </Link>
               </Button>
               <Button
                 asChild

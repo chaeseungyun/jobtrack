@@ -27,7 +27,7 @@ export function AppShell({
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
       <header className="border-b border-border bg-background/80 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-          <Link href="/dashboard" className="text-lg font-semibold text-foreground">
+          <Link href="/" className="text-lg font-semibold text-foreground">
             JobTrack
           </Link>
           <nav className="flex items-center gap-2">
@@ -47,6 +47,12 @@ export function AppShell({
                 </Link>
               );
             })}
+            <Link
+              href="/"
+              className="px-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              랜딩
+            </Link>
             <DarkButton />
             <LogoutButton />
           </nav>
