@@ -18,3 +18,9 @@ export type {
 } from "./document.repository";
 
 export type { IUserRepository } from "./user.repository";
+
+
+export type {
+  IJobCacheRepository,
+  JobParsingCacheRow,
+} from "./job-cache.repository";

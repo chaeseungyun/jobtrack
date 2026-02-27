@@ -115,6 +115,52 @@
         }
       }
     },
+    "/api/applications/parse": {
+      "post": {
+        "summary": "Parse job posting from URL",
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url"],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Parsed job data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParsedJob"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "400": {
+            "description": "Invalid URL or parsing error"
+          }
+        }
+      }
+    },
+
     "/api/applications": {
       "get": {
         "summary": "List applications",
@@ -946,6 +992,40 @@
           }
         }
       },
+      "ParsedJob": {
+        "type": "object",
+        "required": [
+          "company_name",
+          "position",
+          "career_type"
+        ],
+        "properties": {
+          "company_name": {
+            "type": "string"
+          },
+          "position": {
+            "type": "string"
+          },
+          "career_type": {
+            "$ref": "#/components/schemas/CareerType"
+          },
+          "merit_tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "company_memo": {
+            "type": "string"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+
       "ApplicationDetailResponse": {
         "allOf": [
           {
