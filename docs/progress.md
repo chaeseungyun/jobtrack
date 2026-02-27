@@ -1,5 +1,184 @@
 # Progress Log
 
+이 문서는 일일 목표, 작업 내용, 학습 로그 및 다음 단계를 기록하는 작업 일지입니다.
+기술적 의사결정 기록은 [selection.md](./selection.md)에서 관리합니다.
+
+---
+
+## 2026-02-23
+
+### 1) 오늘의 목표
+- 랜딩 페이지 개선 (진입점 추가, 공용 컴포넌트 재사용)
+- 이메일 테스트
+
+### 2) 작업 내용
+- Done:
+- In porgress:
+  - 랜딩 페이지 개선 (진입점 추가, 공용 컴포넌트 재사용)
+  - 이메일 테스트
+- Blocked:
+
+### 3) 검증/지표
+- 기능 검증(회귀 포함)
+  - `pnpm build`: 성공
+  - 랜딩 페이지 리다이렉트 로직 검증: 미인증 시 랜딩, 인증 시 대시보드 리다이렉트 확인
+
+### 4) 학습 로그
+- 이메일이 발송되지 않는 문제를 추적하는 과정에서, Promise.allSettled 사용 방식에 대한 이해가 부족했음을 깨달았다.
+- Promise.allSettled는 내부 Promise가 reject되어도 전체가 reject되지 않고, 항상 fulfilled 상태로 결과 배열을 반환한다는 점을 정확히 이해하게 되었다.
+- 그동안 try/catch로 에러가 잡힐 것이라 생각했지만, 실제로는 status: 'rejected'인 항목을 직접 순회하며 처리해야 한다는 점을 놓치고 있었다.
+- 이를 개선하기 위해 allSettled 결과를 순회하며 rejected 항목의 error를 명시적으로 로깅하도록 수정했다.
+- 이번 경험을 통해 “에러가 발생했는지”보다 “에러를 어떻게 관측하고 추적할 것인가”가 더 중요하다는 점을 배웠다.
+
+### 5) 다음 스텝
+- V3 자동화 (LLM URL 파싱 등)
+- Gmail API 연동 연구
+
+---
+
+## 2026-02-23 (Architecture Update)
+
+### 1) 오늘의 목표
+- layered architecture 도입
+
+### 2) 작업 내용
+- Done:
+  - layered architecture 도입
+  - 다크 모드 적용
+  - 랜딩 페이지 구현 및 시각적 고도화 (애니메이션, 호버 효과 등)
+- In porgress:
+- Blocked:
+
+### 3) 검증/지표
+- 기능 검증(회귀 포함)
+  - `pnpm build`: 성공
+  - 랜딩 페이지 리다이렉트 로직 검증: 미인증 시 랜딩, 인증 시 대시보드 리다이렉트 확인
+
+### 4) 학습 로그
+- 3-layered architecture는 관심사를 분리하여 변경 전파를 최소화한다.
+  - HTTP 변경이 비즈니스 로직 변경을 유발하지 않아야 한다.
+  - DB 교체가 서비스 로직 수정을 유발하지 않아야 한다.
+- DIP(Dependency Inversion Principle)에 따라 service는 repository의 구현체가 아니라 추상화(인터페이스)에 의존해야 한다.
+- controller는 HTTP 요청/응답 처리 및 DTO 변환만 담당한다.
+- service layer는 유즈케이스 단위의 비즈니스 로직을 담당하며, 하나의 유즈케이스는 하나의 트랜잭션 경계를 가진다.
+- repository는 도메인 관점에서 영속성을 추상화하는 계층이며, DB 접근 구현 세부사항을 외부로 노출하지 않는다.
+- service가 비대해지지 않으려면 엔티티 단위가 아닌 행위 중심으로 설계해야 한다.
+- next.js api routes를 controller로 사용하고 있는데 server components의 경우 container -> service -> repository 흐름을 따르도록 설계
+- raw token -> tailwind utility -> 전역 레이어 순서로 디자인을 설계시 추후 raw token 값만 바꾸면 디자인 토큰 변경이 쉬움
+
+---
+
+## 2026-02-22
+
+### 1) 오늘의 목표
+- production, preview 환경 변수 세팅
+- E2E 테스트
+- 문서화 전략 세우기
+
+### 2) 작업 내용
+- Done:
+  - production 배포 및 환경 변수 세팅
+- In porgress:
+  - 문서화 전략 세우기
+
+### 3) 학습 로그
+- 문서화 전략 수립 과정에서 PRD, Architecture, Progress 문서의 역할을 분리함. (Decision Log는 selection.md로 분리 결정)
+
+---
+
+## 2026-02-19
+
+### 1) 오늘의 목표
+- Step 7. 알림 시스템(Resend + Webhook + Cron) 구현
+- 데이터 아키텍처 및 도메인 모델(Application) 정제
+- 리액트 쿼리 캐시 재사용성 극대화
+
+### 2) 작업 내용
+- Done:
+  - **알림 인프라 구축**: `resend`, `svix` 의존성 설치 및 설정
+  - **Service Layer 통합 및 확장**: `eventService`를 `applicationService`로 완전 통합
+  - **API 및 웹훅 핸들러 구현**: Vercel Cron 기반 자동 알림 및 Resend 웹훅 연동
+  - **도메인 모델 및 캐싱 최적화**: ApplicationRow 확장 및 캐시 재사용성 100% 달성
+  - **UI/UX 개선**: 일정 관리 액션 추가
+
+### 3) 검증/지표
+- `pnpm build`: 성공
+- LSP 진단: clean
+- Cron 트리거 및 Webhook 수신 로직 확인 완료
+
+---
+
+## 2026-02-16
+
+### 1) 오늘의 목표
+- 지원서 등록 전용 UI 구현
+- Server Components first 구조 유지
+- 기존 API 연결 및 검증
+
+### 2) 작업 내용
+- Done:
+  - `/applications/new` 페이지 및 폼 구현
+  - 문서 업로드/다운로드/삭제 UI 연결
+  - React Query SSR Hydration 도입
+  - 데이터 아키텍처 단순화 (마감일 통합 등)
+
+### 3) 검증/지표
+- `pnpm build`: 성공
+- 상세 페이지 메인 폼 저장 및 일정 추가/수정/삭제 동작 확인
+
+### 4) 학습 로그
+- 신규 페이지 추가 시 서버 페이지 + 클라이언트 폼 island 분리 패턴으로 클라이언트 번들 최소화
+- 입력 스키마 기반 폼 필드 매핑 체크리스트의 중요성 체득
+
+---
+
+## 2026-02-15
+
+### 1) 오늘의 목표
+- Server components 활용 아키텍처 변경
+- JWT 쿠키 관리로 전환
+- 지원서 등록 화면 UI 구현 시작
+
+### 2) 작업 내용
+- Done:
+  - httpOnly cookie 인증 전환
+  - Server Components first 전면 전환
+  - OpenAPI 스펙 동기화
+
+### 3) 검증/지표
+- API health 및 Auth 회귀 테스트 통과
+- `Set-Cookie` 헤더 및 쿠키 기반 인증 동작 확인
+
+### 4) 학습 로그
+- Server/Client Component 경계 설정이 인증 방식과 강하게 결합됨을 배움.
+- 아키텍처 전환 시 지표(번들 제거, 참조 제거 등)를 수치화하는 것의 중요성.
+
+---
+
+## 2026-02-14
+
+### 1) 오늘의 목표
+- 프로젝트 초기 세팅 (Next.js, API, Supabase)
+- Auth 및 핵심 API(Applications/Events/Documents) 구현
+
+### 2) 작업 내용
+- Done:
+  - Next.js + shadcn/ui 초기 세팅
+  - Supabase 연결 및 타입 정의
+  - JWT 기반 인증 및 핵심 CRUD API 구현
+  - Swagger/OpenAPI 연동
+  - 초기 UI 구현 (Dashboard, Board, 상세 페이지)
+
+### 3) 검증/지표
+- `pnpm build`: 성공
+- 핵심 시나리오 E2E 테스트 통과
+
+### 4) 학습 로그
+- Supabase 타입 동기화 전략 수립.
+- `server-only`를 활용한 경계 설계.
+- Swagger를 통한 API 테스트 일원화의 편리함.
+
+
 ### template
 ### 1) 오늘의 목표
 -
