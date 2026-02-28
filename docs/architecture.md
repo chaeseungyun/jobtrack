@@ -15,13 +15,14 @@
 - **레이어 규칙 (예외 없음)**:
   - **Controller** (Route Handler / Server Component): HTTP 요청/응답 처리, 인증 검증, 입력 유효성 검사. 비즈니스 로직 포함 금지.
   - **Service** (class 기반): 비즈니스 로직 캡슐화. Repository 인터페이스를 생성자 주입(Constructor Injection)으로 받는다.
-  - **Repository Interface** (`domain/repositories/`): Supabase 비종속적인 도메인 언어로 정의된 데이터 접근 계약.
-  - **Repository Implementation** (`infrastructure/repositories/`): Supabase SDK를 사용한 구체 구현체.
+  - **Repository Interface** (`lib/core/repositories/interfaces/`): Supabase 비종속적인 도메인 언어로 정의된 데이터 접근 계약.
+  - **Repository Implementation** (`lib/core/repositories/supabase/`): Supabase SDK를 사용한 구체 구현체.
+  - **Service** (`lib/core/services/`): 비즈니스 로직 캡슐화. Repository 인터페이스를 생성자 주입으로 받는다.
 - **DI 전략 (Domain-specific Container)**:
   - 도메인별 컨테이너 팩토리 함수(`containers/`)가 Supabase 클라이언트 생성 → Repository 인스턴스화 → Service 인스턴스화를 수행한다.
   - Controller에서 `const { applicationService } = createApplicationContainer()` 형태로 사용하여 보일러플레이트를 최소화한다.
 - **에러 처리**:
-  - `AppError` 경량 에러 클래스(`domain/errors.ts`)로 도메인 에러를 표현한다.
+  - `AppError` 경량 에러 클래스(`lib/core/errors.ts`)로 도메인 에러를 표현한다.
   - Controller에서 `toErrorResponse(error)` 헬퍼(`api/response.ts`)를 통해 AppError를 HTTP 응답으로 변환한다.
 #### 코드 예제: 지원서 목록 조회 플로우
 
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest) {
 }
 ```
 
-**2. Service** (`lib/services/ApplicationService.ts`) — 비즈니스 로직 캡슐화:
+**2. Service** (`lib/core/services/ApplicationService.ts`) — 비즈니스 로직 캡슐화:
 
 ```typescript
 export class ApplicationService {
@@ -72,7 +73,7 @@ export class ApplicationService {
 }
 ```
 
-**3. Repository Interface** (`lib/domain/repositories/application.repository.ts`) — DB 비종속 계약:
+**3. Repository Interface** (`lib/core/repositories/interfaces/application.repository.ts`) — DB 비종속 계약:
 
 ```typescript
 export interface IApplicationRepository {
@@ -88,7 +89,7 @@ export interface IApplicationRepository {
 }
 ```
 
-**4. Repository Implementation** (`lib/infrastructure/repositories/SupabaseApplicationRepository.ts`) — Supabase 구체 구현:
+**4. Repository Implementation** (`lib/core/repositories/supabase/SupabaseApplicationRepository.ts`) — Supabase 구체 구현:
 
 ```typescript
 export class SupabaseApplicationRepository implements IApplicationRepository {
@@ -166,12 +167,15 @@ src/
 │   ├── api/              # HTTP 응답 헬퍼 (toErrorResponse 등)
 │   ├── auth/             # 인증 및 보안 (JWT, 세션)
 │   ├── containers/       # 도메인별 DI 컨테이너 팩토리
-│   ├── domain/           # 도메인 계층
+│   ├── core/             # 핵심 계층 (Centralized Services & Repositories)
 │   │   ├── errors.ts     # AppError 경량 에러 클래스
-│   │   └── repositories/ # Repository 인터페이스 (Supabase 비종속)
-│   ├── infrastructure/   # 인프라 계층
-│   │   └── repositories/ # Supabase Repository 구현체
-│   ├── services/         # 비즈니스 로직 (class 기반 Service)
+│   │   ├── repositories/ # Repository 계층
+│   │   │   ├── interfaces/ # 인터페이스 정의
+│   │   │   └── supabase/   # Supabase 구현체
+│   │   └── services/     # 서비스 계층 (Business Logic)
+│   │       ├── interfaces/ # 도메인 서비스 인터페이스
+│   │       ├── llm/        # LLM 관련 구현체
+│   │       └── scrapers/   # 스크래퍼 관련 구현체
 │   ├── supabase/         # DB 클라이언트 및 생성 타입
 │   └── validation/       # Zod 기반 요청 검증
 └── types/                # 공용 타입 정의

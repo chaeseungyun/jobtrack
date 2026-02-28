@@ -12,6 +12,7 @@ type AuthResult =
 
 export const requireAuth = (request: NextRequest): AuthResult => {
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value ?? null;
+  console.log("Request cookies:", request.cookies.get(AUTH_COOKIE_NAME));
 
   if (!token) {
     return {

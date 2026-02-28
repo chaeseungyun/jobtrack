@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { toErrorResponse } from "@/lib/api/response";
 import { createNotificationContainer } from "@/lib/containers/notification.container";
-import { emailService } from "@/lib/services/email.service";
+import { emailService } from "@/lib/core/services/email.service";
 
 export async function POST(request: NextRequest) {
   const payload = await request.text();

@@ -1,6 +1,6 @@
-import { IJobCacheRepository } from "@/lib/domain/repositories/job-cache.repository";
-import { IScraperService } from "@/lib/domain/services/scraper.service";
-import { IParsingService, ParsedJob } from "@/lib/domain/services/parser.service";
+import { IJobCacheRepository } from "@/lib/core/repositories/interfaces/job-cache.repository";
+import { IScraperService } from "@/lib/core/services/interfaces/scraper.service";
+import { IParsingService, ParsedJob } from "@/lib/core/services/interfaces/parser.service";
 
 export class JobParsingService {
   constructor(
@@ -12,6 +12,7 @@ export class JobParsingService {
 
   async parseUrl(url: string): Promise<ParsedJob> {
     const cached = await this.cacheRepo.get(url);
+    console.log(cached)
     if (cached) {
       return cached.parsed_data as ParsedJob;
     }

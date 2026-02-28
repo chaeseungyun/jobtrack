@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { AppError } from "@/lib/domain/errors";
+import { AppError } from "@/lib/core/errors";
 
 export function toErrorResponse(error: unknown): NextResponse {
   if (error instanceof AppError) {

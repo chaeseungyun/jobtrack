@@ -1,5 +1,5 @@
-import { SupabaseUserRepository } from "@/lib/infrastructure/repositories";
-import { AuthService } from "@/lib/services/AuthService";
+import { SupabaseUserRepository } from "@/lib/core/repositories/supabase";
+import { AuthService } from "@/lib/core/services/AuthService";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export function createAuthContainer() {

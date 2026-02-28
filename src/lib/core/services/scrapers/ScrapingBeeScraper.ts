@@ -1,4 +1,4 @@
-import { IScraperService, ScrapeResult } from "@/lib/domain/services/scraper.service";
+import { IScraperService, ScrapeResult } from "@/lib/core/services/interfaces/scraper.service";
 // @ts-ignore
 import { ScrapingBeeClient } from "scrapingbee";
 

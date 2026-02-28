@@ -1,8 +1,8 @@
-import { SupabaseJobCacheRepository } from "@/lib/infrastructure/repositories";
-import { NativeScraper } from "@/lib/infrastructure/scrapers/NativeScraper";
-import { ScrapingBeeScraper } from "@/lib/infrastructure/scrapers/ScrapingBeeScraper";
-import { OpenAiParsingService } from "@/lib/infrastructure/llm/OpenAiParsingService";
-import { JobParsingService } from "@/lib/services/JobParsingService";
+import { SupabaseJobCacheRepository } from "@/lib/core/repositories/supabase";
+import { NativeScraper } from "@/lib/core/services/scrapers/NativeScraper";
+import { ScrapingBeeScraper } from "@/lib/core/services/scrapers/ScrapingBeeScraper";
+import { OpenAiParsingService } from "@/lib/core/services/llm/OpenAiParsingService";
+import { JobParsingService } from "@/lib/core/services/JobParsingService";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export function createParsingContainer() {

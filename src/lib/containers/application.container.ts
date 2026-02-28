@@ -1,7 +1,7 @@
-import { SupabaseApplicationRepository } from "@/lib/infrastructure/repositories";
-import { SupabaseEventRepository } from "@/lib/infrastructure/repositories";
-import { ApplicationService } from "@/lib/services/ApplicationService";
-import { EventService } from "@/lib/services/EventService";
+import { SupabaseApplicationRepository } from "@/lib/core/repositories/supabase";
+import { SupabaseEventRepository } from "@/lib/core/repositories/supabase";
+import { ApplicationService } from "@/lib/core/services/ApplicationService";
+import { EventService } from "@/lib/core/services/EventService";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export function createApplicationContainer() {

@@ -1,6 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { IJobCacheRepository, JobParsingCacheRow } from "@/lib/domain/repositories/job-cache.repository";
-import { CreateApplicationInput } from "@/lib/domain/repositories/application.repository";
+import { IJobCacheRepository, JobParsingCacheRow } from "@/lib/core/repositories/interfaces/job-cache.repository";
+import { CreateApplicationInput } from "@/lib/core/repositories/interfaces/application.repository";
 
 export class SupabaseJobCacheRepository implements IJobCacheRepository {
   constructor(private readonly supabase: SupabaseClient) {}

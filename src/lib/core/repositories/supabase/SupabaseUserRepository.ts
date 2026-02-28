@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { IUserRepository } from "@/lib/domain/repositories";
+import type { IUserRepository } from "@/lib/core/repositories/interfaces";
 import type { UserRow } from "@/lib/supabase/types";
 
 export class SupabaseUserRepository implements IUserRepository {

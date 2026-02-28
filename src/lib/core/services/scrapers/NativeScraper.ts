@@ -1,4 +1,4 @@
-import { IScraperService, ScrapeResult } from "@/lib/domain/services/scraper.service";
+import { IScraperService, ScrapeResult } from "@/lib/core/services/interfaces/scraper.service";
 
 export class NativeScraper implements IScraperService {
   async scrape(url: string): Promise<ScrapeResult> {

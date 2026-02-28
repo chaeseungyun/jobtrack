@@ -1,8 +1,8 @@
-import { notFound } from "@/lib/domain/errors";
+import { notFound } from "@/lib/core/errors";
 import type {
   IApplicationRepository,
   IDocumentRepository,
-} from "@/lib/domain/repositories";
+} from "@/lib/core/repositories/interfaces";
 import type { DocumentRow } from "@/lib/supabase/types";
 
 export class DocumentService {

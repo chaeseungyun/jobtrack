@@ -1,4 +1,4 @@
-import { CreateApplicationInput } from "../repositories/application.repository";
+import { CreateApplicationInput } from "../../repositories/interfaces/application.repository";
 
 export interface ParsedJob extends CreateApplicationInput {
   deadline?: string | null;

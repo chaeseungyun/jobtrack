@@ -1,5 +1,5 @@
-import type { IEventRepository } from "@/lib/domain/repositories";
-import { emailService } from "@/lib/services/email.service";
+import type { IEventRepository } from "@/lib/core/repositories/interfaces";
+import { emailService } from "@/lib/core/services/email.service";
 
 export class NotificationService {
   constructor(private readonly eventRepo: IEventRepository) {}

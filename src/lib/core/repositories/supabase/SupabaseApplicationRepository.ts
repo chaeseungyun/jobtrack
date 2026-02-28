@@ -4,7 +4,7 @@ import type {
   IApplicationRepository,
   CreateApplicationInput,
   UpdateApplicationInput,
-} from "@/lib/domain/repositories";
+} from "@/lib/core/repositories/interfaces";
 import type { ApplicationRow, StageType } from "@/lib/supabase/types";
 
 export class SupabaseApplicationRepository implements IApplicationRepository {

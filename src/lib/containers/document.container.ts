@@ -1,6 +1,6 @@
-import { SupabaseApplicationRepository } from "@/lib/infrastructure/repositories";
-import { SupabaseDocumentRepository } from "@/lib/infrastructure/repositories";
-import { DocumentService } from "@/lib/services/DocumentService";
+import { SupabaseApplicationRepository } from "@/lib/core/repositories/supabase";
+import { SupabaseDocumentRepository } from "@/lib/core/repositories/supabase";
+import { DocumentService } from "@/lib/core/services/DocumentService";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export function createDocumentContainer() {

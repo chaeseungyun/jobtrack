@@ -1,5 +1,5 @@
-import { conflict, unauthorized } from "@/lib/domain/errors";
-import type { IUserRepository } from "@/lib/domain/repositories";
+import { conflict, unauthorized } from "@/lib/core/errors";
+import type { IUserRepository } from "@/lib/core/repositories/interfaces";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
 
 export class AuthService {

@@ -6,7 +6,7 @@ import type {
   UpdateEventInput,
   NotificationTarget,
   UpcomingEvent,
-} from "@/lib/domain/repositories";
+} from "@/lib/core/repositories/interfaces";
 import type { EventRow } from "@/lib/supabase/types";
 
 export class SupabaseEventRepository implements IEventRepository {

@@ -1,13 +1,13 @@
-import { notFound } from "@/lib/domain/errors";
+import { notFound } from "@/lib/core/errors";
 import type {
   IApplicationRepository,
   CreateApplicationInput,
   UpdateApplicationInput,
-} from "@/lib/domain/repositories";
+} from "@/lib/core/repositories/interfaces";
 import type {
   IEventRepository,
   UpcomingEvent,
-} from "@/lib/domain/repositories";
+} from "@/lib/core/repositories/interfaces";
 import type { ApplicationRow, EventRow, StageType } from "@/lib/supabase/types";
 
 export class ApplicationService {

@@ -1,5 +1,5 @@
-import { SupabaseEventRepository } from "@/lib/infrastructure/repositories";
-import { NotificationService } from "@/lib/services/NotificationService";
+import { SupabaseEventRepository } from "@/lib/core/repositories/supabase";
+import { NotificationService } from "@/lib/core/services/NotificationService";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 export function createNotificationContainer() {

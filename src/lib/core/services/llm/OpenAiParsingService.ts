@@ -1,4 +1,4 @@
-import { IParsingService, ParsedJob } from "@/lib/domain/services/parser.service";
+import { IParsingService, ParsedJob } from "@/lib/core/services/interfaces/parser.service";
 import OpenAI from "openai";
 import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";

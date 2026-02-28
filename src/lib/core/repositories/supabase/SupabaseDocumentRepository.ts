@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   IDocumentRepository,
   CreateDocumentInput,
-} from "@/lib/domain/repositories";
+} from "@/lib/core/repositories/interfaces";
 import type { DocumentRow } from "@/lib/supabase/types";
 
 export class SupabaseDocumentRepository implements IDocumentRepository {

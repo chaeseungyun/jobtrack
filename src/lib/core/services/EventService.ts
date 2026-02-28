@@ -1,10 +1,10 @@
-import { notFound } from "@/lib/domain/errors";
+import { notFound } from "@/lib/core/errors";
 import type {
   IApplicationRepository,
   IEventRepository,
   CreateEventInput,
   UpdateEventInput,
-} from "@/lib/domain/repositories";
+} from "@/lib/core/repositories/interfaces";
 import type { EventRow } from "@/lib/supabase/types";
 
 export class EventService {
