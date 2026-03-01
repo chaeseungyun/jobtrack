@@ -9,15 +9,17 @@ export class NativeScraper implements IScraperService {
     });
 
     // We allow 404/410 to be handled by the parser to detect expired jobs
-    if (!response.ok && response.status !== 404 && response.status !== 410) {
+    if (!response.ok && ![403, 404, 410, 429].includes(response.status)) {
       throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
     }
 
     const html = await response.text();
+
     return {
       html,
       status: response.status,
       url,
+      isBlocked: response.status === 403 || response.status === 429,
     };
   }
 }

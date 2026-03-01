@@ -3,6 +3,7 @@ import { JobParsingService } from "../JobParsingService";
 import { IJobCacheRepository } from "@/lib/core/repositories/interfaces/job-cache.repository";
 import { IScraperService } from "@/lib/core/services/interfaces/scraper.service";
 import { IParsingService } from "@/lib/core/services/interfaces/parser.service";
+import { ADAPTER_CONFIG } from "@/lib/core/config/adapter.config";
 
 describe("JobParsingService", () => {
   let service: JobParsingService;
@@ -47,11 +48,13 @@ describe("JobParsingService", () => {
 
     expect(result).toEqual(cachedData);
     expect(mockNativeScraper.scrape).not.toHaveBeenCalled();
+    expect(mockSpbScraper.scrape).not.toHaveBeenCalled();
+    expect(mockParser.parse).not.toHaveBeenCalled();
   });
 
   it("should use native scraper and then parse if cache is empty", async () => {
     const url = "https://example.com/job";
-    const html = "<html><body>Job Details</body></html>";
+    const html = `<html><body>${"Job Details ".repeat(150)}</body></html>`;
     const parsedData = { company_name: "New Co", position: "Manager", career_type: "experienced" as const };
 
     vi.mocked(mockCacheRepo.get).mockResolvedValue(null);
@@ -62,7 +65,9 @@ describe("JobParsingService", () => {
 
     expect(result).toEqual(parsedData);
     expect(mockNativeScraper.scrape).toHaveBeenCalledWith(url);
-    expect(mockCacheRepo.set).toHaveBeenCalled();
+    expect(mockSpbScraper.scrape).not.toHaveBeenCalled();
+    expect(mockParser.parse).toHaveBeenCalledWith(html, ADAPTER_CONFIG.generic);
+    expect(mockCacheRepo.set).toHaveBeenCalledWith(url, parsedData, expect.any(Date));
   });
 
   it("should fallback to ScrapingBee if native scraper is blocked", async () => {
@@ -79,6 +84,25 @@ describe("JobParsingService", () => {
     const result = await service.parseUrl(url);
 
     expect(result).toEqual(parsedData);
+    expect(mockNativeScraper.scrape).toHaveBeenCalledWith(url);
     expect(mockSpbScraper.scrape).toHaveBeenCalledWith(url);
+    expect(mockParser.parse).toHaveBeenCalledWith(successHtml, ADAPTER_CONFIG.generic);
+  });
+
+  it("should route directly to ScrapingBee when adapter requires JS rendering", async () => {
+    const url = "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=123";
+    const html = "<html><body>Saramin Job</body></html>";
+    const parsedData = { company_name: "Saramin", position: "FE", career_type: "any" as const };
+
+    vi.mocked(mockCacheRepo.get).mockResolvedValue(null);
+    vi.mocked(mockSpbScraper.scrape).mockResolvedValue({ html, status: 200, url });
+    vi.mocked(mockParser.parse).mockResolvedValue(parsedData);
+
+    const result = await service.parseUrl(url);
+
+    expect(result).toEqual(parsedData);
+    expect(mockNativeScraper.scrape).not.toHaveBeenCalled();
+    expect(mockSpbScraper.scrape).toHaveBeenCalledWith(url);
+    expect(mockParser.parse).toHaveBeenCalledWith(html, ADAPTER_CONFIG["saramin.co.kr"]);
   });
 });

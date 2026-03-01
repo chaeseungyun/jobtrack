@@ -14,6 +14,11 @@ export async function POST(request: NextRequest) {
     return auth.response;
   }
 
+  // const token = request.headers.get("Authorization")?.replace("Bearer ", "");
+  // if (!token) {
+  //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // }
+
   try {
     const body = await request.json();
     const { url } = parseRequestSchema.parse(body);

@@ -242,3 +242,24 @@ src/
 - **[V2-DONE] Repository 패턴 도입**: interface 기반 Repository + class 기반 Service + 도메인별 Container로 3계층 아키텍처 완성.
 - **[V2-DONE] 알림 서비스 독립화**: NotificationService 추출 완료. 단위 테스트 강화는 추후 진행.
 - **[V2-PLANNED] Auth 추상화**: `IAuthService` 도입 및 Supabase Auth 마이그레이션.
+
+---
+
+## 9. 채용 공고 파싱 파이프라인 (Job Parsing Pipeline)
+
+### 9.1 파이프라인 구조
+- **Orchestrator**: `JobParsingService`가 전체 흐름을 제어한다.
+- **Adapter Config**: `ADAPTER_CONFIG`를 통해 도메인별 최적화된 스크래핑 및 파싱 규칙을 정의한다.
+- **Scraper Layer**: `NativeScraper`(빠름/저비용)와 `ScrapingBeeScraper`(JS 렌더링/우회)를 상황에 맞게 사용한다.
+- **Parser Layer**: `OpenAiParsingService`가 `cheerio`를 사용하여 본문을 추출하고, LLM을 통해 정형 데이터로 변환한다.
+
+### 9.2 주요 전략
+- **지능형 라우팅**: `render_js` 설정에 따라 스크래퍼를 선택하며, Native 요청이 차단(`isBlocked`)되거나 본문이 너무 짧을 경우 자동으로 ScrapingBee로 재시도한다.
+- **LLM 전처리 및 비용 최적화**: 
+  - `cheerio`로 불필요한 태그(`script`, `style` 등) 및 노이즈(추천 공고 등)를 제거한다.
+  - `Turndown`을 사용하여 HTML을 Markdown으로 변환, 토큰 사용량을 최소화한다 (최대 15,000자).
+- **Graceful Fallback**: 특정 사이트의 셀렉터가 변경되어 매칭에 실패할 경우, `generic` 설정으로 전환하거나 전체 텍스트 추출 모드로 자동 복구한다.
+
+
+- **[V3-DONE] 채용 공고 파싱 고도화**: `ADAPTER_CONFIG` 기반 멀티 사이트 대응, ScrapingBee/Native 스크래퍼 동적 라우팅, LLM 전처리 최적화(HTML 최소화) 적용 완료.
+

@@ -30,6 +30,7 @@ export class ScrapingBeeScraper implements IScraperService {
       html,
       status,
       url,
+      isBlocked: status === 403 || status === 429,
     };
   }
 }

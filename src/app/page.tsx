@@ -5,6 +5,8 @@ import { LandingFooter } from "@/components/app/landing-footer";
 import { LandingHero } from "@/components/app/landing-hero";
 import { LandingPreview } from "@/components/app/landing-preview";
 import { getServerAuthPayload } from "@/lib/auth/session";
+import { cookies } from "next/headers";
+import { AUTH_COOKIE_NAME } from "@/lib/auth/jwt";
 
 export const metadata: Metadata = {
   title: "JobTrack",
