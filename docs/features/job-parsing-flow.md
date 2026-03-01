@@ -60,11 +60,13 @@ graph TD
 
 ### Step 2: 지능형 스크래핑 라우팅 (Smart Scraping)
 1. **기본 시도**: 설정의 `render_js`가 `false`면 `NativeScraper`를 먼저 사용합니다.
-2. **차단 감지 및 재시도**:
-   - HTTP 상태 코드가 `403` 또는 `429`(차단)인 경우.
-   - HTML 본문 길이가 1,000자 미만인 경우 (비정상 응답).
-   - 본문에 "captcha", "robot" 등 차단 키워드가 포함된 경우.
-   - 위 조건 발생 시 자동으로 유료 서비스인 `ScrapingBeeScraper`로 재시도합니다.
+2. **차단 감지 및 견고한 폴백 (Robust Fallback)**:
+   - `NativeScraper`는 모든 HTTP 응답(4xx, 5xx 포함)을 그대로 반환하여 오케스트레이터가 판단할 수 있게 합니다.
+   - `JobParsingService`는 다음 조건 발생 시 자동으로 `ScrapingBeeScraper`로 재시도합니다:
+     - 네트워크 에러 발생 시.
+     - HTTP 상태 코드가 `403`, `429` 또는 기타 4xx/5xx 에러인 경우 (404/410 제외).
+     - HTML 본문 길이가 1,000자 미만인 경우 (비정상 응답 의심).
+     - 본문에 "captcha", "robot", "security check" 등 차단 키워드가 포함된 경우.
 
 ### Step 3: HTML 전처리 및 최적화 (Preprocessing)
 `OpenAiParsingService`는 LLM의 토큰 비용을 절감하고 정확도를 높이기 위해 다음 3단계 전략을 수행합니다.

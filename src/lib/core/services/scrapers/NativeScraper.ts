@@ -8,10 +8,10 @@ export class NativeScraper implements IScraperService {
       },
     });
 
-    // We allow 404/410 to be handled by the parser to detect expired jobs
-    if (!response.ok && ![403, 404, 410, 429].includes(response.status)) {
-      throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`);
-    }
+    // NativeScraper should return the response status and content without throwing,
+    // so that the orchestrator (JobParsingService) can decide whether to retry with ScrapingBee.
+    // We only throw if the request itself failed to execute (e.g., network error).
+
 
     const html = await response.text();
 

@@ -15,6 +15,16 @@
   3. 사이트 별로 adaptor를 만들어 selector를 유지보수하기 쉽게 보완
 - **리스크**: selector가 변경되면 즉각 조치 필요
 
+### 2) 스크래핑 로직 관리
+- **선택지**:
+  - A: 1차 fetch 이후 실패 시 ScrapingBee 사용
+  - B: ScrapingBee를 사용할지 안할지 미리 판단
+- **최종 결정**: **B안 채택**
+- **판단 근거**:
+  1. fetch로 url에서 데이터를 가져오면 비어있는 html이라도 응답을 받는다. 따라서 ScrapingBee fallback 로직이 실행되지 않고 있었다.
+  2. 사이트마다 adaptor에 js 렌더링 기반인지 파악하는 key를 두고 해당 값이 true면 바로 ScrapingBee를 사용하여 정확도를 향상시켰다. 일반 ssr 렌더링이면 일반 fetch를 먼저 시도해서 ScrapingBee 비용을 줄였다.
+  3. 일반 fetch를 했지만 정상적인 html을 가져오지 못할 경우에 ScrapingBee를 호출하도록 fallback 로직을 수정했다.
+- **리스크**: selector가 변경되면 즉각 조치 필요
 ---
 
 ## 2026-02-23
