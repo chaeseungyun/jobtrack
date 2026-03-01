@@ -3,11 +3,7 @@ import Link from "next/link";
 import { DarkButton } from "@/components/islands/dark-button.client";
 import { Button } from "@/components/ui/button";
 
-interface LandingHeroProps {
-  isAuthenticated: boolean;
-}
-
-export function LandingHero({ isAuthenticated }: LandingHeroProps) {
+export function LandingHero({ isAuthenticated }: { isAuthenticated?: boolean }) {
   return (
     <div className="relative">
       <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -56,11 +52,17 @@ export function LandingHero({ isAuthenticated }: LandingHeroProps) {
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <Button asChild size="lg">
-                <Link href={isAuthenticated ? "/dashboard" : "/auth?mode=register"}>
-                  {isAuthenticated ? "대시보드로 이동" : "무료로 시작하기"}
-                </Link>
-              </Button>
+              {isAuthenticated ? (
+                <Button asChild size="lg">
+                  <Link href="/dashboard">대시보드 바로가기</Link>
+                </Button>
+              ) : (
+                <Button asChild size="lg">
+                  <Link href="/auth?mode=register">
+                    무료로 시작하기
+                  </Link>
+                </Button>
+              )}
               <Button
                 asChild
                 size="lg"

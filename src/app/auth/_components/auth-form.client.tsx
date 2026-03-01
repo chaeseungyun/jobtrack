@@ -36,6 +36,7 @@ export function AuthForm() {
   const searchParams = useSearchParams();
   const requestedMode = searchParams.get("mode");
   const initialTab = requestedMode === "register" ? "register" : "login";
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
   const [activeTab, setActiveTab] = useState<"login" | "register">(initialTab);
   const [loginForm, setLoginForm] = useState<AuthFormState>(INITIAL_FORM);
@@ -56,7 +57,7 @@ export function AuthForm() {
       toast.success(mode === "login" ? "로그인 완료" : "계정이 생성되었습니다", {
         id: mode === "login" ? AUTH_TOAST_ID.loginSuccess : AUTH_TOAST_ID.registerSuccess,
       });
-      router.replace("/dashboard");
+      router.replace(callbackUrl);
     },
     onError: (error, mode) => {
       const message = error instanceof Error ? error.message : "요청에 실패했습니다";

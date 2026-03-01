@@ -215,7 +215,9 @@ src/
   - **클라이언트 대응**: API 응답에서 401 에러 감지 시, 클라이언트 사이드에서 사용자를 `/auth` 페이지로 리다이렉트하여 재로그인을 유도한다.
 
 ### 5.2 보안 원칙
-- API Route 접근 시 반드시 JWT 세션 검증 (`requireAuth` 미들웨어).
+- **미들웨어 기반 접근 제어**: `src/middleware.ts`에서 전역적으로 세션 쿠키 존재 여부를 확인하여 보호된 경로(`/dashboard`, `/applications`, `/board`) 접근을 제어하고, 인증된 사용자의 `/` 및 `/auth` 접근을 대시보드로 자동 리다이렉트한다.
+- **서버 컴포넌트 보안**: 미들웨어는 성능을 위해 쿠키 존재 여부만 확인하며, 최종적인 토큰 검증 및 사용자 식별은 서버 컴포넌트(`requireServerAuth`)와 API Route(`requireAuth`)에서 수행한다.
+- **소유권 검증**: 모든 리소스 접근 시 `user_id`를 통한 소유권 검증 필수 (Repository 레벨에서 userId 조건 강제).
 - 모든 리소스 접근 시 `user_id`를 통한 소유권 검증 필수 (Repository 레벨에서 userId 조건 강제).
 
 ---

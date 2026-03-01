@@ -3,11 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-interface LandingFooterProps {
-  isAuthenticated: boolean;
-}
-
-export function LandingFooter({ isAuthenticated }: LandingFooterProps) {
+export function LandingFooter() {
   return (
     <footer className="border-t border-border bg-background/80 backdrop-blur">
       <div className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
@@ -20,8 +16,8 @@ export function LandingFooter({ isAuthenticated }: LandingFooterProps) {
           </div>
 
           <Button asChild>
-            <Link href={isAuthenticated ? "/dashboard" : "/auth?mode=register"}>
-              {isAuthenticated ? "대시보드로 이동" : "무료로 시작하기"}
+            <Link href="/auth?mode=register">
+              무료로 시작하기
             </Link>
           </Button>
         </div>
@@ -39,9 +35,9 @@ export function LandingFooter({ isAuthenticated }: LandingFooterProps) {
             </Link>
             <Link
               className="transition-colors hover:text-foreground"
-              href={isAuthenticated ? "/dashboard" : "/auth?mode=register"}
+              href="/auth?mode=register"
             >
-              {isAuthenticated ? "대시보드" : "시작하기"}
+              시작하기
             </Link>
           </div>
         </div>
