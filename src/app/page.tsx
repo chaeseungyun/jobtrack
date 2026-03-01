@@ -13,11 +13,7 @@ export const metadata: Metadata = {
     "칸반 보드로 지원 파이프라인을 정리하고, 중요한 면접/코테 일정을 알림으로 놓치지 마세요.",
 };
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+export default async function HomePage() {
   const payload = await getServerAuthPayload();
   const isAuthenticated = payload !== null;
 
