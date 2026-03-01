@@ -32,6 +32,5 @@
 - 스킬 목록/설명에 맞는 작업이면 해당 스킬 문서( SKILL.md )를 먼저 열고 진행
 
 ## Preload Context
-- docs/steps.md
 - docs/prd.md
 - docs/architecture.md
