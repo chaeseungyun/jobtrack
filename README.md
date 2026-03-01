@@ -35,6 +35,10 @@ JobTrack은 취업 준비생의 지원 파이프라인과 면접/코딩테스트
   - 문제 정의, 목표, 사용자 시나리오, 성공 지표
 - 기술 설계: `docs/architecture.md`
   - 시스템 구조, API 방향, 데이터 흐름, 인증/보안 전략
+- 의사결정 기록: `docs/selection.md`
+  - 주요 기술적 선택과 근거 (Decision Log)
+- 진행 기록: `docs/progress.md`
+  - 일일 목표, 작업 내용, 학습 로그
 
 ## 프로젝트 구조
 
