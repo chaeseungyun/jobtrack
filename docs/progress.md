@@ -1,9 +1,149 @@
 # Progress Log
 
-이 문서는 일일 목표, 작업 내용, 학습 로그 및 다음 단계를 기록하는 작업 일지입니다.
-기술적 의사결정 기록은 [selection.md](./selection.md)에서 관리합니다.
+> **문서 역할**: 매일의 작업 목표, 실제 수행 내용, 검증 결과 및 가벼운 회고를 기록하는 작업 일지입니다.
+> **작성 가이드**:
+>
+> - **목표**: 당일 완수하고자 하는 항목
+> - **작업 내용**: 구체적인 변경 사항 (Done/In Progress/Blocked)
+> - **검증/지표**: 테스트 통과 여부, 빌드 성공 여부 등
+> - **학습 로그**: 새롭게 알게 된 사실이나 짧은 회고 (복잡한 기술 분석은 [Tech Notes](./tech-notes/)로 분리)
 
----
+기술적 의사결정 기록은 [selection.md](./selection.md)에서 관리하며, 심도 있는 기술 분석은 [tech-notes/](./tech-notes/)에 기록합니다.
+
+# 2026-03-02
+
+### 1) 오늘의 목표
+
+- JobParsingService client 연결
+- JobParsingService 에러 핸들링 고도화
+
+### 2) 작업 내용
+
+- Done:
+  - JobParsingService client 연결
+  - JobParsingService 에러 핸들링 고도화 (Scraper/Parser 에러 세분화, Fallback 최적화)
+- In porgress:
+- Blocked:
+
+### 3) 검증/지표
+
+- 기능 검증(회귀 포함)
+  - `pnpm build`: 성공
+  - `pnpm run test`: 성공
+  - `JobParsingService.test.ts` (7/7 통과): Scraping fallback 및 Cache resilience 검증 완료
+
+### 4) 학습 로그
+
+- **에러 핸들링의 가시성**: 단순한 500 에러보다 원인별(422, 429, 502) 세분화가 디버깅 경험을 크게 개선함을 실감함.
+- **탄력적 설계(Resilience)**: 캐시와 같은 부수적 기능이 메인 비즈니스 로직의 가용성을 해치지 않도록 'Best-effort' 전략을 취하는 법을 익힘.
+- 상세한 기술 분석 및 개선 과정은 **[Tech Note: Job Parsing Error Handling 고도화](./tech-notes/job-parsing-error-handling.md)**에 기록함.
+
+# 2026-03-02
+
+### 1) 오늘의 목표
+
+- JobParsingService client 연결
+- JobParsingService 에러 핸들링 고도화
+
+### 2) 작업 내용
+
+- Done:
+  - JobParsingService client 연결
+  - JobParsingService 에러 핸들링 고도화
+- In porgress:
+- Blocked:
+
+### 3) 검증/지표
+
+- 기능 검증(회귀 포함)
+  - `pnpm build`: 성공
+  - `pnpm run test`: 성공
+  - scraping fallback 로직 테스트 성공
+
+### 4) 학습 로그
+
+기존 JobParsingService의 스크래핑 및 파싱 로직에는 다음과 같은 문제가 있었다.
+
+1. 스크래핑 fallback 로직의 문제
+
+- config.render_js에 따라 nativeScraper 또는 ScrapingBee 실행
+- shouldRetryWithSpb 결과에 따라 ScrapingBee 재시도
+- nativeScraper 실패 시 ScrapingBee fallback
+- HTTP 상태 코드 기반의 의미 있는 에러 매핑이 없었음
+
+이로 인해 다음 문제가 발생했다.
+
+- 404, 410과 같이 재시도가 불필요한 경우에도 ScrapingBee fallback 실행
+- ScrapingBee 최초 실행 실패 후 fallback 로직에 의해 중복 실행
+- DNS 실패 등 네트워크 오류 발생 시 불필요한 ScrapingBee 호출
+- service 레이어가 네트워크 오류를 직접 판단하여 책임이 과도하게 집중됨
+- 모든 예외가 controller에서 500으로 매핑됨
+
+2. 캐시 실패 시 전체 로직 실패
+
+- cache get / set 실패 시 전체 파싱 요청이 실패
+- 캐시가 비즈니스 핵심 로직과 동일하게 취급됨
+
+3. Parser 단계의 에러 미분리
+
+- OpenAI API 오류
+- JSON 파싱 실패
+- Zod 스키마 불일치
+- finish_reason 비정상 종료
+
+이 모두가 구분 없이 처리되거나 500으로 매핑됨
+
+개선 내용
+
+1. Scraper 레이어에서 HTTP 상태 코드 기반 에러 매핑
+
+각 scraper에서 다음을 수행하도록 변경:
+
+- 404 / 410 → NOT_FOUND (404)
+- 5xx → UPSTREAM_ERROR (502)
+- 네트워크 오류 → NOT_FOUND
+- 기타 오류 → SCRAPE_FAILED
+
+ScrapingBee의 경우:
+
+- API status와 Origin status 분리 처리
+
+→ service는 오케스트레이션 역할만 수행
+
+2. Fallback 정책 명확화
+
+- NOT_FOUND는 절대 fallback하지 않음
+- ScrapingBee는 최대 1회만 실행
+- 중복 호출 제거
+
+→ 비용 감소 및 예측 가능한 실행 흐름 확보
+
+3. Parser 단계 에러 분리
+
+LLM 단계에서 다음을 분리:
+
+- finish_reason != stop → LLM_INCOMPLETE (502)
+- OpenAI 429 → LLM_RATE_LIMIT (429)
+- OpenAI 5xx → LLM_UPSTREAM_ERROR (502)
+- JSON.parse 실패 → LLM_INVALID_JSON (422)
+- Zod 스키마 불일치 → LLM_INVALID_SCHEMA (422)
+
+→ 의미 있는 상태 코드 반환 가능
+
+4. 캐시 실패 비치명 처리
+
+- cache get / set 실패 시 로깅만 수행
+- 비즈니스 흐름 유지
+
+→ 캐시는 best-effort 전략으로 전환
+
+개선 결과
+
+- HTTP 상태 코드 기반 의미 있는 에러 반환 가능
+- ScrapingBee 중복 실행 제거 → 비용 감소
+- 레이어 책임 분리 명확화
+- LLM 실패 유형별 추적 가능
+- 캐시 장애가 비즈니스 흐름에 영향 주지 않음
 
 ## 2026-02-29
 
@@ -15,9 +155,9 @@
 ### 2) 작업 내용
 
 - Done:
-- In porgress:
   - 랜딩 페이지 개선 (진입점 추가, 공용 컴포넌트 재사용)
   - 이메일 테스트
+- In porgress:
 - Blocked:
 
 ### 3) 검증/지표
