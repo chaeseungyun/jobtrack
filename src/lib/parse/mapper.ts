@@ -36,18 +36,6 @@ export function mapParsedJobToFormPatch(
   patch.company_memo = sanitize(parsed.company_memo);
   patch.cover_letter = sanitize(parsed.cover_letter);
 
-  patch.position = parsed.position ?? "";
-  if (parsed.career_type) {
-    patch.career_type = parsed.career_type;
-  }
-
-  // Optional fields with default values
-  patch.job_url = parsed.job_url ?? "";
-  patch.source = parsed.source ?? "none";
-  patch.merit_tags = (parsed.merit_tags ?? []).join(", ");
-  patch.company_memo = parsed.company_memo ?? "";
-  patch.cover_letter = parsed.cover_letter ?? "";
-
   // current_stage: only include if present
   if (parsed.current_stage !== undefined && parsed.current_stage !== null) {
     patch.current_stage = parsed.current_stage;
