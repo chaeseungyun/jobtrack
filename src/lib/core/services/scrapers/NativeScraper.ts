@@ -1,25 +1,45 @@
-import { IScraperService, ScrapeResult } from "@/lib/core/services/interfaces/scraper.service";
+import {
+  IScraperService,
+  ScrapeResult,
+} from "@/lib/core/services/interfaces/scraper.service";
+import { AppError, notFound } from "../../errors";
+import { isNetworkError } from "@/lib/utils/error";
 
 export class NativeScraper implements IScraperService {
   async scrape(url: string): Promise<ScrapeResult> {
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      },
-    });
+    try {
+      const response = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+      });
 
-    // NativeScraper should return the response status and content without throwing,
-    // so that the orchestrator (JobParsingService) can decide whether to retry with ScrapingBee.
-    // We only throw if the request itself failed to execute (e.g., network error).
+      if (!response.ok) {
+        if (response.status === 404 || response.status === 410) {
+          throw notFound(`공고가 존재하지 않습니다.`);
+        }
 
+        if (response.status >= 500) {
+          throw new AppError(502, "UPSTREAM_ERROR", "Origin server error");
+        }
 
-    const html = await response.text();
+        throw new AppError(response.status, "SCRAPE_FAILED", "Scrape failed");
+      }
 
-    return {
-      html,
-      status: response.status,
-      url,
-      isBlocked: response.status === 403 || response.status === 429,
-    };
+      const html = await response.text();
+
+      return {
+        html,
+        status: response.status,
+        url,
+      };
+    } catch (error) {
+      // If fetch itself fails (e.g., network error), we throw to let the orchestrator handle it.
+      if (isNetworkError(error)) {
+        throw notFound(`도메인을 찾을 수 없습니다. URL을 다시 확인해주세요.`);
+      }
+      throw error;
+    }
   }
 }

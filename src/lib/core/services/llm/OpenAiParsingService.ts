@@ -1,4 +1,7 @@
-import { IParsingService, ParsedJob } from "@/lib/core/services/interfaces/parser.service";
+import {
+  IParsingService,
+  ParsedJob,
+} from "@/lib/core/services/interfaces/parser.service";
 import { ADAPTER_CONFIG } from "@/lib/core/config/adapter.config";
 import type { JobAdapterConfig } from "@/lib/core/config/adapter.config";
 import OpenAI from "openai";
@@ -6,13 +9,21 @@ import { zodResponseFormat } from "openai/helpers/zod";
 import { z } from "zod";
 import TurndownService from "turndown";
 import * as cheerio from "cheerio";
+import { AppError } from "../../errors";
 
 const JobSchema = z.object({
   company_name: z.string().describe("기업 공식 명칭"),
   position: z.string().describe("채용 포지션명"),
-  career_type: z.enum(["new", "experienced", "any"]).describe("신입, 경력, 무관 중 하나"),
-  merit_tags: z.array(z.string()).max(10).describe("복지, 기술스택, 근무환경 등 주요 키워드"),
-  company_memo: z.string().describe("요구 기술 스택, 자격 요건, 우대 사항 요약"),
+  career_type: z
+    .enum(["new", "experienced", "any"])
+    .describe("신입, 경력, 무관 중 하나"),
+  merit_tags: z
+    .array(z.string())
+    .max(10)
+    .describe("복지, 기술스택, 근무환경 등 주요 키워드"),
+  company_memo: z
+    .string()
+    .describe("요구 기술 스택, 자격 요건, 우대 사항 요약"),
   deadline: z.string().nullable().describe("YYYY-MM-DDTHH:mm 형식의 마감일"),
 });
 
@@ -28,13 +39,14 @@ export class OpenAiParsingService implements IParsingService {
 
   async parse(html: string, config?: JobAdapterConfig): Promise<ParsedJob> {
     const markdown = this.preprocessHtml(html, config);
-    
-    const completion = await this.openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `
+
+    try {
+      const completion = await this.openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `
           당신은 채용 공고 데이터 추출 전문가입니다. 제공된 텍스트에서 정해진 구조에 따라 정보를 정확히 추출하세요.
 
           [핵심 규칙]
@@ -49,28 +61,86 @@ export class OpenAiParsingService implements IParsingService {
           6. merit_tags: 복지, 기술 스택, 근무 환경 등 주요 키워드를 최대 10개 추출하세요. 특히 '점심 식대, 저녁 식대, 재택 근무, 유연출근제, 복지포인트, 자유로운 연차 사용, 스톡옵션' 등의 항목은 표현 방식이 다르더라도 의미가 같다면 해당 키워드로 통합하여 추출하세요.
           7. company_memo: 자격 요건, 우대 사항, 기술 스택을 핵심 위주로 간결하게 요약하세요.
           `,
-        },
-        {
-          role: "user",
-          content: `다음 채용 공고 텍스트에서 정보를 추출하세요.
+          },
+          {
+            role: "user",
+            content: `다음 채용 공고 텍스트에서 정보를 추출하세요.
 
 --- BEGIN JOB TEXT ---
 ${markdown}
 --- END JOB TEXT ---`,
-        },
-      ],
-      response_format: zodResponseFormat(JobSchema, "job_parsing"),
-    });
+          },
+        ],
+        response_format: zodResponseFormat(JobSchema, "job_parsing"),
+      });
 
+      const choice = completion.choices[0];
 
-    const result = completion.choices[0].message.content;
-    if (!result) {
-      throw new Error("Failed to parse job data from LLM response");
+      if (!completion.choices?.length) {
+        throw new AppError(
+          502,
+          "LLM_EMPTY_RESPONSE",
+          "No choices returned from LLM",
+        );
+      }
+
+      if (choice.finish_reason !== "stop") {
+        throw new AppError(
+          502,
+          "LLM_INCOMPLETE",
+          `LLM did not finish properly: ${choice.finish_reason}`,
+        );
+      }
+
+      const result = choice.message.content;
+
+      if (!result) {
+        throw new AppError(502, "LLM_EMPTY_CONTENT", "Empty LLM content");
+      }
+
+      let parsed;
+
+      try {
+        parsed = JSON.parse(result);
+      } catch {
+        throw new AppError(422, "LLM_INVALID_JSON", "Invalid JSON from LLM");
+      }
+
+      const validated = JobSchema.safeParse(parsed);
+
+      if (!validated.success) {
+        throw new AppError(
+          422,
+          "LLM_INVALID_SCHEMA",
+          `Invalid schema from LLM: ${validated.error.message}`,
+        );
+      }
+
+      return validated.data;
+    } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
+
+      if (error?.status === 429) {
+        throw new AppError(
+          429,
+          "LLM_RATE_LIMIT",
+          "OpenAI API rate limit exceeded",
+        );
+      }
+
+      if (error?.status >= 500) {
+        throw new AppError(
+          502,
+          "LLM_UPSTREAM_ERROR",
+          `OpenAI API error: ${error.message}`,
+        );
+      }
+
+      throw new AppError(502, "LLM_API_ERROR", error?.message ?? "LLM failed");
     }
-
-    return JSON.parse(result) as ParsedJob;
   }
-
 
   private preprocessHtml(html: string, config?: JobAdapterConfig): string {
     const turndownService = new TurndownService({
@@ -78,7 +148,10 @@ ${markdown}
       codeBlockStyle: "fenced",
     });
 
-    const extractWithConfig = (cfg: JobAdapterConfig, label: string): string | null => {
+    const extractWithConfig = (
+      cfg: JobAdapterConfig,
+      label: string,
+    ): string | null => {
       const $ = cheerio.load(html);
 
       $("style, noscript, iframe, script").remove();
@@ -107,7 +180,7 @@ ${markdown}
         for (const selector of cfg.content ?? []) {
           if (!selector) continue;
           console.warn(
-            `[OpenAiParsingService] Content selector matched 0 elements: selector="${selector}" label=${label} configVersion=${cfg.version}`
+            `[OpenAiParsingService] Content selector matched 0 elements: selector="${selector}" label=${label} configVersion=${cfg.version}`,
           );
         }
       }
@@ -120,7 +193,7 @@ ${markdown}
     if (config) {
       extractedHtml = extractWithConfig(
         config,
-        config === ADAPTER_CONFIG.generic ? "generic" : "provided"
+        config === ADAPTER_CONFIG.generic ? "generic" : "provided",
       );
     }
 

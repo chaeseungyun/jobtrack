@@ -1,5 +1,8 @@
 import { SupabaseClient } from "@supabase/supabase-js";
-import { IJobCacheRepository, JobParsingCacheRow } from "@/lib/core/repositories/interfaces/job-cache.repository";
+import {
+  IJobCacheRepository,
+  JobParsingCacheRow,
+} from "@/lib/core/repositories/interfaces/job-cache.repository";
 import { CreateApplicationInput } from "@/lib/core/repositories/interfaces/application.repository";
 
 export class SupabaseJobCacheRepository implements IJobCacheRepository {
@@ -13,7 +16,10 @@ export class SupabaseJobCacheRepository implements IJobCacheRepository {
       .gt("expires_at", new Date().toISOString())
       .maybeSingle();
 
-    if (error) throw error;
+    if (error) {
+      console.log("failed to get cache from supabase:", error);
+      // 캐시 조회 실패는 치명적이지 않으므로 에러를 로그로 남기고 null 반환
+    }
     return data as JobParsingCacheRow | null;
   }
 
@@ -21,21 +27,25 @@ export class SupabaseJobCacheRepository implements IJobCacheRepository {
     url: string,
     data: CreateApplicationInput & { deadline?: string | null },
     expiresAt: Date,
-    contentHash?: string | null
+    contentHash?: string | null,
   ): Promise<void> {
-    const { error } = await this.supabase
-      .from("job_parsing_cache")
-      .upsert({
+    const { error } = await this.supabase.from("job_parsing_cache").upsert(
+      {
         url,
         parsed_data: data,
         expires_at: expiresAt.toISOString(),
         content_hash: contentHash ?? null,
         last_fetched_at: new Date().toISOString(),
-      }, {
+      },
+      {
         onConflict: "url",
-      });
+      },
+    );
 
-    if (error) throw error;
+    if (error) {
+      console.log("failed to set cache in supabase:", error);
+      // 캐시 저장 실패는 치명적이지 않으므로 에러를 로그로 남기고 넘어감
+    }
   }
 
   async deleteExpired(): Promise<void> {
