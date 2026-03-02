@@ -5,13 +5,15 @@
 
 ---
 
-## 2026-02-23
+## 2026-02-29
 
 ### 1) 오늘의 목표
+
 - 랜딩 페이지 개선 (진입점 추가, 공용 컴포넌트 재사용)
 - 이메일 테스트
 
 ### 2) 작업 내용
+
 - Done:
 - In porgress:
   - 랜딩 페이지 개선 (진입점 추가, 공용 컴포넌트 재사용)
@@ -19,11 +21,13 @@
 - Blocked:
 
 ### 3) 검증/지표
+
 - 기능 검증(회귀 포함)
   - `pnpm build`: 성공
   - 랜딩 페이지 리다이렉트 로직 검증: 미인증 시 랜딩, 인증 시 대시보드 리다이렉트 확인
 
 ### 4) 학습 로그
+
 - 이메일이 발송되지 않는 문제를 추적하는 과정에서, Promise.allSettled 사용 방식에 대한 이해가 부족했음을 깨달았다.
 - Promise.allSettled는 내부 Promise가 reject되어도 전체가 reject되지 않고, 항상 fulfilled 상태로 결과 배열을 반환한다는 점을 정확히 이해하게 되었다.
 - 그동안 try/catch로 에러가 잡힐 것이라 생각했지만, 실제로는 status: 'rejected'인 항목을 직접 순회하며 처리해야 한다는 점을 놓치고 있었다.
@@ -31,6 +35,7 @@
 - 이번 경험을 통해 “에러가 발생했는지”보다 “에러를 어떻게 관측하고 추적할 것인가”가 더 중요하다는 점을 배웠다.
 
 ### 5) 다음 스텝
+
 - V3 자동화 (LLM URL 파싱 등)
 - Gmail API 연동 연구
 
@@ -39,9 +44,11 @@
 ## 2026-02-23 (Architecture Update)
 
 ### 1) 오늘의 목표
+
 - layered architecture 도입
 
 ### 2) 작업 내용
+
 - Done:
   - layered architecture 도입
   - 다크 모드 적용
@@ -50,11 +57,13 @@
 - Blocked:
 
 ### 3) 검증/지표
+
 - 기능 검증(회귀 포함)
   - `pnpm build`: 성공
   - 랜딩 페이지 리다이렉트 로직 검증: 미인증 시 랜딩, 인증 시 대시보드 리다이렉트 확인
 
 ### 4) 학습 로그
+
 - 3-layered architecture는 관심사를 분리하여 변경 전파를 최소화한다.
   - HTTP 변경이 비즈니스 로직 변경을 유발하지 않아야 한다.
   - DB 교체가 서비스 로직 수정을 유발하지 않아야 한다.
@@ -71,17 +80,20 @@
 ## 2026-02-22
 
 ### 1) 오늘의 목표
+
 - production, preview 환경 변수 세팅
 - E2E 테스트
 - 문서화 전략 세우기
 
 ### 2) 작업 내용
+
 - Done:
   - production 배포 및 환경 변수 세팅
 - In porgress:
   - 문서화 전략 세우기
 
 ### 3) 학습 로그
+
 - 문서화 전략 수립 과정에서 PRD, Architecture, Progress 문서의 역할을 분리함. (Decision Log는 selection.md로 분리 결정)
 
 ---
@@ -89,11 +101,13 @@
 ## 2026-02-19
 
 ### 1) 오늘의 목표
+
 - Step 7. 알림 시스템(Resend + Webhook + Cron) 구현
 - 데이터 아키텍처 및 도메인 모델(Application) 정제
 - 리액트 쿼리 캐시 재사용성 극대화
 
 ### 2) 작업 내용
+
 - Done:
   - **알림 인프라 구축**: `resend`, `svix` 의존성 설치 및 설정
   - **Service Layer 통합 및 확장**: `eventService`를 `applicationService`로 완전 통합
@@ -102,6 +116,7 @@
   - **UI/UX 개선**: 일정 관리 액션 추가
 
 ### 3) 검증/지표
+
 - `pnpm build`: 성공
 - LSP 진단: clean
 - Cron 트리거 및 Webhook 수신 로직 확인 완료
@@ -111,11 +126,13 @@
 ## 2026-02-16
 
 ### 1) 오늘의 목표
+
 - 지원서 등록 전용 UI 구현
 - Server Components first 구조 유지
 - 기존 API 연결 및 검증
 
 ### 2) 작업 내용
+
 - Done:
   - `/applications/new` 페이지 및 폼 구현
   - 문서 업로드/다운로드/삭제 UI 연결
@@ -123,10 +140,12 @@
   - 데이터 아키텍처 단순화 (마감일 통합 등)
 
 ### 3) 검증/지표
+
 - `pnpm build`: 성공
 - 상세 페이지 메인 폼 저장 및 일정 추가/수정/삭제 동작 확인
 
 ### 4) 학습 로그
+
 - 신규 페이지 추가 시 서버 페이지 + 클라이언트 폼 island 분리 패턴으로 클라이언트 번들 최소화
 - 입력 스키마 기반 폼 필드 매핑 체크리스트의 중요성 체득
 
@@ -135,21 +154,25 @@
 ## 2026-02-15
 
 ### 1) 오늘의 목표
+
 - Server components 활용 아키텍처 변경
 - JWT 쿠키 관리로 전환
 - 지원서 등록 화면 UI 구현 시작
 
 ### 2) 작업 내용
+
 - Done:
   - httpOnly cookie 인증 전환
   - Server Components first 전면 전환
   - OpenAPI 스펙 동기화
 
 ### 3) 검증/지표
+
 - API health 및 Auth 회귀 테스트 통과
 - `Set-Cookie` 헤더 및 쿠키 기반 인증 동작 확인
 
 ### 4) 학습 로그
+
 - Server/Client Component 경계 설정이 인증 방식과 강하게 결합됨을 배움.
 - 아키텍처 전환 시 지표(번들 제거, 참조 제거 등)를 수치화하는 것의 중요성.
 
@@ -158,10 +181,12 @@
 ## 2026-02-14
 
 ### 1) 오늘의 목표
+
 - 프로젝트 초기 세팅 (Next.js, API, Supabase)
 - Auth 및 핵심 API(Applications/Events/Documents) 구현
 
 ### 2) 작업 내용
+
 - Done:
   - Next.js + shadcn/ui 초기 세팅
   - Supabase 연결 및 타입 정의
@@ -170,25 +195,30 @@
   - 초기 UI 구현 (Dashboard, Board, 상세 페이지)
 
 ### 3) 검증/지표
+
 - `pnpm build`: 성공
 - 핵심 시나리오 E2E 테스트 통과
 
 ### 4) 학습 로그
+
 - Supabase 타입 동기화 전략 수립.
 - `server-only`를 활용한 경계 설계.
 - Swagger를 통한 API 테스트 일원화의 편리함.
 
-
 ### template
+
 ### 1) 오늘의 목표
+
 -
 
 ### 2) 작업 내용
+
 - Done:
 - In porgress:
 - Blocked:
 
 ### 3) 개발 판단 로그
+
 - 주제:
 - 최종 결정:
 - 판단 근거(왜):
@@ -196,21 +226,26 @@
 ### 4) 검증/지표
 
 ### 5) 학습 로그
+
 -
 
 ### 6) 다음 스텝
+
 -
 
 ### 7) AI 리뷰
+
 -
 
 ## 2026-02-23
 
 ### 1) 오늘의 목표
+
 - 랜딩 페이지 개선 (진입점 추가, 공용 컴포넌트 재사용)
 - 이메일 테스트
 
 ### 2) 작업 내용
+
 - Done:
 - In porgress:
   - 랜딩 페이지 개선 (진입점 추가, 공용 컴포넌트 재사용)
@@ -218,6 +253,7 @@
 - Blocked:
 
 ### 3) 개발 판단 로그
+
 - 주제:
 - 최종 결정:
 - 판단 근거(왜):
@@ -225,6 +261,7 @@
 ### 4) 검증/지표
 
 ### 5) 학습 로그
+
 - 이메일이 발송되지 않는 문제를 추적하는 과정에서, Promise.allSettled 사용 방식에 대한 이해가 부족했음을 깨달았다.
 - Promise.allSettled는 내부 Promise가 reject되어도 전체가 reject되지 않고, 항상 fulfilled 상태로 결과 배열을 반환한다는 점을 정확히 이해하게 되었다.
 - 그동안 try/catch로 에러가 잡힐 것이라 생각했지만, 실제로는 status: 'rejected'인 항목을 직접 순회하며 처리해야 한다는 점을 놓치고 있었다.
@@ -232,17 +269,21 @@
 - 이번 경험을 통해 “에러가 발생했는지”보다 “에러를 어떻게 관측하고 추적할 것인가”가 더 중요하다는 점을 배웠다.
 
 ### 6) 다음 스텝
+
 -
 
 ### 7) AI 리뷰
+
 -
 
 ## 2026-02-23
 
 ### 1) 오늘의 목표
+
 - layered architecture 도입
 
 ### 2) 작업 내용
+
 - Done:
   - layered architecture 도입
   - 다크 모드 적용
@@ -251,6 +292,7 @@
 - Blocked:
 
 ### 3) 개발 판단 로그
+
 - 주제: 백엔드 코드 리팩토링 필요성 검토
 - 선택지:
   - A: route handler → service 구조 유지
@@ -259,16 +301,16 @@
   - B안 채택
 - 판단 근거(왜):
   1. 변경 비용 통제 필요성
-    - 프로젝트는 현재 serverless 환경(Vercel)에서 실행되나, 향후 서버 분리(Express/Nest) 또는 DB 교체 가능성을 열어두고 있음.
-    - 도메인 로직이 HTTP/DB/Framework에 직접 의존할 경우, 변경 비용이 비선형적으로 증가함.
+  - 프로젝트는 현재 serverless 환경(Vercel)에서 실행되나, 향후 서버 분리(Express/Nest) 또는 DB 교체 가능성을 열어두고 있음.
+  - 도메인 로직이 HTTP/DB/Framework에 직접 의존할 경우, 변경 비용이 비선형적으로 증가함.
   2. 인프라 의존성 분리
-    - 기존 service가 Supabase에 직접 접근하여 인프라 결합도가 높음.
-    - repository interface를 도입함으로써 도메인 계층을 인프라로부터 분리하여 테스트 용이성 및 교체 가능성 확보.
+  - 기존 service가 Supabase에 직접 접근하여 인프라 결합도가 높음.
+  - repository interface를 도입함으로써 도메인 계층을 인프라로부터 분리하여 테스트 용이성 및 교체 가능성 확보.
   3. service가 HTTP에서 분리됨으로써, 다양한 실행 환경에서 재사용 가능.
   4. 아키텍처 일관성
-    - controller → service → repository로 의존 방향을 고정하여 응집도를 높이고 레이어 간 결합도를 낮춤.
-    - 잠재적 기술 부채 발생 가능성을 감소시킴.
-- 리스크: 보일러 플레이트 증가, 현재 프로젝트 대비 과설계 
+  - controller → service → repository로 의존 방향을 고정하여 응집도를 높이고 레이어 간 결합도를 낮춤.
+  - 잠재적 기술 부채 발생 가능성을 감소시킴.
+- 리스크: 보일러 플레이트 증가, 현재 프로젝트 대비 과설계
 
 - 주제: 다크 모드 버튼의 hydration error 처리
 - 선택지:
@@ -283,43 +325,49 @@
 - 리스크: design token, tailwind를 알아야 정확한 이해 가능
 
 ### 4) 검증/지표
+
 - 기능 검증(회귀 포함)
   - `pnpm build`: 성공
   - 랜딩 페이지 리다이렉트 로직 검증: 미인증 시 랜딩, 인증 시 대시보드 리다이렉트 확인
 
 ### 5) 학습 로그
+
 - 3-layered architecture는 관심사를 분리하여 변경 전파를 최소화한다.
   - HTTP 변경이 비즈니스 로직 변경을 유발하지 않아야 한다.
   - DB 교체가 서비스 로직 수정을 유발하지 않아야 한다.
 - DIP(Dependency Inversion Principle)에 따라
-service는 repository의 구현체가 아니라 추상화(인터페이스)에 의존해야 한다.
+  service는 repository의 구현체가 아니라 추상화(인터페이스)에 의존해야 한다.
 - controller는 HTTP 요청/응답 처리 및 DTO 변환만 담당한다.
 - service layer는 유즈케이스 단위의 비즈니스 로직을 담당하며,
-하나의 유즈케이스는 하나의 트랜잭션 경계를 가진다.
+  하나의 유즈케이스는 하나의 트랜잭션 경계를 가진다.
 - repository는 도메인 관점에서 영속성을 추상화하는 계층이며,
-DB 접근 구현 세부사항을 외부로 노출하지 않는다.
+  DB 접근 구현 세부사항을 외부로 노출하지 않는다.
 - service가 비대해지지 않으려면 엔티티 단위가 아닌 행위 중심으로 설계해야 한다.
 - next.js api routes를 controller로 사용하고 있는데 server components의 경우 container -> service -> repository 흐름을 따르도록 설계
 - raw token -> tailwind utility -> 전역 레이어 순서로 디자인을 설계시 추후 raw token 값만 바꾸면 디자인 토큰 변경이 쉬움
 
 ### 6) 다음 스텝
+
 - V3 자동화 (LLM URL 파싱 등)
 - Gmail API 연동 연구
 
 ## 2026-02-22
 
 ### 1) 오늘의 목표
+
 - production, preview 환경 변수 세팅
 - E2E 테스트
 - 문서화 전략 세우기
 
 ### 2) 작업 내용
+
 - Done:
   - production 배포 및 환경 변수 세팅
 - In porgress:
   - 문서화 전략 세우기
 
 ### 3) 개발 판단 로그
+
 - 주제: 개발 기획을 어떻게 관리해야 LLM이 잘 이해하며 다음 개발에 효율적으로 참고할 수 있을까? 사람은 어떻게 문서를 작성해야 할까?
 - 최종 결정:
   - PRD는 human과 LLM이 모두 이해할 수 있도록 구조화한다.
@@ -335,11 +383,13 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
 ## 2026-02-19
 
 ### 1) 오늘의 목표
+
 - Step 7. 알림 시스템(Resend + Webhook + Cron) 구현
 - 데이터 아키텍처 및 도메인 모델(Application) 정제
 - 리액트 쿼리 캐시 재사용성 극대화
 
 ### 2) 작업 내용
+
 - Done:
   - **알림 인프라 구축**:
     - `resend`, `svix` 의존성 설치 및 설정
@@ -362,6 +412,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   - 없음
 
 ### 3) 개발 판단 로그
+
 - 주제: 서비스 레이어 통합
 - 최종 결정: `eventService`를 `applicationService`로 흡수
 - 판단 근거(왜):
@@ -375,6 +426,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   2. `svix`를 통한 서명 검증으로 보안 위협 방어.
 
 ### 4) 검증/지표
+
 - 코드/문서 변경 추적
   - 변경 파일(핵심):
     - `src/lib/services/application.service.ts`
@@ -394,11 +446,13 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
 ## 2026-02-16
 
 ### 1) 오늘의 목표
+
 - 지원서 등록 전용 UI(`/applications/new`) 구현
 - Server Components first 구조를 유지한 신규 페이지 추가
 - 기존 Step4 생성 API와 UI 연결 및 검증
 
 ### 2) 작업 내용
+
 - Done:
   - `/applications/new` 페이지 추가(서버 컴포넌트)
   - 등록 폼 Client Island 추가 및 React Query mutation 연결
@@ -427,6 +481,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   - 없음
 
 ### 3) 개발 판단 로그
+
 - 주제: 이벤트 리소스 통합 및 저장 원자성 확보
 - 최종 결정: 마감일 통합(Form) + 다중 일정 분리(Card Action) 하이브리드 구조
 - 판단 근거(왜):
@@ -435,6 +490,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   3. 이를 위해 마감일은 지원서 PATCH 보디에 포함하고, 그 외 일정은 독립된 `api/events`를 통해 관리하는 구조로 이원화하여 사용성과 확장성을 모두 확보함.
 
 ### 4) 검증/지표
+
 - 코드/문서 변경 추적
   - 변경 파일(핵심):
     - `src/lib/supabase/domain.types.ts` (EventType 확장)
@@ -462,6 +518,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   - 생산성 지표(작업 소요 시간/재시도 횟수): 기록 예정
 
 ### 5) 학습 로그
+
 - 배운 점:
   - 신규 페이지 추가 시 서버 페이지 + 클라이언트 폼 island 분리 패턴으로 클라이언트 번들 최소화
 - 근거(문서/실험):
@@ -470,19 +527,24 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   - 입력 스키마(`createApplicationSchema`) 기반 폼 필드 매핑 체크리스트를 사전에 고정
 
 ### 6) 다음 액션
-- 
+
+-
 
 ### 7) 이력서/포트폴리오용 요약 포인트
+
 - App Router 기반 server-components-first 구조에서 `/applications/new` 생성 플로우를 추가하고, 폼 인터랙션만 Client Island로 분리해 아키텍처 일관성을 유지
 - 기존 Step4 생성 API를 재사용해 프론트-API 연결을 확장하고, 생성 성공 후 상세 페이지로 이어지는 사용자 플로우를 완성
 
 ## 2026-02-15
+
 ### 1) 오늘의 목표
+
 - Server components를 활용하도록 아키텍처 변경
 - jwt 관리를 브라우저 스토리지가 아닌 쿠키에서 하도록 변경
 - 지원서 등록 화면 UI(`/applications/new` 또는 동등 경로) 구현하기
 
 ### 2) 작업 내용
+
 - Done:
   - 인증 전달 방식을 `localStorage + Bearer`에서 `httpOnly cookie(jobtrack_auth)`로 전환
     - 변경 파일: `src/app/api/auth/login/route.ts`, `src/app/api/auth/register/route.ts`, `src/app/api/auth/logout/route.ts`, `src/lib/auth/request.ts`, `src/lib/auth/jwt.ts`
@@ -500,6 +562,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   - 없음
 
 ### 3) 개발 판단 로그
+
 - 주제: 렌더링 방식
 - 선택지:
   - A: CSR 중심 구조 (Client Component + useEffect 데이터 패칭)
@@ -507,16 +570,16 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
 - 최종 결정: B안
 - 판단 근거(왜):
   1. 초기 렌더링 성능 개선
-  CSR 구조에서는 데이터 패칭이 hydration 이후 수행되므로 주요 콘텐츠가 JS 실행 이후 렌더링됨. 이는 LCP 지표에 불리함.
-  반면 Server Components는 서버에서 데이터 패칭 후 완전한 HTML을 제공하므로 초기 콘텐츠 표시 속도 개선 가능
+     CSR 구조에서는 데이터 패칭이 hydration 이후 수행되므로 주요 콘텐츠가 JS 실행 이후 렌더링됨. 이는 LCP 지표에 불리함.
+     반면 Server Components는 서버에서 데이터 패칭 후 완전한 HTML을 제공하므로 초기 콘텐츠 표시 속도 개선 가능
   2. 번들 크기 감소
-  Server Components는 클라이언트 번들에 포함되지 않으므로 JS 번들 크기를 줄이고 hydration 비용을 낮출 수 있음.
+     Server Components는 클라이언트 번들에 포함되지 않으므로 JS 번들 크기를 줄이고 hydration 비용을 낮출 수 있음.
   3. Next.js App Router 철학과 맞닿음
-  App router는 Server Components, Data Cache, Streaming 등을 전제로 설계되어 있음.
+     App router는 Server Components, Data Cache, Streaming 등을 전제로 설계되어 있음.
   4. 캐싱
-  서버 기반 데이터 패칭은 Next.js의 캐시 전략을 적극 활용 가능
+     서버 기반 데이터 패칭은 Next.js의 캐시 전략을 적극 활용 가능
   5. PPR 도입 가능성
-  향후 Partial Pre-Rendering을 적용하여 정적/동적 영역을 분리하는 실험적 구조 확장 가능
+     향후 Partial Pre-Rendering을 적용하여 정적/동적 영역을 분리하는 실험적 구조 확장 가능
 - 예상 리스크: Server Components와 Client Components 경계 설정 복잡도 증가
 
 - 주제: 인증 방식 전환
@@ -526,14 +589,15 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
 - 최종 결정: B안
 - 판단 근거(왜):
   1. XSS 공격에 대한 방어 강화
-  localStorage에 저장된 토큰은 JavaScript를 통해 접근 가능하므로 XSS 발생 시 즉시 탈취될 수 있다. HttpOnly 쿠키는 브라우저에서 자동 전송되지만 JS에서 접근이 불가능하여 토큰 직접 탈취를 방지할 수 있다.
+     localStorage에 저장된 토큰은 JavaScript를 통해 접근 가능하므로 XSS 발생 시 즉시 탈취될 수 있다. HttpOnly 쿠키는 브라우저에서 자동 전송되지만 JS에서 접근이 불가능하여 토큰 직접 탈취를 방지할 수 있다.
   2. Server Components 기반 렌더링과의 정합성
-  localStorage는 서버에서 접근할 수 없기 때문에 인증 상태를 기반으로 한 SSR이 불가능.
-  hydration 이후 클라이언트에서 토큰을 읽고 데이터 패칭을 하면 초기 렌더링 지연, 서버 데이터 캐싱 전략과 충돌
-  반면 http-only 쿠키는 요청 시 자동 포함되므로 서버 컴포넌트 및 router handler에서 인증 정보 활용 가능.
+     localStorage는 서버에서 접근할 수 없기 때문에 인증 상태를 기반으로 한 SSR이 불가능.
+     hydration 이후 클라이언트에서 토큰을 읽고 데이터 패칭을 하면 초기 렌더링 지연, 서버 데이터 캐싱 전략과 충돌
+     반면 http-only 쿠키는 요청 시 자동 포함되므로 서버 컴포넌트 및 router handler에서 인증 정보 활용 가능.
 - 예상 리스크: 여전히 JWT의 기본 특성상 즉시 무효화 어려움. 쿠키 설정 복잡성 증가. 쿠키 기반 인증은 자동 전송 특성으로 인해 CSRF 공격에 노출될 수 있다.
 
 ### 4) 검증/지표
+
 - 코드/문서 변경 추적(확인 완료)
   - 당일 커밋 기준 변경 범위가 인증 전환 + 라우트/UI 연계 + OpenAPI/문서 동기화로 일치
 - 기능 검증(당일 기록)
@@ -555,6 +619,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   - 생산성 지표: 작업 소요 시간/재시도 횟수 기록 누락(다음 기록부터 추가)
 
 ### 5) 학습 로그
+
 - 배운 점:
   - Server Component/Client Component 경계 설정이 인증 방식(localStorage vs cookie)과 강하게 결합됨
   - 쿠키 기반 인증 전환 시 API 계약, 클라이언트 호출 방식, OpenAPI 문서를 같은 작업 단위에서 함께 갱신해야 안정적
@@ -565,16 +630,18 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   - 진행 로그의 검증/지표는 "기능 회귀"와 "아키텍처 전환 지표"를 분리해 수치화
 
 ### 6) 다음 액션
+
 - [ ] 지원서 등록 화면 UI 추가 구현
 
 ### 7) 이력서/포트폴리오용 요약 포인트
+
 - JWT 전달 구조를 `localStorage + Bearer`에서 `httpOnly cookie` 기반으로 전환하고, 인증 API/클라이언트 호출 계층/OpenAPI 문서를 한 작업 단위로 동기화해 인증 경계를 재정의
 - App Router에서 주요 페이지를 Server Components first로 전환하고, 인터랙션 영역만 Client Island로 분리해 렌더링 전략을 서버 중심으로 재구성
-
 
 ## 2026-02-14
 
 ### 1) 오늘의 목표
+
 - Next.js 초기 세팅
 - API Route 초기 세팅
 - Supabase 초기 세팅 및 테이블 생성
@@ -582,6 +649,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
 - Step 4(Applications/Events/Documents API) 구현
 
 ### 2) 작업 내용
+
 - Done:
   - Next.js 초기 세팅 완료
   - shadcn/ui 컴포넌트 설치 완료
@@ -607,6 +675,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   - 없음
 
 ### 3) 개발 판단 로그
+
 - 주제: Supabase 타입 관리 방식
 - 선택지:
   - A: PRD 스키마 기준 수기 타입 작성
@@ -648,6 +717,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
 - 예상 리스크: helper 수정 시 영향 범위가 넓어져 회귀 테스트 필요
 
 ### 4) 검증/지표
+
 - API health: 성공 (`200`, `{"ok":true,"database":"connected"}`)
 - Auth E2E: 성공 (`register 201`, `login 200`, `logout 200`)
 - Swagger/OpenAPI 접근: 성공 (`/swagger 200`, `/openapi.json 200`)
@@ -661,6 +731,7 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
 - 생산성 지표(선택): 작업 소요 시간 기록 필요
 
 ### 5) 학습 로그
+
 - 배운 점:
   - Supabase 프로젝트 초기 연결 흐름
   - SQL Editor 기반 테이블 생성
@@ -676,9 +747,11 @@ DB 접근 구현 세부사항을 외부로 노출하지 않는다.
   - API 변경 시 스펙(`public/openapi.json`) 동시 수정을 PR 체크리스트에 포함
 
 ### 6) 다음 액션
+
 - [ ] 지원서 등록 화면 UI 추가 구현
 - [ ] UI 구현 시 Step4 엔드포인트 연결 E2E 재검증
 
 ### 7) 이력서/포트폴리오용 요약 포인트
+
 - Next.js App Router 기반 풀스택 MVP에서 인증(JWT), DB(Supabase), API 문서화(Swagger)까지 단일 리포에서 설계/구현/검증 수행
 - 인증/타입/문서 정책을 코드와 문서(AGENTS.md, steps.md, progress.md)에 일관되게 반영해 운영 가능한 개발 흐름 구축
