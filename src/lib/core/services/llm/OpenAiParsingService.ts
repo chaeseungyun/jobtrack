@@ -14,13 +14,23 @@ import { AppError } from "../../errors";
 /**
  * Helper to handle LLM's tendency to return "null" as a string.
  */
-const llmString = z
-  .string()
-  .transform((val) => (val.trim().toLowerCase() === "null" ? "" : val.trim()));
+
+const normalizeNullString = (v: unknown) => {
+  if (typeof v !== "string") return "";
+  const t = v.trim();
+  return t.toLowerCase() === "null" ? "" : t;
+};
+
+const normalizeNullToNull = (v: unknown) => {
+  if (v === null) return null;
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  return t.toLowerCase() === "null" || t === "" ? null : t;
+};
 
 const JobSchema = z.object({
-  company_name: llmString.describe("기업 공식 명칭"),
-  position: llmString.describe("채용 포지션명"),
+  company_name: z.string().describe("기업 공식 명칭"),
+  position: z.string().describe("채용 포지션명"),
   career_type: z
     .enum(["new", "experienced", "any"])
     .describe("신입, 경력, 무관 중 하나"),
@@ -28,12 +38,11 @@ const JobSchema = z.object({
     .array(z.string())
     .max(10)
     .describe("복지, 기술스택, 근무환경 등 주요 키워드"),
-  company_memo: llmString.describe("요구 기술 스택, 자격 요건, 우대 사항 요약"),
-  deadline: z
+  company_memo: z
     .string()
     .nullable()
-    .transform((val) => (val?.trim().toLowerCase() === "null" ? null : val))
-    .describe("YYYY-MM-DDTHH:mm 형식의 마감일"),
+    .describe("요구 기술 스택, 자격 요건, 우대 사항 요약"),
+  deadline: z.string().nullable().describe("YYYY-MM-DDTHH:mm 형식의 마감일"),
 });
 
 export class OpenAiParsingService implements IParsingService {
@@ -125,7 +134,18 @@ ${markdown}
         );
       }
 
-      return validated.data as ParsedJob;
+      const normalized = {
+        company_name: normalizeNullString(validated.data.company_name),
+        position: normalizeNullString(validated.data.position),
+        career_type: validated.data.career_type,
+        merit_tags: validated.data.merit_tags
+          .map(normalizeNullString)
+          .filter(Boolean),
+        company_memo: normalizeNullString(validated.data.company_memo),
+        deadline: normalizeNullToNull(validated.data.deadline),
+      };
+
+      return normalized as ParsedJob;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;
