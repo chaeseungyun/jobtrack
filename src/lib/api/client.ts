@@ -7,6 +7,19 @@ import type {
   SourceType,
   StageType,
 } from "@/lib/supabase/types";
+export interface ParsedJobResponse {
+  company_name: string;
+  position: string;
+  career_type: CareerType;
+  job_url?: string | null;
+  source?: SourceType | null;
+  merit_tags?: string[];
+  current_stage?: StageType;
+  company_memo?: string | null;
+  cover_letter?: string | null;
+  deadline?: string | null;
+}
+
 
 type Method = "GET" | "POST" | "PATCH" | "DELETE";
 
@@ -148,6 +161,27 @@ export const applicationsApi = {
       method: "PATCH",
       body,
     }),
+  parse: async (url: string, options: { bypassCache?: boolean } = {}): Promise<ParsedJobResponse> => {
+    if (!url) {
+      throw new Error("URL을 입력해주세요");
+    }
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      throw new Error("올바른 URL 형식이 아닙니다");
+    }
+
+    try {
+      return await request<ParsedJobResponse>("/api/applications/parse", {
+        method: "POST",
+        body: { url, bypassCache: options.bypassCache },
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes("(500)") || message === "Internal Server Error") {
+        throw new Error("파싱 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+      }
+      throw error;
+    }
+  },
 };
 
 export const eventsApi = {

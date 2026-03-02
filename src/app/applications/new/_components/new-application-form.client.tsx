@@ -6,11 +6,14 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { applicationsApi, documentsApi } from "@/lib/api/client";
+import type { ParseStatus } from "@/lib/parse/types";
+import { mapParsedJobToFormPatch } from "@/lib/parse/mapper";
 
 import {
   ApplicationFormFields,
   type ApplicationFormValues,
 } from "@/app/applications/_components/application-form-fields.client";
+import { UrlParseBlock } from "@/app/applications/_components/url-parse-block.client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -53,11 +56,47 @@ export function NewApplicationForm() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [form, setForm] = useState<ApplicationFormValues>(INITIAL_FORM);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [parseStatus, setParseStatus] = useState<ParseStatus>("idle");
+  const [parseMessage, setParseMessage] = useState<string | undefined>();
+
+  const handleParse = async () => {
+    setParseStatus("loading");
+    setParseMessage(undefined);
+
+    try {
+      const parsed = await applicationsApi.parse(form.job_url);
+      const patch = mapParsedJobToFormPatch(parsed);
+
+      const hasCompanyAndPosition = !!(parsed.company_name && parsed.position);
+
+      if (hasCompanyAndPosition) {
+        setParseStatus("success");
+        setParseMessage("파싱 성공! 필드가 자동으로 채워졌습니다.");
+      } else {
+        setParseStatus("partial");
+        setParseMessage(
+          "일부 필드만 파싱되었습니다. 나머지는 직접 입력해주세요."
+        );
+      }
+
+      // Auto-fill: apply parsed patch, keep job_url as user entered
+      setForm((prev) => ({ ...prev, ...patch, job_url: prev.job_url }));
+    } catch (error) {
+      setParseStatus("fail");
+      const message =
+        error instanceof Error ? error.message : "파싱에 실패했습니다";
+      setParseMessage(message);
+    }
+  };
 
   const createMutation = useMutation({
     mutationFn: async () => {
-      if (!form.company_name.trim() || !form.position.trim()) {
-        throw new Error("기업명과 직무는 필수입니다");
+      if (
+        !form.company_name.trim() ||
+        !form.position.trim() ||
+        !form.job_url.trim()
+      ) {
+        throw new Error("기업명, 직무, URL은 필수입니다");
       }
 
       const meritTags = form.merit_tags
@@ -81,8 +120,12 @@ export function NewApplicationForm() {
         source: form.source === "none" ? null : form.source,
         merit_tags: meritTags.length > 0 ? meritTags : undefined,
         current_stage: form.current_stage,
-        company_memo: form.company_memo.trim() ? form.company_memo.trim() : null,
-        cover_letter: form.cover_letter.trim() ? form.cover_letter.trim() : null,
+        company_memo: form.company_memo.trim()
+          ? form.company_memo.trim()
+          : null,
+        cover_letter: form.cover_letter.trim()
+          ? form.cover_letter.trim()
+          : null,
         deadline: deadlineIso,
       });
 
@@ -96,7 +139,8 @@ export function NewApplicationForm() {
           try {
             await documentsApi.upload(created.id, selectedFile);
           } catch (error) {
-            uploadError = error instanceof Error ? error.message : "업로드 실패";
+            uploadError =
+              error instanceof Error ? error.message : "업로드 실패";
           }
         }
       }
@@ -113,7 +157,8 @@ export function NewApplicationForm() {
       router.replace(`/applications/${created.id}`);
     },
     onError: (error) => {
-      const message = error instanceof Error ? error.message : "등록에 실패했습니다";
+      const message =
+        error instanceof Error ? error.message : "등록에 실패했습니다";
 
       if (message === "Unauthorized") {
         router.replace("/auth");
@@ -129,7 +174,17 @@ export function NewApplicationForm() {
       <CardHeader>
         <CardTitle>새 지원서</CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="space-y-6">
+        <UrlParseBlock
+          url={form.job_url}
+          onUrlChange={(url) =>
+            setForm((prev) => ({ ...prev, job_url: url }))
+          }
+          onParse={handleParse}
+          parseStatus={parseStatus}
+          statusMessage={parseMessage}
+        />
+
         <ApplicationFormFields
           values={form}
           onFieldChange={(patch) => {
@@ -139,6 +194,7 @@ export function NewApplicationForm() {
           isSubmitting={createMutation.isPending}
           submitLabel="지원서 등록"
           submittingLabel="등록 중..."
+          visibleFields={{ job_url: false }}
           beforeSubmit={
             <div className="space-y-2">
               <Label htmlFor="document_file">문서 PDF (선택사항)</Label>

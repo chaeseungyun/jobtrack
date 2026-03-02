@@ -3,9 +3,11 @@ import { requireAuth } from "@/lib/auth/request";
 import { createParsingContainer } from "@/lib/containers/parsing.container";
 import { toErrorResponse } from "@/lib/api/response";
 import { z } from "zod";
+import { inferSourceFromUrl } from "@/lib/parse/source";
 
 const parseRequestSchema = z.object({
   url: z.string().url(),
+  bypassCache: z.boolean().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -21,12 +23,19 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { url } = parseRequestSchema.parse(body);
+    const { url, bypassCache } = parseRequestSchema.parse(body);
 
     const { jobParsingService } = createParsingContainer();
-    const result = await jobParsingService.parseUrl(url);
+    const result = await jobParsingService.parseUrl(url, { bypassCache });
 
-    return NextResponse.json(result);
+    // Enrich result with URL and Source
+    const enrichedResult = {
+      ...result,
+      job_url: url,
+      source: result.source ?? inferSourceFromUrl(url),
+    };
+
+    return NextResponse.json(enrichedResult);
   } catch (error) {
     return toErrorResponse(error);
   }
