@@ -129,11 +129,16 @@
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["url"],
+                "required": [
+                  "url"
+                ],
                 "properties": {
                   "url": {
                     "type": "string",
                     "format": "uri"
+                  },
+                  "bypassCache": {
+                    "type": "boolean"
                   }
                 }
               }
@@ -160,7 +165,6 @@
         }
       }
     },
-
     "/api/applications": {
       "get": {
         "summary": "List applications",
@@ -1009,6 +1013,13 @@
           "career_type": {
             "$ref": "#/components/schemas/CareerType"
           },
+          "job_url": {
+            "type": "string",
+            "format": "uri"
+          },
+          "source": {
+            "$ref": "#/components/schemas/SourceType"
+          },
           "merit_tags": {
             "type": "array",
             "items": {
@@ -1025,7 +1036,6 @@
           }
         }
       },
-
       "ApplicationDetailResponse": {
         "allOf": [
           {
