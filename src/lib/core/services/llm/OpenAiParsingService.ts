@@ -11,9 +11,16 @@ import TurndownService from "turndown";
 import * as cheerio from "cheerio";
 import { AppError } from "../../errors";
 
+/**
+ * Helper to handle LLM's tendency to return "null" as a string.
+ */
+const llmString = z
+  .string()
+  .transform((val) => (val.trim().toLowerCase() === "null" ? "" : val.trim()));
+
 const JobSchema = z.object({
-  company_name: z.string().describe("기업 공식 명칭"),
-  position: z.string().describe("채용 포지션명"),
+  company_name: llmString.describe("기업 공식 명칭"),
+  position: llmString.describe("채용 포지션명"),
   career_type: z
     .enum(["new", "experienced", "any"])
     .describe("신입, 경력, 무관 중 하나"),
@@ -21,10 +28,12 @@ const JobSchema = z.object({
     .array(z.string())
     .max(10)
     .describe("복지, 기술스택, 근무환경 등 주요 키워드"),
-  company_memo: z
+  company_memo: llmString.describe("요구 기술 스택, 자격 요건, 우대 사항 요약"),
+  deadline: z
     .string()
-    .describe("요구 기술 스택, 자격 요건, 우대 사항 요약"),
-  deadline: z.string().nullable().describe("YYYY-MM-DDTHH:mm 형식의 마감일"),
+    .nullable()
+    .transform((val) => (val?.trim().toLowerCase() === "null" ? null : val))
+    .describe("YYYY-MM-DDTHH:mm 형식의 마감일"),
 });
 
 export class OpenAiParsingService implements IParsingService {
@@ -51,7 +60,7 @@ export class OpenAiParsingService implements IParsingService {
 
           [핵심 규칙]
           1. 텍스트에 명시된 정보만 사용하며, 추측이나 허구의 정보를 생성하지 마세요.
-          2. 정보가 없는 경우 null 또는 빈 문자열을 반환하세요.
+          2. 정보가 없는 경우 JSON null(문자열 "null" 아님) 또는 빈 문자열을 반환하세요.
           3. company_name: 기업의 공식 명칭 또는 법인명을 추출하세요.
           4. career_type: 
              - 'new': 신입/인턴만 해당할 경우
@@ -116,7 +125,7 @@ ${markdown}
         );
       }
 
-      return validated.data;
+      return validated.data as ParsedJob;
     } catch (error) {
       if (error instanceof AppError) {
         throw error;

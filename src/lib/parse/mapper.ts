@@ -2,20 +2,44 @@ import type { ApplicationFormValues } from "@/app/applications/_components/appli
 import type { ParsedJob } from "./types";
 
 /**
+ * Sanitizes a string value from the parser.
+ * LLMs sometimes return "null" or "NULL" as a string instead of a real null.
+ */
+function sanitize(val: string | null | undefined): string {
+  if (!val) return "";
+  const trimmed = val.trim();
+  if (trimmed.toLowerCase() === "null") return "";
+  return trimmed;
+}
+
+/**
+ * Maps a ParsedJob (server response) to a Partial<ApplicationFormValues> (form patch).
+
  * Maps a ParsedJob (server response) to a Partial<ApplicationFormValues> (form patch).
  * This is a pure function used to update the form state after parsing a job URL.
  */
 export function mapParsedJobToFormPatch(
-  parsed: ParsedJob
+  parsed: ParsedJob,
 ): Partial<ApplicationFormValues> {
   const patch: Partial<ApplicationFormValues> = {};
 
-  patch.company_name = parsed.company_name ?? "";
-  patch.position = parsed.position ?? "";
+  patch.company_name = sanitize(parsed.company_name);
+  patch.position = sanitize(parsed.position);
   if (parsed.career_type) {
     patch.career_type = parsed.career_type;
   }
 
+  // Optional fields with default values
+  patch.job_url = sanitize(parsed.job_url);
+  patch.source = parsed.source ?? "none";
+  patch.merit_tags = (parsed.merit_tags ?? []).join(", ");
+  patch.company_memo = sanitize(parsed.company_memo);
+  patch.cover_letter = sanitize(parsed.cover_letter);
+
+  patch.position = parsed.position ?? "";
+  if (parsed.career_type) {
+    patch.career_type = parsed.career_type;
+  }
 
   // Optional fields with default values
   patch.job_url = parsed.job_url ?? "";
@@ -48,4 +72,3 @@ export function mapParsedJobToFormPatch(
 
   return patch;
 }
-
