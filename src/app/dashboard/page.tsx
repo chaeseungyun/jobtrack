@@ -26,7 +26,7 @@ const DATE_FORMATTER = new Intl.DateTimeFormat("ko-KR", {
 });
 
 export default async function DashboardPage() {
-  const auth = await requireServerAuth();
+  const auth = await requireServerAuth("/dashboard");
   const { applicationService } = createApplicationContainer();
 
   let errorMessage: string | null = null;

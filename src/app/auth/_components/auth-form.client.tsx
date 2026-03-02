@@ -7,6 +7,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { authApi } from "@/lib/api/client";
+import { getSafeCallbackUrl } from "@/lib/auth/callback-url";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,7 +37,7 @@ export function AuthForm() {
   const searchParams = useSearchParams();
   const requestedMode = searchParams.get("mode");
   const initialTab = requestedMode === "register" ? "register" : "login";
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+  const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
 
   const [activeTab, setActiveTab] = useState<"login" | "register">(initialTab);
   const [loginForm, setLoginForm] = useState<AuthFormState>(INITIAL_FORM);

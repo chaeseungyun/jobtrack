@@ -6,7 +6,7 @@ import { NewApplicationForm } from "@/app/applications/new/_components/new-appli
 import { AppShell } from "@/components/app/app-shell";
 
 export default async function NewApplicationPage() {
-  await requireServerAuth();
+  await requireServerAuth("/applications/new");
 
   return (
     <AppShell

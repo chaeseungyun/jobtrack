@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default async function BoardPage() {
-  const auth = await requireServerAuth();
+  const auth = await requireServerAuth("/board");
   const { applicationService } = createApplicationContainer();
 
   let errorMessage: string | null = null;

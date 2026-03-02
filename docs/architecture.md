@@ -215,10 +215,11 @@ src/
   - **클라이언트 대응**: API 응답에서 401 에러 감지 시, 클라이언트 사이드에서 사용자를 `/auth` 페이지로 리다이렉트하여 재로그인을 유도한다.
 
 ### 5.2 보안 원칙
-- **미들웨어 기반 접근 제어**: `src/middleware.ts`에서 전역적으로 세션 쿠키 존재 여부를 확인하여 보호된 경로(`/dashboard`, `/applications`, `/board`) 접근을 제어하고, 인증된 사용자의 `/` 및 `/auth` 접근을 대시보드로 자동 리다이렉트한다.
-- **서버 컴포넌트 보안**: 미들웨어는 성능을 위해 쿠키 존재 여부만 확인하며, 최종적인 토큰 검증 및 사용자 식별은 서버 컴포넌트(`requireServerAuth`)와 API Route(`requireAuth`)에서 수행한다.
+- **서버 컴포넌트 기반 접근 제어**: 보호된 경로(`/dashboard`, `/applications`, `/board`)는 각 서버 컴포넌트에서 `requireServerAuth(callbackUrl)`를 호출하여 JWT 토큰을 검증한다. 비인증 사용자는 `/auth?callbackUrl=<원래경로>`로 리다이렉트되어 로그인 후 원래 목적지로 복귀한다.
+- **callbackUrl 경계 함수**: `getSafeCallbackUrl()` (`lib/auth/callback-url.ts`)이 사용자 입력 callbackUrl을 정규화하며, 상대 경로만 허용하고 오픈 리다이렉트(절대 URL, protocol-relative, javascript scheme 등)를 차단한다. 안전하지 않은 값은 `/dashboard`로 fallback된다.
+- **인증 사용자 진입 정책**: 루트(`/`)는 서버 컴포넌트에서 인증 상태를 확인해 대시보드로 리다이렉트하며, `?landing=true` 파라미터로 랜딩 페이지 수동 접근을 허용한다. `/auth` 페이지는 인증 사용자 진입 시 callbackUrl 경계 함수를 통해 안전한 경로로 리다이렉트한다.
+- **서버 컴포넌트 보안**: 최종적인 토큰 검증 및 사용자 식별은 서버 컴포넌트(`requireServerAuth`)와 API Route(`requireAuth`)에서 수행한다.
 - **소유권 검증**: 모든 리소스 접근 시 `user_id`를 통한 소유권 검증 필수 (Repository 레벨에서 userId 조건 강제).
-- 모든 리소스 접근 시 `user_id`를 통한 소유권 검증 필수 (Repository 레벨에서 userId 조건 강제).
 
 ---
 
@@ -264,4 +265,3 @@ src/
 
 
 - **[V3-DONE] 채용 공고 파싱 고도화**: `ADAPTER_CONFIG` 기반 멀티 사이트 대응, ScrapingBee/Native 스크래퍼 동적 라우팅, LLM 전처리 최적화(HTML 최소화) 적용 완료.
-

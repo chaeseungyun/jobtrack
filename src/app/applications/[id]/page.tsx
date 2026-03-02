@@ -16,8 +16,8 @@ interface ApplicationDetailPageProps {
 }
 
 export default async function ApplicationDetailPage({ params }: ApplicationDetailPageProps) {
-  const auth = await requireServerAuth();
   const { id } = await params;
+  const auth = await requireServerAuth(`/applications/${id}`);
   const { applicationService } = createApplicationContainer();
   const { documentService } = createDocumentContainer();
   const queryClient = new QueryClient();

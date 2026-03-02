@@ -16,11 +16,14 @@ export const getServerAuthPayload = async (): Promise<AuthTokenPayload | null> =
   return verifyAuthToken(token);
 };
 
-export const requireServerAuth = async (): Promise<AuthTokenPayload> => {
+export const requireServerAuth = async (callbackUrl?: string): Promise<AuthTokenPayload> => {
   const payload = await getServerAuthPayload();
 
   if (!payload) {
-    redirect("/auth");
+    const authUrl = callbackUrl
+      ? `/auth?callbackUrl=${encodeURIComponent(callbackUrl)}`
+      : "/auth";
+    redirect(authUrl);
   }
 
   return payload;

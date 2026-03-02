@@ -1,21 +1,30 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
 import { LandingFeatures } from "@/components/app/landing-features";
 import { LandingFooter } from "@/components/app/landing-footer";
 import { LandingHero } from "@/components/app/landing-hero";
 import { LandingPreview } from "@/components/app/landing-preview";
 import { getServerAuthPayload } from "@/lib/auth/session";
-import { redirect } from "next/navigation";
-
 export const metadata: Metadata = {
   title: "JobTrack",
   description:
     "칸반 보드로 지원 파이프라인을 정리하고, 중요한 면접/코테 일정을 알림으로 놓치지 마세요.",
 };
 
-export default async function HomePage() {
-  const payload = await getServerAuthPayload();
+interface HomePageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}
+
+export default async function HomePage({ searchParams }: HomePageProps) {
+  const [payload, params] = await Promise.all([getServerAuthPayload(), searchParams]);
   const isAuthenticated = payload !== null;
+  const isLandingBypass = params.landing === "true";
+
+  // 인증 사용자는 기본적으로 대시보드로 리다이렉트 (landing bypass 제외)
+  if (isAuthenticated && !isLandingBypass) {
+    redirect("/dashboard");
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted">
@@ -27,4 +36,4 @@ export default async function HomePage() {
       <LandingFooter />
     </div>
   );
-}
+} 
