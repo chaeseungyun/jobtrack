@@ -14,9 +14,9 @@ export const ADAPTER_CONFIG: Record<string, JobAdapterConfig> = {
   },
   "jobkorea.co.kr": {
     render_js: false,
-    content: [".jobKindCont"],
-    remove: ["script"],
-    version: "2026-03-01",
+    content: ["._1v41msv0"],
+    remove: ["script", "button"],
+    version: "2026-03-02",
   },
   generic: {
     render_js: false,
