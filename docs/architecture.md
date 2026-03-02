@@ -265,3 +265,27 @@ src/
 
 
 - **[V3-DONE] 채용 공고 파싱 고도화**: `ADAPTER_CONFIG` 기반 멀티 사이트 대응, ScrapingBee/Native 스크래퍼 동적 라우팅, LLM 전처리 최적화(HTML 최소화) 적용 완료.
+
+### 9.3 클라이언트 파싱 UX (Client-Side Parse Flow)
+
+서버 파싱 파이프라인(§9.1~9.2)을 클라이언트 신규/수정 폼에 연결하는 UX 계층이다.
+
+#### 신규 지원서 (URL-First Auto-Fill)
+- 폼 상단에 URL 입력 + "URL 파싱" 버튼을 배치한다.
+- 파싱 성공 시 `mapParsedJobToFormPatch()`로 폼 필드를 자동 채운다.
+- 파싱 실패/부분성공 시 상태 메시지를 표시하고, 사용자가 수동으로 필수 필드(회사명/포지션/URL)를 입력하면 저장 가능하다.
+
+#### 수정 지원서 (Explicit Reparse + Selective Apply)
+- URL 변경만으로는 파싱을 호출하지 않는다. "재파싱" 버튼 클릭 시에만 호출된다.
+- 파싱 결과를 현재 폼 값과 비교하여 변경된 필드만 후보 패널(candidate panel)로 표시한다.
+- 사용자가 체크박스로 반영할 필드를 선택한 뒤 "선택 반영" 버튼으로 일괄 적용한다.
+- 선택하지 않은 필드는 절대 변경되지 않는다 (자동 덮어쓰기 금지).
+
+#### 관련 모듈
+| 모듈 | 경로 | 역할 |
+|------|------|------|
+| Parse Types | `src/lib/parse/types.ts` | `ParseStatus`, `ParsedJob`, `ParseResultDto` 타입 정의 |
+| Mapper | `src/lib/parse/mapper.ts` | `ParsedJob` → `Partial<ApplicationFormValues>` 변환 |
+| Merge Utils | `src/lib/parse/merge.ts` | `getChangedFields`, `applySelectedFields`, `getDiff` |
+| URL Parse Block | `src/app/applications/_components/url-parse-block.client.tsx` | 공용 URL 입력 + 파싱 액션 UI |
+| API Client | `src/lib/api/client.ts` | `applicationsApi.parse()` — 클라이언트측 URL 검증 + 에러 매핑 |
