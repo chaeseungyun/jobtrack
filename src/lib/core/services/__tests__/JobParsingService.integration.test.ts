@@ -62,7 +62,7 @@ describe("OpenAiParsingService Integration (Preprocessing)", () => {
     const html = `
       <html>
         <body>
-          <div class="jobKindCont">
+          <div class="_1v41msv0">
             <h2>Backend Developer</h2>
             <ul>
               <li>Node.js</li>

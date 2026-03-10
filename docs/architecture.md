@@ -169,12 +169,14 @@ src/
 │   └── (routes)/         # UI Pages (Server Components = Read-only Controller)
 ├── components/           # UI Components
 │   ├── ui/               # shadcn/ui 원자 컴포넌트
+│   ├── charts/           # 차트 공통 컴포넌트 (ChartCard, 색상 시스템)
 │   └── app/              # 도메인 특정 컴포넌트
 ├── lib/                  # 핵심 로직 및 유틸리티
 │   ├── api/              # HTTP 응답 헬퍼 (toErrorResponse 등)
 │   ├── auth/             # 인증 및 보안 (JWT, 세션)
 │   ├── containers/       # 도메인별 DI 컨테이너 팩토리
 │   ├── core/             # 핵심 계층 (Centralized Services & Repositories)
+│   │   ├── analytics/     # 분석 타입 정의 (types.ts)
 │   │   ├── errors.ts     # AppError 경량 에러 클래스
 │   │   ├── repositories/ # Repository 계층
 │   │   │   ├── interfaces/ # 인터페이스 정의
@@ -252,6 +254,7 @@ src/
 - **[V2-DONE] Repository 패턴 도입**: interface 기반 Repository + class 기반 Service + 도메인별 Container로 3계층 아키텍처 완성.
 - **[V2-DONE] 알림 서비스 독립화**: NotificationService 추출 완료. 단위 테스트 강화는 추후 진행.
 - **[V2-PLANNED] Auth 추상화**: `IAuthService` 도입 및 Supabase Auth 마이그레이션.
+- **[V3-DONE] 데이터 시각화 및 분석**: Dashboard KPI/차트, Board 운영지표, Application 타임라인, Analytics 심화 페이지 구현 완료. Recharts + ChartCard 패턴 도입.
 
 ---
 
@@ -301,3 +304,43 @@ src/
 | Merge Utils | `src/lib/parse/merge.ts` | `getChangedFields`, `applySelectedFields`, `getDiff` |
 | URL Parse Block | `src/app/applications/_components/url-parse-block.client.tsx` | 공용 URL 입력 + 파싱 액션 UI |
 | API Client | `src/lib/api/client.ts` | `applicationsApi.parse()` — 클라이언트측 URL 검증 + 에러 매핑 |
+
+---
+
+## 10. 데이터 시각화 및 분석 파이프라인 (Analytics Pipeline)
+
+### 10.1 파이프라인 구조
+- **데이터 소스**: `applications` + `events` 테이블을 집계 쿼리(COUNT, GROUP BY, DATE_TRUNC)로 가공한다.
+- **Repository**: `IAnalyticsRepository` 인터페이스가 6개 메서드(stageFunnel, trendByPeriod, sourcePerformance, boardMetrics, dailyActivity, timelineForApplication)를 정의하며, `SupabaseAnalyticsRepository`가 Supabase RPC/쿼리로 구현한다.
+- **Service**: `AnalyticsService`가 Repository 메서드를 조합하여 3개 유스케이스(getDashboardAnalytics, getBoardAnalytics, getApplicationTimeline)를 제공한다.
+- **Container**: `createAnalyticsContainer()`가 DI 조립을 수행한다.
+
+### 10.2 데이터 흐름
+```text
+Server Component / API Route
+  → createAnalyticsContainer()
+  → AnalyticsService.getDashboardAnalytics(userId)
+  → IAnalyticsRepository.stageFunnel(userId) + trendByPeriod(...) + sourcePerformance(...)
+  → Supabase SQL (COUNT, GROUP BY, DATE_TRUNC)
+  → 집계 결과 → Service가 DTO 조합 → Controller가 JSON 응답
+```
+
+### 10.3 API 엔드포인트
+| 엔드포인트 | 메서드 | 용도 |
+| :--- | :--- | :--- |
+| `/api/analytics/dashboard` | GET | KPI 카드, 퍼널, 추이, 출처별 성과 데이터 |
+| `/api/analytics/board` | GET | 칸반 보드 운영 지표 (전환율, 정체 알림) |
+
+### 10.4 차트 시스템
+- **라이브러리**: Recharts v3 (React 19 호환, 트리셰이킹 지원).
+- **공통 래퍼**: `ChartCard` (`src/components/charts/chart-card.tsx`) — 타이틀, 빈 상태 처리, 반응형 컨테이너를 제공하는 `"use client"` 컴포넌트.
+- **색상 시스템**: `CHART_COLORS` (`src/components/charts/chart-colors.ts`) — CSS 변수 기반으로 라이트/다크 모드를 자동 지원한다.
+- **차트 컴포넌트**: 각 페이지의 `_components/` 디렉토리에 Client Component로 배치하며, Server Component에서 데이터를 props로 전달받는다.
+
+### 10.5 시각화 페이지 구성
+| 페이지 | 시각화 요소 | 데이터 소스 |
+| :--- | :--- | :--- |
+| `/dashboard` | KPI 5카드, 퍼널 차트, 추이 차트, 출처별 성과 | Server Component → AnalyticsService |
+| `/board` | 칼럼 헤더 전환율(→ N%), 14일+ 정체 배지 | Server Component → AnalyticsService |
+| `/applications/[id]` | 타임라인 카드 (시간순, D-day 배지) | Server Component → AnalyticsService |
+| `/analytics` | 기간 선택 + 전체 차트 심화 뷰 | Client Component → API Routes |

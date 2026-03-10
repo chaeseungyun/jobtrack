@@ -3,12 +3,13 @@ import Link from "next/link";
 import { STAGE_LABELS, STAGE_ORDER } from "@/lib/app/stages";
 import { requireServerAuth } from "@/lib/auth/session";
 import { createApplicationContainer } from "@/lib/containers/application.container";
+import { createAnalyticsContainer } from "@/lib/containers/analytics.container";
+import type { BoardAnalytics, StageConversion, StagnantApplication } from "@/lib/core/analytics";
 import type { ApplicationRow, StageType } from "@/lib/supabase/types";
 
 import { AppShell } from "@/components/app/app-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
 export default async function BoardPage() {
   const auth = await requireServerAuth("/board");
   const { applicationService } = createApplicationContainer();
@@ -30,6 +31,31 @@ export default async function BoardPage() {
     {} as Record<StageType, ApplicationRow[]>,
   );
 
+  // Board Analytics — 실패해도 기존 보드는 정상 동작
+  const { analyticsService } = createAnalyticsContainer();
+  let boardAnalytics: BoardAnalytics | null = null;
+  try {
+    boardAnalytics = await analyticsService.getBoardAnalytics(auth.sub);
+  } catch {
+    // analytics 실패 시 대시보드는 기존처럼 동작
+  }
+
+  // 전환율 룩업: fromStage → StageConversion
+  const conversionMap = new Map<StageType, StageConversion>();
+  if (boardAnalytics) {
+    for (const conv of boardAnalytics.conversions) {
+      conversionMap.set(conv.fromStage, conv);
+    }
+  }
+
+  // 정체 지원서 룩업: applicationId → StagnantApplication
+  const stagnantMap = new Map<string, StagnantApplication>();
+  if (boardAnalytics) {
+    for (const s of boardAnalytics.stagnant) {
+      stagnantMap.set(s.applicationId, s);
+    }
+  }
+
   return (
     <AppShell
       title="칸반 보드"
@@ -49,6 +75,11 @@ export default async function BoardPage() {
                 <CardTitle className="text-base">{STAGE_LABELS[stage]}</CardTitle>
                 <Badge variant="secondary">{grouped[stage].length}</Badge>
               </div>
+              {conversionMap.has(stage) ? (
+                <p className="text-xs text-muted-foreground">
+                  → {STAGE_LABELS[conversionMap.get(stage)!.toStage]} {conversionMap.get(stage)!.rate}%
+                </p>
+              ) : null}
             </CardHeader>
             <CardContent className="space-y-3">
               {grouped[stage].map((application) => (
@@ -57,7 +88,14 @@ export default async function BoardPage() {
                   href={`/applications/${application.id}`}
                   className="block rounded-md border border-border p-3 transition hover:bg-muted"
                 >
-                  <p className="font-medium text-foreground">{application.company_name}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium text-foreground">{application.company_name}</p>
+                    {stagnantMap.has(application.id) ? (
+                      <Badge variant="outline" className="border-amber-500 text-amber-600 dark:text-amber-400">
+                        {stagnantMap.get(application.id)!.daysSinceUpdate}일 정체
+                      </Badge>
+                    ) : null}
+                  </div>
                   <p className="text-sm text-muted-foreground">{application.position}</p>
                 </Link>
               ))}

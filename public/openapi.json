@@ -560,6 +560,77 @@
         }
       }
     }
+    },
+    "/api/analytics/dashboard": {
+      "get": {
+        "summary": "Get dashboard analytics",
+        "tags": ["Analytics"],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": ["7d", "30d", "90d", "all"]
+            },
+            "required": false,
+            "description": "Time range filter (default: 30d)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard analytics data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardAnalytics"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/analytics/board": {
+      "get": {
+        "summary": "Get board analytics",
+        "tags": ["Analytics"],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Board analytics data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardAnalytics"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    }
   },
   "components": {
     "securitySchemes": {
@@ -1063,6 +1134,163 @@
             }
           }
         ]
+      }
+      },
+      "AnalyticsSummary": {
+        "type": "object",
+        "properties": {
+          "totalApplications": {
+            "type": "integer"
+          },
+          "responseRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "documentPassRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "interviewRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "finalPassRate": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "weeklyApplicationCount": {
+            "type": "integer"
+          },
+          "activeApplications": {
+            "type": "integer"
+          }
+        }
+      },
+      "StageFunnelItem": {
+        "type": "object",
+        "properties": {
+          "stage": {
+            "type": "string",
+            "enum": ["interest", "applied", "document_pass", "assignment", "interview", "final_pass", "rejected"]
+          },
+          "count": {
+            "type": "integer"
+          }
+        }
+      },
+      "TrendItem": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "count": {
+            "type": "integer"
+          }
+        }
+      },
+      "SourcePerformance": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "total": {
+            "type": "integer"
+          },
+          "documentPassRate": {
+            "type": "number"
+          },
+          "interviewRate": {
+            "type": "number"
+          },
+          "finalPassRate": {
+            "type": "number"
+          }
+        }
+      },
+      "DashboardAnalytics": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "$ref": "#/components/schemas/AnalyticsSummary"
+          },
+          "funnel": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageFunnelItem"
+            }
+          },
+          "trend": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrendItem"
+            }
+          },
+          "sourcePerformance": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SourcePerformance"
+            }
+          }
+        }
+      },
+      "StageConversion": {
+        "type": "object",
+        "properties": {
+          "fromStage": {
+            "type": "string"
+          },
+          "toStage": {
+            "type": "string"
+          },
+          "rate": {
+            "type": "number"
+          },
+          "count": {
+            "type": "integer"
+          }
+        }
+      },
+      "StagnantApplication": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "companyName": {
+            "type": "string"
+          },
+          "stage": {
+            "type": "string"
+          },
+          "daysSinceUpdate": {
+            "type": "integer"
+          }
+        }
+      },
+      "BoardAnalytics": {
+        "type": "object",
+        "properties": {
+          "conversions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StageConversion"
+            }
+          },
+          "stagnant": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StagnantApplication"
+            }
+          }
+        }
       }
     }
   }

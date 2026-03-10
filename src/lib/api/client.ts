@@ -7,6 +7,11 @@ import type {
   SourceType,
   StageType,
 } from "@/lib/supabase/types";
+import type {
+  DashboardAnalytics,
+  BoardAnalytics,
+  AnalyticsQueryParams,
+} from "@/lib/core/analytics";
 export interface ParsedJobResponse {
   company_name: string;
   position: string;
@@ -215,4 +220,14 @@ export const documentsApi = {
     request<void>(`/api/documents/${documentId}`, {
       method: "DELETE",
     }),
+};
+
+export const analyticsApi = {
+  dashboard: (params?: AnalyticsQueryParams) => {
+    const search = new URLSearchParams();
+    if (params?.range) search.set("range", params.range);
+    const suffix = search.size > 0 ? `?${search.toString()}` : "";
+    return request<DashboardAnalytics>(`/api/analytics/dashboard${suffix}`);
+  },
+  board: () => request<BoardAnalytics>("/api/analytics/board"),
 };

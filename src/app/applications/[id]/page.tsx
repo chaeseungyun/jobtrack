@@ -10,6 +10,7 @@ import { applicationDetailQueryKey } from "@/lib/query/applications";
 import { ApplicationDetailForm } from "@/app/applications/[id]/_components/application-detail-form.client";
 import { ApplicationEventsCard } from "@/app/applications/[id]/_components/application-events-card.client";
 import { AppShell } from "@/components/app/app-shell";
+import { ApplicationTimelineCard } from "@/app/applications/[id]/_components/application-timeline-card";
 
 interface ApplicationDetailPageProps {
   params: Promise<{ id: string }>;
@@ -62,6 +63,12 @@ export default async function ApplicationDetailPage({ params }: ApplicationDetai
           <ApplicationEventsCard applicationId={id} />
         </div>
       </HydrationBoundary>
+
+      {applicationDetail.events && applicationDetail.events.length > 0 ? (
+        <div className="mt-6">
+          <ApplicationTimelineCard events={applicationDetail.events} />
+        </div>
+      ) : null}
     </AppShell>
   );
 }

@@ -13,6 +13,7 @@ interface AppShellProps {
 const NAV_ITEMS = [
   { href: "/dashboard", label: "대시보드" },
   { href: "/board", label: "보드" },
+  { href: "/analytics", label: "분석" },
   { href: "/applications/new", label: "새 지원서" },
 ];
 

@@ -10,6 +10,35 @@
 
 기술적 의사결정 기록은 [selection.md](./selection.md)에서 관리하며, 심도 있는 기술 분석은 [tech-notes/](./tech-notes/)에 기록합니다.
 
+# 2026-03-10
+
+### 1) 오늘의 목표
+
+- 데이터 시각화 도입을 위한 데이터 선별 및 지표 설계
+- Recharts 기반 차트 시스템 구축 및 4개 페이지 시각화 구현
+
+### 2) 작업 내용
+
+- Done:
+  - **Wave 1 (기반 구축)**: Recharts 설치, ChartCard 공통 래퍼 + CHART_COLORS 색상 시스템, Analytics 타입 9개 인터페이스, IAnalyticsRepository(6 메서드) + SupabaseAnalyticsRepository 구현, AnalyticsService(3 메서드) + DI 컨테이너, API Routes(`/api/analytics/dashboard`, `/api/analytics/board`) + OpenAPI 업데이트, analyticsApi 클라이언트 + React Query 패처
+  - **Wave 2 (UI 구현)**: Dashboard KPI 5카드 + 퍼널/추이/출처별 차트, Board 칼럼 헤더 전환율(→ N%) + 14일 정체 배지, Application 타임라인 카드(시간순, D-day 배지), `/analytics` 심화 페이지(기간 선택 + 전체 차트 뷰), 네비게이션에 "분석" 링크 추가
+  - **Wave 3 (테스트 & 문서)**: AnalyticsService 단위 테스트(5건), client-analytics 테스트(3건) — 총 8/8 신규 테스트 통과. PRD §3.5 업데이트, selection.md 의사결정 3건 기록, architecture.md 분석 파이프라인 섹션 추가, progress.md 동기화, analytics-flow.md 기능 가이드 작성
+- In progress:
+- Blocked:
+
+### 3) 검증/지표
+
+- 기능 검증(회귀 포함)
+  - `pnpm build`: 성공
+  - `pnpm test:run`: 성공 (신규 analytics 테스트 8/8 통과)
+  - 기존 테스트 회귀 없음 (JobParsingService 1건 기존 실패 — analytics 무관)
+
+### 4) 학습 로그
+
+- **북극성 지표 선정**: 합격률(서류→면접 전환율)을 핵심 지표로, 꾸준함(일별 활동 추이)을 선행 지표로 설정. 행동 유도 없는 '관상용' 지표를 배제하는 기준을 학습함.
+- **Server/Client Component 분리 패턴**: 차트는 Client Component로 분리하되, 데이터 페칭은 Server Component에서 수행하여 props로 전달. analytics 실패 시 기존 UI가 깨지지 않도록 try/catch fallback 적용.
+- **Recharts + shadcn 통합**: ChartCard 래퍼로 빈 상태/반응형/다크모드를 공통 처리하고, CSS 변수 기반 색상 시스템으로 테마 호환성을 확보함.
+
 # 2026-03-02
 
 ### 1) 오늘의 목표

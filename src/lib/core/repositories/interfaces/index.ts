@@ -24,3 +24,5 @@ export type {
   IJobCacheRepository,
   JobParsingCacheRow,
 } from "./job-cache.repository";
+
+export type { IAnalyticsRepository } from "./analytics.repository";

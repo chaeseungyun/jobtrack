@@ -4,3 +4,5 @@ export { SupabaseDocumentRepository } from "./SupabaseDocumentRepository";
 export { SupabaseUserRepository } from "./SupabaseUserRepository";
 
 export { SupabaseJobCacheRepository } from "./SupabaseJobCacheRepository";
+
+export { SupabaseAnalyticsRepository } from "./SupabaseAnalyticsRepository";
