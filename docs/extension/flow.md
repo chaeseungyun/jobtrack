@@ -85,13 +85,13 @@ flowchart TD
 sequenceDiagram
     actor User as 사용자
     participant Popup as 팝업
-    participant BG as Background<br/>(Service Worker)
     participant Web as JobTrack 웹
+    participant CS as auth-callback.js<br/>(Content Script)
     participant API as JobTrack API
 
     User->>Popup: 로그인 버튼 클릭
-    Popup->>BG: 로그인 요청
-    BG->>Web: 새 탭 열기<br/>/auth?from=extension
+    Popup->>Web: 새 탭 열기<br/>/auth?from=extension
+    Note over Popup: 새 탭이 열리면서<br/>팝업 자동 닫힘
 
     User->>Web: 이메일/비밀번호 입력
     User->>Web: 로그인 버튼 클릭
@@ -99,16 +99,18 @@ sequenceDiagram
     API-->>Web: 로그인 성공 + 세션 쿠키
 
     Web->>Web: /auth/extension-callback 리다이렉트
-    Web->>API: POST /api/auth/extension-token
+    Note over CS: content_script 실행 (document_idle)<br/>MutationObserver 등록하고 대기
+    Note over Web: 클라이언트 컴포넌트 마운트
+    Web->>API: fetch POST /api/auth/extension-token<br/>(세션 쿠키 자동 첨부)
     API-->>Web: { token, expiresAt } (30일)
 
-    Note over Web: 페이지에 data-extension-token 속성 삽입
+    Web->>Web: data-extension-token 속성으로<br/>DOM에 토큰 삽입
+    CS->>CS: MutationObserver가 속성 감지<br/>chrome.storage.local에 직접 저장
 
-    Web->>BG: content_script가 토큰 읽어<br/>chrome.runtime.sendMessage
-    BG->>BG: chrome.storage.local에<br/>토큰 + 만료일 저장
+    Web-->>User: "로그인 완료!<br/>확장 프로그램 아이콘을 다시 클릭해주세요"
 
-    BG-->>Popup: 로그인 완료 알림
-    Popup->>Popup: 메인 UI로 전환
+    User->>Popup: 확장 아이콘 재클릭
+    Popup->>Popup: Init → storage 토큰 확인<br/>→ 메인 UI로 전환
 ```
 
 ---
@@ -119,7 +121,7 @@ sequenceDiagram
 
 ```mermaid
 flowchart TD
-    Start([저장하기 클릭]) --> Inject[Background: chrome.scripting.executeScript<br/>extractor.js 실행]
+    Start([저장하기 클릭]) --> Inject[Popup: chrome.scripting.executeScript<br/>extractor.js 실행]
 
     Inject --> CloneDOM[DOM 클론 생성<br/>cloneNode - true]
     CloneDOM --> RemoveNoise[remove 셀렉터로 불필요 요소 제거<br/>script, style, noscript, iframe<br/>+ 사이트별 추가 제거]
@@ -142,8 +144,8 @@ flowchart TD
     SelectBest --> ExtractBest[선택된 컨테이너의 outerHTML 추출]
     ExtractBest --> ReturnHTML
 
-    ReturnHTML --> SendToBG[Background로 HTML 전달]
-    SendToBG --> End([파싱 API 호출로 진행])
+    ReturnHTML --> SendToPopup[Popup으로 HTML 전달]
+    SendToPopup --> End([파싱 API 호출로 진행])
 
     %% ── 스타일 ──
     style Start fill:#4f46e5,color:#fff
@@ -212,8 +214,9 @@ stateDiagram-v2
 
     state Login {
         [*] --> ShowLoginButton
-        ShowLoginButton --> WaitingAuth: 로그인 클릭
-        WaitingAuth --> [*]: 토큰 수신
+        ShowLoginButton --> WaitingAuth: 로그인 클릭 (새 탭 열림)
+        Note right of WaitingAuth: 팝업은 포커스를 잃어 자동 닫힘\n사용자가 웹에서 로그인 완료 후\n아이콘 재클릭 시 Init에서 토큰 확인
+        WaitingAuth --> [*]: 아이콘 재클릭 → Init → 토큰 유효
     }
 
     state Form {
@@ -227,45 +230,39 @@ stateDiagram-v2
 
 ## 6. 컴포넌트 간 통신 흐름
 
-팝업, Background, Content Script, 서버 간의 메시지 흐름 전체를 시간순으로 정리.
+팝업, Content Script, 서버 간의 메시지 흐름 전체를 시간순으로 정리.
 
 ```mermaid
 sequenceDiagram
     actor User as 사용자
     participant Popup as 팝업 UI
-    participant BG as Background<br/>(Service Worker)
     participant CS as Content Script<br/>(extractor.js)
     participant API as JobTrack API
 
     Note over User,API: 공고 저장 플로우
 
     User->>Popup: 툴바 아이콘 클릭
-    Popup->>BG: 토큰 확인 요청
-    BG->>BG: chrome.storage.local 조회
-    BG-->>Popup: 토큰 유효 + 현재 URL
-
+    Popup->>Popup: chrome.storage.local에서<br/>토큰 조회 + 유효성 확인
+    Popup->>Popup: chrome.tabs.query로<br/>현재 탭 URL 확인
     Popup->>Popup: 사이트 판별 (sites.js)
     Popup-->>User: "이 공고 저장하기" 표시
 
     User->>Popup: 저장하기 클릭
-    Popup->>BG: HTML 추출 요청
-
-    BG->>CS: chrome.scripting.executeScript<br/>(siteConfig 전달)
+    Popup->>CS: chrome.scripting.executeScript<br/>(siteConfig 전달)
 
     Note over CS: DOM 클론 → 노이즈 제거 → 컨테이너 검색
 
     alt 컨테이너 1개
-        CS-->>BG: { html, title }
+        CS-->>Popup: { html, title }
     else 컨테이너 2개+
         Note over CS: 뷰포트 감지<br/>getBoundingClientRect
-        CS-->>BG: { html, title, alternatives[] }
+        CS-->>Popup: { html, title, alternatives[] }
     end
 
-    BG->>API: POST /api/applications/parse-html<br/>{ url, html }
+    Popup->>API: POST /api/applications/parse-html<br/>{ url, html }
     API->>API: HTML 정제 → OpenAI 파싱
-    API-->>BG: { company_name, position, ... }
+    API-->>Popup: { company_name, position, ... }
 
-    BG-->>Popup: 파싱 결과 전달
     Popup-->>User: 공고 확인 화면<br/>"삼성전자 - 프론트엔드, 맞나요?"
 
     alt 맞아요
@@ -274,20 +271,15 @@ sequenceDiagram
         User->>Popup: 다른 공고 선택
         Popup-->>User: 공고 목록 표시 (alternatives)
         User->>Popup: 공고 선택
-        Popup->>BG: 선택된 HTML로 재파싱
-        BG->>API: POST /api/applications/parse-html
-        API-->>BG: 파싱 결과
-        BG-->>Popup: 결과 전달
+        Popup->>API: 선택된 HTML로 재파싱<br/>POST /api/applications/parse-html
+        API-->>Popup: 파싱 결과
     end
 
     Popup-->>User: 편집 폼 표시
 
     User->>Popup: 필드 수정 후 저장 클릭
-    Popup->>BG: 저장 요청
+    Popup->>API: POST /api/applications<br/>{ company_name, position, ... }
+    API-->>Popup: 201 Created { id }
 
-    BG->>API: POST /api/applications<br/>{ company_name, position, ... }
-    API-->>BG: 201 Created { id }
-
-    BG-->>Popup: 저장 완료
     Popup-->>User: 성공 토스트<br/>"JobTrack에서 보기" 링크
 ```

@@ -59,7 +59,7 @@
 | BE-2 | 기존 cookie 기반 인증과 병행하여 `Authorization: Bearer` 헤더 기반 인증 지원 추가 |
 | BE-3 | HTML 직접 수신 파싱 엔드포인트 추가 (`POST /api/applications/parse-html`) — URL + HTML 본문을 받아 정제 → OpenAI 파싱. ScrapingBee 미사용 |
 | BE-4 | 기존 URL 파싱 엔드포인트(`POST /api/applications/parse`)는 변경 없이 유지 |
-| BE-5 | 확장 프로그램 인증 콜백 페이지 추가 (`/auth/extension-callback`) — 로그인 후 토큰을 확장 프로그램에 전달하는 브릿지 역할 |
+| BE-5 | 확장 프로그램 인증 콜백 페이지 추가 (`/auth/extension-callback`) — 클라이언트 컴포넌트로 구현. 마운트 시 `/api/auth/extension-token` fetch 호출하여 토큰 발급 후, DOM에 삽입하여 content_script에 전달하는 브릿지 역할 |
 
 ---
 
@@ -67,7 +67,7 @@
 
 | ID | 항목 | 요구사항 |
 |----|------|---------|
-| NFR-1 | 보안 | 토큰은 `chrome.storage.local`에만 저장, content_script에 노출하지 않음 |
+| NFR-1 | 보안 | 토큰은 `chrome.storage.local`에만 저장. `auth-callback.js` content_script가 저장을 담당하며, 공고 추출용 `extractor.js`에는 토큰을 노출하지 않음 |
 | NFR-2 | 보안 | HTML 전송 시 셀렉터로 추출한 공고 본문 영역만 전송. 쿠키, 로컬스토리지 등 민감 정보 미포함 |
 | NFR-3 | 보안/성능 | HTML 파싱 엔드포인트에 요청 크기 제한 설정 (최대 5MB). 클라이언트 사이드 정제로 실제 전송 크기는 50~200KB 수준 |
 | NFR-4 | 보안 | Chrome Web Store 등록 기준 충족 — 권한 최소화 원칙 (`activeTab`, `storage`, 대상 사이트 host_permissions만) |

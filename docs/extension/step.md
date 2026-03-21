@@ -91,9 +91,11 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
   - Cookie 기반 인증 필요 (로그인 상태에서만 호출)
   - 응답: `{ token: string, expiresAt: string }` (30일 JWT)
 - [ ] `/auth/extension-callback` 페이지 생성
-  - 파일: `src/app/auth/extension-callback/page.tsx`
-  - 서버에서 토큰 발급 → `data-extension-token` 속성으로 삽입
-  - 확장 프로그램의 content_script가 토큰을 읽어가는 브릿지 역할
+  - 파일: `src/app/auth/extension-callback/page.tsx` (클라이언트 컴포넌트)
+  - 마운트 시 `fetch('/api/auth/extension-token')` 호출하여 토큰 발급 (세션 쿠키 자동 첨부)
+  - 응답받은 토큰을 `data-extension-token` 속성으로 DOM에 삽입
+  - 확장 프로그램의 content_script(MutationObserver)가 토큰을 읽어가는 브릿지 역할
+  - **"로그인 완료! 확장 프로그램 아이콘을 다시 클릭해주세요"** 안내 문구 표시 (팝업은 새 탭이 열리면서 자동 닫힘)
 - [ ] 기존 로그인 플로우에 `from=extension` 파라미터 처리 추가
   - 로그인 성공 시 `from=extension`이면 `/auth/extension-callback`으로 리다이렉트
 
@@ -180,7 +182,7 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 | 읽을 파일 | 이유 |
 |-----------|------|
 | `docs/extension/step.md` | 전체 작업 흐름 복구 |
-| `docs/extension/implementation-plan.md` § 2-1, 2-2, 3-1 | 구조/매니페스트/인증 설계 |
+| `docs/extension/implementation-plan.md` § 2-1, 2-2, 3-1 | 구조/매니페스트/인증 설계 (Service Worker 없는 2-컴포넌트 구조) |
 | `docs/extension/flow.md` § 2 | 인증 플로우 다이어그램 |
 
 ### 작업
@@ -193,8 +195,6 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
   │   ├── popup.html
   │   ├── popup.css
   │   └── popup.js
-  ├── background/
-  │   └── service-worker.js
   ├── content/
   │   ├── extractor.js        (빈 파일 — Step 6에서 구현)
   │   └── auth-callback.js
@@ -211,19 +211,17 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
   - permissions: `activeTab`, `storage`, `scripting`
   - host_permissions: 사람인, 잡코리아, JobTrack 도메인
   - content_scripts: 인증 콜백 페이지에만 `auth-callback.js`
-- [ ] `service-worker.js` 구현 — 인증 콜백 수신만
-  - `chrome.runtime.onMessage` → `auth-callback.js`에서 토큰 수신 → storage 저장
 - [ ] `auth-callback.js` 구현
-  - `/auth/extension-callback` 페이지에서 `data-extension-token` 읽기
-  - `chrome.runtime.sendMessage`로 Service Worker에 토큰 전달
+  - `MutationObserver`로 `data-extension-token` 속성이 DOM에 삽입될 때까지 대기 (content_script는 클라이언트 컴포넌트 fetch 완료보다 먼저 실행되므로 필수)
+  - 속성 감지 시 토큰과 만료일을 읽어 `chrome.storage.local`에 직접 저장 (Service Worker 불필요)
 - [ ] `auth.js` 구현
   - `saveToken(token, expiresAt)`, `getValidToken()`, `clearToken()`
 - [ ] `api.js` 기본 구조
   - `apiCall(endpoint, options)` — Bearer 토큰 자동 첨부, 401 처리
 - [ ] `popup.html/css/js` — 로그인 화면 구현
-  - 토큰 확인 → 없으면 "JobTrack 로그인" 버튼 표시
-  - 로그인 클릭 → 새 탭으로 `/auth?from=extension` 열기
-  - 토큰 수신 후 → 메인 UI로 전환
+  - 초기화 시 `chrome.storage.local`에서 토큰 확인 → 없거나 만료면 "JobTrack 로그인" 버튼 표시
+  - 로그인 클릭 → 새 탭으로 `/auth?from=extension` 열기 (팝업은 자동 닫힘)
+  - 사용자가 웹 로그인 완료 후 아이콘 재클릭 → 초기화에서 토큰 확인 → 메인 UI 표시
 - [ ] 아이콘 생성 (심플 플레이스홀더)
 
 ### 완료 조건
