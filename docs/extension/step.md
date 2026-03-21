@@ -55,19 +55,19 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 
 ### 작업
 
-- [ ] `jwt.ts`에 `signExtensionToken(claims: AuthClaims): string` 함수 추가
+- [x] `jwt.ts`에 `signExtensionToken(claims: AuthClaims): string` 함수 추가
   - 30일 유효 (`30d`)
   - 기존 `signAuthToken` (7일)과 분리
-- [ ] `request.ts`에 `extractToken(request: NextRequest)` 헬퍼 추가
+- [x] `request.ts`에 `extractToken(request: NextRequest)` 헬퍼 추가
   - Cookie 우선 확인 → 없으면 `Authorization: Bearer` 헤더에서 추출
-- [ ] `requireAuth` 함수가 `extractToken`을 사용하도록 수정
-- [ ] 기존 테스트 통과 확인
+- [x] `requireAuth` 함수가 `extractToken`을 사용하도록 수정
+- [x] 기존 테스트 통과 확인
 
 ### 완료 조건
 
-- [ ] `pnpm build` 성공
-- [ ] `pnpm test:run` — 기존 테스트 통과
-- [ ] 기존 웹 Cookie 인증 플로우 영향 없음 확인
+- [x] `pnpm build` 성공
+- [x] `pnpm test:run` — 기존 테스트 통과
+- [x] 기존 웹 Cookie 인증 플로우 영향 없음 확인
 
 ---
 

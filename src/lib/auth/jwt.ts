@@ -3,6 +3,7 @@ import "server-only";
 import jwt, { type JwtPayload } from "jsonwebtoken";
 
 const JWT_EXPIRES_IN = "7d";
+const EXTENSION_JWT_EXPIRES_IN = "30d";
 export const AUTH_COOKIE_NAME = "jobtrack_auth";
 export const AUTH_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
@@ -28,6 +29,12 @@ const getJwtSecret = (): string => {
 
 export const signAuthToken = (claims: AuthClaims): string => {
   return jwt.sign(claims, getJwtSecret(), { expiresIn: JWT_EXPIRES_IN });
+};
+
+export const signExtensionToken = (claims: AuthClaims): string => {
+  return jwt.sign(claims, getJwtSecret(), {
+    expiresIn: EXTENSION_JWT_EXPIRES_IN,
+  });
 };
 
 export const verifyAuthToken = (token: string): AuthTokenPayload | null => {
