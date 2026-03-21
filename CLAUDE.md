@@ -10,6 +10,7 @@ pnpm build        # Production build (completion = done criterion)
 pnpm lint         # Run ESLint
 pnpm test         # Run Vitest in watch mode
 pnpm test:run     # Run tests once (CI mode)
+pnpm test <path>  # Run a single test file (e.g., pnpm test src/lib/auth/__tests__/callback-url.test.ts)
 pnpm db:types     # Regenerate TypeScript types from Supabase schema
 ```
 
@@ -44,7 +45,11 @@ HTTP Request
 Supabase (PostgreSQL)
 ```
 
-Dependency injection is wired in `src/lib/containers/`. Each domain has its own container (e.g., `application.container.ts`, `parsing.container.ts`).
+Dependency injection is wired in `src/lib/containers/`. Each domain has its own container (e.g., `application.container.ts`, `parsing.container.ts`). Containers follow a factory pattern: create Supabase client, instantiate repositories, wire them into services, return the services object.
+
+### Path Alias
+
+`@/*` maps to `./src/*` (configured in both `tsconfig.json` and `vitest.config.ts`).
 
 ### Key Directories
 
@@ -58,21 +63,40 @@ Dependency injection is wired in `src/lib/containers/`. Each domain has its own 
 | `src/lib/core/repositories/` | Data access layer (interfaces + Supabase impls) |
 | `src/lib/containers/` | DI wiring per domain |
 | `src/lib/query/` | React Query hooks (client-side data fetching) |
+| `src/lib/api/client.ts` | Typed API client methods for client-side fetching |
 | `src/lib/validation/` | Zod schemas for request validation |
 | `src/lib/auth/` | JWT, session helpers, password hashing |
 | `src/lib/parse/` | Job posting parsing types, mapper, merge logic |
 | `public/openapi.json` | Swagger/OpenAPI spec (keep in sync with API changes) |
 
+### API Route Handler Pattern
+
+Route handlers follow a consistent structure:
+1. `requireAuth(request)` — returns `{ ok, payload }` or `{ ok: false, response }`
+2. Parse/validate request body with Zod
+3. Create container, call service method
+4. Return `NextResponse.json(...)`, catch with `toErrorResponse(error)`
+
 ### Authentication
 
 JWT stored in HttpOnly cookie `jobtrack_auth` (7-day expiry).
-- Server components: `requireServerAuth()`
+- Server components: `requireServerAuth()` (redirects if unauthenticated)
+- Server components (no redirect): `getServerAuthPayload()` (returns payload or null)
 - API routes: `requireAuth()`
 - Callback URL safety: `getSafeCallbackUrl()` — only relative URLs allowed
+- No global middleware — auth is enforced per-route
+
+### Styling
+
+Tailwind CSS v4 with CSS-first config (no `tailwind.config.ts`). Theme is defined via CSS variables in `globals.css` using `@theme inline`. Light/dark mode via CSS variables with OKLch color space.
 
 ### Job Parsing Pipeline (`/api/applications/parse`)
 
 URL → Scraper (NativeScraper → ScrapingBee fallback) → HTML → OpenAI LLM extraction → field mapping → merge with existing data. Site-specific adapter configs control selectors and removal rules.
+
+### Testing
+
+Tests are co-located with source code in `__tests__` directories. Vitest config mirrors the `@/*` path alias.
 
 ### Error Handling
 
