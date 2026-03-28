@@ -11,10 +11,15 @@ interface AuthPageProps {
 export default async function AuthPage({ searchParams }: AuthPageProps) {
   const [payload, params] = await Promise.all([getServerAuthPayload(), searchParams]);
 
+  const isFromExtension = params.from === "extension";
+
   if (payload) {
+    if (isFromExtension) {
+      redirect("/auth/extension-callback");
+    }
     const callbackUrl = getSafeCallbackUrl(params.callbackUrl as string | undefined);
     redirect(callbackUrl);
   }
 
-  return <AuthForm />;
+  return <AuthForm callbackUrlOverride={isFromExtension ? "/auth/extension-callback" : undefined} />;
 }

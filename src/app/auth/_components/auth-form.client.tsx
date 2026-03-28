@@ -32,12 +32,16 @@ const AUTH_TOAST_ID = {
   registerError: "auth-register-error",
 } as const;
 
-export function AuthForm() {
+interface AuthFormProps {
+  callbackUrlOverride?: string;
+}
+
+export function AuthForm({ callbackUrlOverride }: AuthFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedMode = searchParams.get("mode");
   const initialTab = requestedMode === "register" ? "register" : "login";
-  const callbackUrl = getSafeCallbackUrl(searchParams.get("callbackUrl"));
+  const callbackUrl = callbackUrlOverride ?? getSafeCallbackUrl(searchParams.get("callbackUrl"));
 
   const [activeTab, setActiveTab] = useState<"login" | "register">(initialTab);
   const [loginForm, setLoginForm] = useState<AuthFormState>(INITIAL_FORM);
