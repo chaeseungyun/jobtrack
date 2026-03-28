@@ -86,25 +86,25 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 
 ### 작업
 
-- [ ] `POST /api/auth/extension-token` 엔드포인트 생성
+- [x] `POST /api/auth/extension-token` 엔드포인트 생성
   - 파일: `src/app/api/auth/extension-token/route.ts`
   - Cookie 기반 인증 필요 (로그인 상태에서만 호출)
   - 응답: `{ token: string, expiresAt: string }` (30일 JWT)
-- [ ] `/auth/extension-callback` 페이지 생성
+- [x] `/auth/extension-callback` 페이지 생성
   - 파일: `src/app/auth/extension-callback/page.tsx` (클라이언트 컴포넌트)
   - 마운트 시 `fetch('/api/auth/extension-token')` 호출하여 토큰 발급 (세션 쿠키 자동 첨부)
   - 응답받은 토큰을 `data-extension-token` 속성으로 DOM에 삽입
   - 확장 프로그램의 content_script(MutationObserver)가 토큰을 읽어가는 브릿지 역할
   - **"로그인 완료! 확장 프로그램 아이콘을 다시 클릭해주세요"** 안내 문구 표시 (팝업은 새 탭이 열리면서 자동 닫힘)
-- [ ] 기존 로그인 플로우에 `from=extension` 파라미터 처리 추가
+- [x] 기존 로그인 플로우에 `from=extension` 파라미터 처리 추가
   - 로그인 성공 시 `from=extension`이면 `/auth/extension-callback`으로 리다이렉트
 
 ### 완료 조건
 
-- [ ] `pnpm build` 성공
-- [ ] 기존 로그인 플로우 영향 없음 확인 (`from` 파라미터 없을 때 기존 동작)
-- [ ] `/api/auth/extension-token` 수동 호출 시 JWT 응답 확인
-- [ ] `/auth/extension-callback` 페이지 렌더링 확인
+- [x] `pnpm build` 성공
+- [x] 기존 로그인 플로우 영향 없음 확인 (`from` 파라미터 없을 때 기존 동작)
+- [x] `/api/auth/extension-token` 수동 호출 시 JWT 응답 확인
+- [x] `/auth/extension-callback` 페이지 렌더링 확인
 
 ---
 
