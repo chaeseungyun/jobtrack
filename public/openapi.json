@@ -559,7 +559,32 @@
           }
         }
       }
-    }
+    },
+    "/api/auth/extension-token": {
+      "post": {
+        "summary": "Issue extension JWT token (30-day)",
+        "description": "Issues a long-lived JWT for the Chrome extension. Requires an active web session (cookie auth).",
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Extension token issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtensionTokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
     },
     "/api/analytics/dashboard": {
       "get": {
@@ -1134,7 +1159,24 @@
             }
           }
         ]
-      }
+      },
+      "ExtensionTokenResponse": {
+        "type": "object",
+        "required": [
+          "token",
+          "expiresAt"
+        ],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "30-day JWT for Chrome extension"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Token expiration timestamp (ISO 8601)"
+          }
+        }
       },
       "AnalyticsSummary": {
         "type": "object",
