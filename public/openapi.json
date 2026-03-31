@@ -165,6 +165,60 @@
         }
       }
     },
+    "/api/applications/parse-html": {
+      "post": {
+        "summary": "Parse job posting from raw HTML",
+        "description": "Accepts pre-scraped HTML (e.g. from a browser extension) and extracts job data via LLM, skipping the server-side scraping step.",
+        "tags": ["Parsing"],
+        "security": [
+          {
+            "CookieAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url", "html"],
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri",
+                    "description": "Original job posting URL"
+                  },
+                  "html": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 5242880,
+                    "description": "Raw HTML content of the job posting page (max 5MB)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Parsed job data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParsedJob"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Unauthorized"
+          }
+        }
+      }
+    },
     "/api/applications": {
       "get": {
         "summary": "List applications",
