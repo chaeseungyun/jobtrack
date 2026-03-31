@@ -124,23 +124,23 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 
 ### 작업
 
-- [ ] `JobParsingService`에 `parseHtml(url: string, html: string)` 메서드 추가
+- [x] `JobParsingService`에 `parseHtml(url: string, html: string)` 메서드 추가
   - 스크래핑 단계 건너뛰고 HTML 정제 → LLM 파싱만 수행
   - `preExtracted: true` 옵션으로 content 셀렉터 추출 단계 스킵
   - 캐시 저장은 기존과 동일 적용
-- [ ] `POST /api/applications/parse-html` 라우트 생성
+- [x] `POST /api/applications/parse-html` 라우트 생성
   - 파일: `src/app/api/applications/parse-html/route.ts`
   - 인증: `requireAuth` (Cookie 또는 Bearer)
   - 요청 본문: `{ url: string, html: string }`
-  - Zod 스키마 추가 (`src/lib/validation/`)
+  - Zod 스키마 추가 (라우트 파일 내 인라인 — 기존 `parse` 라우트와 동일 패턴)
   - 요청 크기 제한: 5MB
-- [ ] 기존 URL 파싱 엔드포인트(`POST /api/applications/parse`)는 변경 없이 유지
+- [x] 기존 URL 파싱 엔드포인트(`POST /api/applications/parse`)는 변경 없이 유지
 
 ### 완료 조건
 
-- [ ] `pnpm build` 성공
-- [ ] `pnpm test:run` — 기존 테스트 통과
-- [ ] 기존 URL 파싱 플로우 영향 없음 확인
+- [x] `pnpm build` 성공
+- [x] `pnpm test:run` — 기존 테스트 통과 (71 tests passed)
+- [x] 기존 URL 파싱 플로우 영향 없음 확인
 
 ---
 
@@ -158,18 +158,18 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 
 ### 작업
 
-- [ ] `POST /api/auth/extension-token` 스펙 추가
+- [x] `POST /api/auth/extension-token` 스펙 추가
   - 요청: 없음 (Cookie 인증)
   - 응답: `{ token: string, expiresAt: string }`
-- [ ] `POST /api/applications/parse-html` 스펙 추가
+- [x] `POST /api/applications/parse-html` 스펙 추가
   - 요청: `{ url: string, html: string }`
   - 응답: 기존 `parse` 엔드포인트와 동일한 형식
   - 인증: Bearer 토큰
 
 ### 완료 조건
 
-- [ ] `/swagger` 페이지에서 새 엔드포인트 2개 확인
-- [ ] `pnpm build` 성공
+- [x] `/swagger` 페이지에서 새 엔드포인트 2개 확인
+- [x] `pnpm build` 성공
 
 ---
 

@@ -100,4 +100,4 @@ Tests are co-located with source code in `__tests__` directories. Vitest config 
 
 ### Error Handling
 
-Use `AppError` from `src/lib/core/errors.ts` for domain errors. API responses use `toErrorResponse()` from `src/lib/api/`.
+Use `AppError` from `src/lib/core/errors.ts` for all domain errors. **Never throw plain `Error`** — always use `AppError` or its factory helpers (`notFound`, `forbidden`, `conflict`, `badRequest`, `unauthorized`). API responses use `toErrorResponse()` from `src/lib/api/`.

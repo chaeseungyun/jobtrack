@@ -155,4 +155,98 @@ describe("JobParsingService", () => {
     expect(mockNativeScraper.scrape).toHaveBeenCalled();
     expect(mockParser.parse).toHaveBeenCalled();
   });
+
+  describe("parseHtml", () => {
+    it("should return cached data if available", async () => {
+      const url = "https://example.com/job";
+      const cachedData = { company_name: "Cached Co", position: "Dev", career_type: "any" as const };
+
+      vi.mocked(mockCacheRepo.get).mockResolvedValue({
+        parsed_data: cachedData,
+        id: "1",
+        url,
+        content_hash: null,
+        last_fetched_at: new Date().toISOString(),
+        expires_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      });
+
+      const result = await service.parseHtml(url, "<html><body>Job</body></html>");
+
+      expect(result).toEqual(cachedData);
+      expect(mockNativeScraper.scrape).not.toHaveBeenCalled();
+      expect(mockSpbScraper.scrape).not.toHaveBeenCalled();
+      expect(mockParser.parse).not.toHaveBeenCalled();
+    });
+
+    it("should parse HTML with preExtracted option and skip scraping", async () => {
+      const url = "https://example.com/job";
+      const html = "<div>Job Details</div>";
+      const parsedData = { company_name: "New Co", position: "Dev", career_type: "any" as const };
+
+      vi.mocked(mockCacheRepo.get).mockResolvedValue(null);
+      vi.mocked(mockParser.parse).mockResolvedValue(parsedData);
+
+      const result = await service.parseHtml(url, html);
+
+      expect(result).toEqual(parsedData);
+      expect(mockNativeScraper.scrape).not.toHaveBeenCalled();
+      expect(mockSpbScraper.scrape).not.toHaveBeenCalled();
+      expect(mockParser.parse).toHaveBeenCalledWith(html, ADAPTER_CONFIG.generic, { preExtracted: true });
+      expect(mockCacheRepo.set).toHaveBeenCalledWith(url, parsedData, expect.any(Date));
+    });
+
+    it("should resolve correct adapter config for known sites", async () => {
+      const url = "https://www.saramin.co.kr/zf_user/jobs/relay/view?rec_idx=123";
+      const html = "<div>Saramin Job</div>";
+      const parsedData = { company_name: "Saramin Co", position: "FE", career_type: "any" as const };
+
+      vi.mocked(mockCacheRepo.get).mockResolvedValue(null);
+      vi.mocked(mockParser.parse).mockResolvedValue(parsedData);
+
+      const result = await service.parseHtml(url, html);
+
+      expect(result).toEqual(parsedData);
+      expect(mockParser.parse).toHaveBeenCalledWith(html, ADAPTER_CONFIG["saramin.co.kr"], { preExtracted: true });
+    });
+
+    it("should skip cache when bypassCache is true", async () => {
+      const url = "https://example.com/job";
+      const html = "<div>Job Details</div>";
+      const cachedData = { company_name: "Old Co", position: "Old", career_type: "any" as const };
+      const freshData = { company_name: "New Co", position: "New", career_type: "any" as const };
+
+      vi.mocked(mockCacheRepo.get).mockResolvedValue({
+        parsed_data: cachedData,
+        id: "1",
+        url,
+        content_hash: null,
+        last_fetched_at: new Date().toISOString(),
+        expires_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+      });
+      vi.mocked(mockParser.parse).mockResolvedValue(freshData);
+
+      const result = await service.parseHtml(url, html, { bypassCache: true });
+
+      expect(result).toEqual(freshData);
+      expect(mockCacheRepo.get).not.toHaveBeenCalled();
+      expect(mockParser.parse).toHaveBeenCalledWith(html, ADAPTER_CONFIG.generic, { preExtracted: true });
+    });
+
+    it("should handle cache failures gracefully", async () => {
+      const url = "https://example.com/job";
+      const html = "<div>Job Details</div>";
+      const parsedData = { company_name: "Co", position: "Dev", career_type: "any" as const };
+
+      vi.mocked(mockCacheRepo.get).mockRejectedValue(new Error("DB Down"));
+      vi.mocked(mockParser.parse).mockResolvedValue(parsedData);
+      vi.mocked(mockCacheRepo.set).mockRejectedValue(new Error("DB Still Down"));
+
+      const result = await service.parseHtml(url, html);
+
+      expect(result).toEqual(parsedData);
+      expect(mockParser.parse).toHaveBeenCalled();
+    });
+  });
 });

@@ -25,7 +25,40 @@ export class JobParsingService {
     url: string,
     options: { bypassCache?: boolean } = {},
   ): Promise<ParsedJob> {
-    if (!options.bypassCache) {
+    const hostname = new URL(url).hostname;
+    const config = this.resolveAdapterConfig(hostname);
+
+    return this.withCache(
+      url,
+      async () => {
+        const scrapeResult = await this.scrapWithFallback(url, config);
+        return this.parser.parse(scrapeResult.html, config);
+      },
+      options,
+    );
+  }
+
+  async parseHtml(
+    url: string,
+    html: string,
+    options: { bypassCache?: boolean } = {},
+  ): Promise<ParsedJob> {
+    const hostname = new URL(url).hostname;
+    const config = this.resolveAdapterConfig(hostname);
+
+    return this.withCache(
+      url,
+      () => this.parser.parse(html, config, { preExtracted: true }),
+      options,
+    );
+  }
+
+  private async withCache(
+    url: string,
+    parseFn: () => Promise<ParsedJob>,
+    options?: { bypassCache?: boolean },
+  ): Promise<ParsedJob> {
+    if (!options?.bypassCache) {
       try {
         const cached = await this.cacheRepo.get(url);
         if (cached) {
@@ -36,11 +69,7 @@ export class JobParsingService {
       }
     }
 
-    const hostname = new URL(url).hostname;
-    const config = this.resolveAdapterConfig(hostname);
-
-    const scrapeResult = await this.scrapWithFallback(url, config);
-    const parsedData = await this.parser.parse(scrapeResult.html, config);
+    const parsedData = await parseFn();
 
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + 24);

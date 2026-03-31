@@ -1,6 +1,7 @@
 import {
   IParsingService,
   ParsedJob,
+  ParseOptions,
 } from "@/lib/core/services/interfaces/parser.service";
 import { ADAPTER_CONFIG } from "@/lib/core/config/adapter.config";
 import type { JobAdapterConfig } from "@/lib/core/config/adapter.config";
@@ -47,16 +48,25 @@ const JobSchema = z.object({
 
 export class OpenAiParsingService implements IParsingService {
   private openai: OpenAI;
+  private turndown: TurndownService;
 
   constructor(apiKey: string) {
     if (!apiKey) {
       throw new Error("OpenAI API key is required");
     }
     this.openai = new OpenAI({ apiKey });
+    this.turndown = new TurndownService({
+      headingStyle: "atx",
+      codeBlockStyle: "fenced",
+    });
   }
 
-  async parse(html: string, config?: JobAdapterConfig): Promise<ParsedJob> {
-    const markdown = this.preprocessHtml(html, config);
+  async parse(
+    html: string,
+    config?: JobAdapterConfig,
+    options?: ParseOptions,
+  ): Promise<ParsedJob> {
+    const markdown = this.preprocessHtml(html, config, options);
 
     try {
       const completion = await this.openai.chat.completions.create({
@@ -171,11 +181,31 @@ ${markdown}
     }
   }
 
-  private preprocessHtml(html: string, config?: JobAdapterConfig): string {
-    const turndownService = new TurndownService({
-      headingStyle: "atx",
-      codeBlockStyle: "fenced",
-    });
+  private preprocessHtml(
+    html: string,
+    config?: JobAdapterConfig,
+    options?: ParseOptions,
+  ): string {
+    // Pre-extracted HTML from extension: skip content selector extraction,
+    // only apply noise removal + markdown conversion
+    if (options?.preExtracted) {
+      const $ = cheerio.load(html);
+
+      $("style, noscript, iframe, script").remove();
+
+      const removeSelectors = config?.remove ?? ADAPTER_CONFIG.generic.remove;
+      for (const selector of removeSelectors) {
+        if (selector) $(selector).remove();
+      }
+
+      const bodyHtml = $("body").html();
+      if (!bodyHtml || bodyHtml.trim().length === 0) {
+        const text = $.root().text();
+        return text.replace(/\s+/g, " ").trim().slice(0, 15000);
+      }
+
+      return this.turndown.turndown(bodyHtml).trim().slice(0, 15000);
+    }
 
     const extractWithConfig = (
       cfg: JobAdapterConfig,
@@ -238,6 +268,6 @@ ${markdown}
       return text.replace(/\s+/g, " ").trim().slice(0, 15000);
     }
 
-    return turndownService.turndown(extractedHtml).trim().slice(0, 15000);
+    return this.turndown.turndown(extractedHtml).trim().slice(0, 15000);
   }
 }
