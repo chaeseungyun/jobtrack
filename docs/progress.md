@@ -28,6 +28,22 @@
 
 ---
 
+# 2026-03-31
+
+**한 것**: 크롬 확장 Step 3 검증 완료 + Step 4 완료. Step 3 코드 구현 상태 점검(전 항목 구현 완료 확인), `pnpm build` / `pnpm test:run` (71 tests) 통과 검증 후 체크리스트 마킹. Step 4 — `POST /api/applications/parse-html` 스펙을 `public/openapi.json`에 추가 (`extension-token`은 Step 2에서 이미 추가됨). `/api-sync` 감사로 전체 20개 라우트 중 누락 1건만 확인 후 반영.
+**결정**: Zod 스키마를 `src/lib/validation/`에 분리하지 않고 라우트 파일 내 인라인 정의 유지 — 기존 `parse/route.ts`와 동일 패턴이라 일관성 우선.
+**빌드**: ✓
+
+---
+
+# 2026-03-28
+
+**한 것**: 크롬 확장 Step 3 — `POST /api/applications/parse-html` 엔드포인트 구현. `IParsingService`에 `ParseOptions { preExtracted }` 추가, `OpenAiParsingService`에서 preExtracted 시 content 셀렉터 스킵(노이즈 제거+마크다운 변환만), `JobParsingService.parseHtml()` 메서드 추가(스크래핑 생략, 캐시 동일), 라우트 핸들러 생성(Zod 5MB 제한, requireAuth), 테스트 4건 추가.
+**결정**: `preExtracted` 옵션을 인터페이스 레벨(`ParseOptions`)로 설계하여 `OpenAiParsingService.preprocessHtml` 내부에서 content 셀렉터 추출만 스킵하고 remove 셀렉터+Turndown 변환은 그대로 수행. 확장 프로그램이 이미 content 영역을 추출해서 보내므로 이중 추출 방지.
+**빌드**: ✓ (71 tests passed, build 성공)
+
+---
+
 # 2026-03-10
 
 ### 1) 오늘의 목표
