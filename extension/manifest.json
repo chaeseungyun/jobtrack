@@ -1,0 +1,39 @@
+{
+  "manifest_version": 3,
+  "name": "JobTrack - 채용 공고 저장",
+  "version": "1.0.0",
+  "description": "채용 공고를 한 번의 클릭으로 JobTrack에 저장합니다.",
+  "permissions": [
+    "activeTab",
+    "storage",
+    "scripting"
+  ],
+  "host_permissions": [
+    "https://*.saramin.co.kr/*",
+    "https://*.jobkorea.co.kr/*",
+    "https://jobtrack-phi.vercel.app/*",
+    "http://localhost:3000/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://jobtrack-phi.vercel.app/auth/extension-callback*",
+        "http://localhost:3000/auth/extension-callback*"
+      ],
+      "js": ["content/auth-callback.js"]
+    }
+  ],
+  "icons": {
+    "16": "icons/icon-16.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  }
+}
