@@ -187,7 +187,7 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 
 ### 작업
 
-- [ ] `extension/` 디렉토리 구조 생성
+- [x] `extension/` 디렉토리 구조 생성
   ```
   extension/
   ├── manifest.json
@@ -199,6 +199,7 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
   │   ├── extractor.js        (빈 파일 — Step 6에서 구현)
   │   └── auth-callback.js
   ├── utils/
+  │   ├── config.js
   │   ├── api.js
   │   ├── auth.js
   │   └── sites.js            (빈 파일 — Step 6에서 구현)
@@ -207,29 +208,36 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
       ├── icon-48.png
       └── icon-128.png
   ```
-- [ ] `manifest.json` 작성
+- [x] `manifest.json` 작성
   - permissions: `activeTab`, `storage`, `scripting`
-  - host_permissions: 사람인, 잡코리아, JobTrack 도메인
-  - content_scripts: 인증 콜백 페이지에만 `auth-callback.js`
-- [ ] `auth-callback.js` 구현
+  - host_permissions: 사람인, 잡코리아, JobTrack 도메인, localhost
+  - content_scripts: 인증 콜백 페이지에만 `auth-callback.js` (prod + localhost)
+- [x] `auth-callback.js` 구현
   - `MutationObserver`로 `data-extension-token` 속성이 DOM에 삽입될 때까지 대기 (content_script는 클라이언트 컴포넌트 fetch 완료보다 먼저 실행되므로 필수)
   - 속성 감지 시 토큰과 만료일을 읽어 `chrome.storage.local`에 직접 저장 (Service Worker 불필요)
-- [ ] `auth.js` 구현
+  - `window.location.origin`을 `apiBase`로 함께 저장 (실제 콜백 origin으로 최종 동기화)
+- [x] `auth.js` 구현
   - `saveToken(token, expiresAt)`, `getValidToken()`, `clearToken()`
-- [ ] `api.js` 기본 구조
-  - `apiCall(endpoint, options)` — Bearer 토큰 자동 첨부, 401 처리
-- [ ] `popup.html/css/js` — 로그인 화면 구현
+- [x] `config.js` 구현
+  - `DEV_WEB_ORIGIN`, `PROD_WEB_ORIGIN`, `DEFAULT_WEB_ENV` 상수 분리
+  - 인증 시작 전에 사용할 초기 `apiBase` 결정
+- [x] `api.js` 기본 구조
+  - `getApiBase()` — storage에서 apiBase 조회, 없으면 환경 상수 기반 초기값 사용
+  - `ensureApiBase()` — 로그인 시작 전에 `apiBase` 초기화
+  - `apiCall(endpoint, options)` — Bearer 토큰 자동 첨부, 401 처리, HTTP/JSON 파싱/네트워크 실패 구분
+- [x] `popup.html/css/js` — 로그인 화면 구현
+  - ES modules 사용 (`<script type="module">`)
   - 초기화 시 `chrome.storage.local`에서 토큰 확인 → 없거나 만료면 "JobTrack 로그인" 버튼 표시
-  - 로그인 클릭 → 새 탭으로 `/auth?from=extension` 열기 (팝업은 자동 닫힘)
+  - 로그인 클릭 전 `apiBase`를 먼저 결정한 뒤, 새 탭으로 `/auth?from=extension` 열기 (팝업은 자동 닫힘)
   - 사용자가 웹 로그인 완료 후 아이콘 재클릭 → 초기화에서 토큰 확인 → 메인 UI 표시
-- [ ] 아이콘 생성 (심플 플레이스홀더)
+- [x] 아이콘 생성 (심플 플레이스홀더)
 
 ### 완료 조건
 
-- [ ] `chrome://extensions` 개발자 모드에서 로드 성공 (에러 없음)
-- [ ] 팝업 열기 → 로그인 버튼 표시 확인
-- [ ] 로그인 버튼 클릭 → JobTrack 로그인 페이지 새 탭 열림
-- [ ] 로그인 완료 → 콜백 페이지 → 토큰 수신 → 팝업 메인 UI 전환 수동 확인
+- [x] `chrome://extensions` 개발자 모드에서 로드 성공 (에러 없음)
+- [x] 팝업 열기 → 로그인 버튼 표시 확인
+- [x] 로그인 버튼 클릭 → 현재 환경(origin) 기준 JobTrack 로그인 페이지 새 탭 열림
+- [x] 로그인 완료 → 콜백 페이지 → 토큰 수신 → 팝업 메인 UI 전환 수동 확인
 
 ---
 
