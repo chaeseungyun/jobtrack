@@ -27,6 +27,13 @@ pnpm db:types     # Regenerate TypeScript types from Supabase schema
 - When modifying architecture or significant code, update the relevant docs in `docs/`.
 - Context docs to read for broader understanding: `docs/prd.md`, `docs/architecture.md`
 
+## Environment Variables
+
+- Required env vars are documented in `.env.example`
+- Development/Test and Production use **separate Supabase projects** — see `docs/architecture.md` Section 7.1
+- Local secrets go in `.env.local` (gitignored). Never commit real keys.
+- `pnpm db:types` generates types from the `supabase link`-ed project. Both Supabase projects must have identical schemas.
+
 ## Architecture
 
 ### Layered Architecture (3-tier + DI)

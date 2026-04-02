@@ -243,7 +243,21 @@ src/
 
 ## 7. 인프라 및 운영 (Infrastructure)
 
-### 7.1 스케줄링 및 웹훅
+### 7.1 환경별 데이터베이스 분리
+
+Supabase 프로젝트를 환경별로 분리하여 운영한다.
+
+| 환경 | 용도 | Vercel 환경 |
+| :--- | :--- | :--- |
+| Development/Test | 로컬 개발, 테스트, Preview 배포 | Preview, Development |
+| Production | 프로덕션 서비스 | Production |
+
+- **연결 방식**: 환경변수(`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`)로 결정되며, 코드 변경 없이 환경변수만으로 DB가 전환된다.
+- **Vercel 설정**: 각 환경(Production / Preview)에 해당 Supabase 프로젝트의 키를 별도로 설정한다.
+- **타입 생성**: `pnpm db:types`는 `supabase link`로 연결된 프로젝트 기준으로 타입을 생성한다. 두 프로젝트의 스키마가 동일해야 한다.
+- **환경변수 목록**: `.env.example` 참조.
+
+### 7.2 스케줄링 및 웹훅
 - **Cron**: Vercel Cron을 사용한 일일 리마인더 배치 작업 실행.
 - **Webhook**: Resend 이메일 발송 상태 수신 및 Svix를 통한 웹훅 검증.
 
