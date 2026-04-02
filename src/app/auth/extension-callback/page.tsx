@@ -64,7 +64,7 @@ export default function ExtensionCallbackPage() {
                 data-extension-expires-at={expiresAt}
               >
                 <p className="text-sm text-muted-foreground">
-                  확장 프로그램 아이콘을 다시 클릭해주세요.
+                  확장 프로그램 아이콘을 다시 클릭해주세요. 페이지를 나가셔도 좋습니다.
                 </p>
               </div>
             )}
