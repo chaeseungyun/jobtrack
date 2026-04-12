@@ -28,6 +28,15 @@
 
 ---
 
+# 2026-04-12
+
+**한 것**: 크롬 확장 Step 6-2 구현. `extractor.js`에 `extractJobHtml(siteConfig)`를 추가하여 공고 컨테이너 탐색, 뷰포트 기반 선택, 노이즈 제거, 속성 정리, alternatives 반환을 구현. `popup.js`의 "이 공고 저장하기" 클릭 흐름을 로딩 전환 → `chrome.scripting.executeScript` HTML 추출 → `parseHtml` API 호출 → 콘솔 출력/실패 롤백으로 연결. 리뷰 반영으로 parse-html 호출에 `bypassCache: true`를 전달하고, root 컨테이너 속성 제거와 콘솔 로그 최소화를 추가.
+**결정**: 컨테이너 후보의 뷰포트 비율 계산은 실제 페이지 DOM에서 수행하고, 전송용 HTML은 선택된 컨테이너를 clone한 뒤 정리한다. 분리된 clone DOM에서는 `getBoundingClientRect()`가 유효한 레이아웃 값을 주지 않을 수 있기 때문이다.
+**검증**: `git diff --check` 성공, `node --check`(`extractor.js`, `popup.js`, `api.js`) 성공, `pnpm build` 성공. 최초 build는 샌드박스 네트워크 제한으로 Google Fonts fetch 실패 후, 네트워크 권한으로 재실행하여 성공.
+**빌드**: ✓
+
+---
+
 # 2026-04-09
 
 **한 것**: 크롬 확장 Step 6 세분화(6-1~6-4) + Step 6-1 구현 완료. Step 6의 작업량이 과다하여 4개 서브스텝으로 분할 후 `docs/extension/step.md`에 반영. Step 6-1 — `sites.js`(SITE_CONFIGS, matchSite, isSupportedSite), `api.js`에 `parseHtml`/`createApplication` 추가, `popup.html`에 저장 버튼/미지원 안내 요소 추가, `popup.js` init()에서 사이트 판별 분기 구현.

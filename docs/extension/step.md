@@ -304,29 +304,29 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 
 #### 작업
 
-- [ ] `extension/content/extractor.js` 구현 — `extractJobHtml(siteConfig)` 함수
-  - **Stage 1**: `document.body.cloneNode(true)`로 DOM 클론 생성 후, `script`, `style`, `noscript`, `iframe`, `svg` 태그 일괄 제거
-  - **Stage 2**: `siteConfig.remove` 셀렉터 목록 순회하여 일치 요소 제거
-  - **Stage 3**: `siteConfig.content` 셀렉터로 컨테이너 검색
+- [x] `extension/content/extractor.js` 구현 — `extractJobHtml(siteConfig)` 함수
+  - **Stage 1**: 실제 DOM에서 `siteConfig.content` 셀렉터로 컨테이너 후보 검색
     - 0개: `generic` config의 `content` 셀렉터로 fallback (`main → article → #content → body` 순)
     - 1개: 해당 컨테이너 바로 추출
     - 2개+: 각 컨테이너에 `getBoundingClientRect` 적용 → 뷰포트 내 노출 비율(`visibleHeight / viewportHeight`) 최대인 것 선택, 나머지는 `alternatives` 배열에 보관
-  - **Stage 4**: 선택된 컨테이너의 모든 요소에서 `style`, `class`, `id`, `data-*` 속성 제거 (태그 구조와 텍스트만 유지)
+  - **Stage 2**: 선택된 컨테이너와 alternatives를 `cloneNode(true)`로 복제
+  - **Stage 3**: clone에서 `script`, `style`, `noscript`, `iframe`, `svg`와 `siteConfig.remove` 셀렉터 목록 순회 제거
+  - **Stage 4**: clone의 모든 요소에서 `style`, `class`, `id`, `data-*` 속성 제거 (태그 구조와 텍스트만 유지)
   - 반환값: `{ html: string, title: string, alternatives: Array<{ html: string, title: string }> }`
     - `title`: 컨테이너 내 첫 번째 `h1 | h2 | h3` 텍스트, 없으면 `document.title` 앞 30자
-- [ ] `extension/popup/popup.js`에 `#btn-save` 클릭 핸들러 추가
+- [x] `extension/popup/popup.js`에 `#btn-save` 클릭 핸들러 추가
   - `showView('loading')` 전환
   - `chrome.scripting.executeScript({ target: { tabId }, func: extractJobHtml, args: [siteConfig] })` 실행
   - 반환값 `{ html, title, alternatives }` 수신
-  - `parseHtml(tab.url, html)` 호출
-  - 성공/실패 결과를 `console.log`로 출력 (뷰 전환은 Step 6-3에서 구현)
+  - `parseHtml(tab.url, html, { bypassCache: true })` 호출
+  - 성공/실패 결과는 HTML 본문 없이 요약 로그로 출력 (뷰 전환은 Step 6-3에서 구현)
   - 실패 시 `showView('main')`으로 롤백
 
 #### 완료 조건
 
-- [ ] 사람인 공고 페이지에서 버튼 클릭 → 로딩 뷰 전환 → 파싱 API 응답 콘솔 출력
-- [ ] 잡코리아 공고 페이지에서 동일 동작 확인
-- [ ] `alternatives` 배열이 공고가 1개인 경우 빈 배열, 여러 개인 경우 나머지 컨테이너 포함 확인
+- [x] 사람인 공고 페이지에서 버튼 클릭 → 로딩 뷰 전환 → 파싱 API 응답 콘솔 출력
+- [x] 잡코리아 공고 페이지에서 동일 동작 확인
+- [x] `alternatives` 배열이 공고가 1개인 경우 빈 배열, 여러 개인 경우 나머지 컨테이너 포함 확인
 
 ---
 

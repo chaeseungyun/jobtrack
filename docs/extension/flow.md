@@ -119,30 +119,32 @@ sequenceDiagram
 
 페이지에서 "사용자가 보고 있는 공고"를 자동 판별하여 HTML을 추출하는 흐름.
 
+> 구현 메모: 뷰포트 계산은 실제 페이지 DOM에서 수행한다. `cloneNode(true)`로 분리된 DOM은 레이아웃 정보가 없어 `getBoundingClientRect()`가 유효하지 않을 수 있으므로, 후보 선택 후 선택된 컨테이너와 alternatives만 clone하여 노이즈/속성을 제거한다.
+
 ```mermaid
 flowchart TD
     Start([저장하기 클릭]) --> Inject[Popup: chrome.scripting.executeScript<br/>extractor.js 실행]
 
-    Inject --> CloneDOM[DOM 클론 생성<br/>cloneNode - true]
-    CloneDOM --> RemoveNoise[remove 셀렉터로 불필요 요소 제거<br/>script, style, noscript, iframe<br/>+ 사이트별 추가 제거]
-
-    RemoveNoise --> FindContainers[content 셀렉터로 컨테이너 검색]
+    Inject --> FindContainers[실제 DOM에서<br/>content 셀렉터로 컨테이너 검색]
     FindContainers --> CountCheck{매칭된 컨테이너 수?}
 
     %% ── 0개: fallback ──
     CountCheck -- "0개" --> GenericFallback[generic fallback 시도<br/>main → article → #content → body]
-    GenericFallback --> ReturnHTML[추출된 HTML 반환]
+    GenericFallback --> CloneSelected[선택된 컨테이너 cloneNode]
 
     %% ── 1개: 바로 추출 ──
-    CountCheck -- "1개" --> SingleExtract[해당 컨테이너의 outerHTML 추출]
-    SingleExtract --> ReturnHTML
+    CountCheck -- "1개" --> SingleExtract[해당 컨테이너 선택]
+    SingleExtract --> CloneSelected
 
     %% ── 2개 이상: 뷰포트 감지 ──
     CountCheck -- "2개+" --> ViewportDetect[각 컨테이너의<br/>getBoundingClientRect 계산]
-    ViewportDetect --> CalcRatio[뷰포트 내 노출 비율 계산<br/>visibleHeight / totalHeight]
+    ViewportDetect --> CalcRatio[뷰포트 내 노출 비율 계산<br/>visibleHeight / viewportHeight]
     CalcRatio --> SelectBest[가장 높은 비율의 컨테이너 선택]
-    SelectBest --> ExtractBest[선택된 컨테이너의 outerHTML 추출]
-    ExtractBest --> ReturnHTML
+    SelectBest --> CloneSelected
+
+    CloneSelected --> RemoveNoise[clone에서 remove 셀렉터로 불필요 요소 제거<br/>script, style, noscript, iframe, svg<br/>+ 사이트별 추가 제거]
+    RemoveNoise --> StripAttrs[style, class, id, data-* 속성 제거]
+    StripAttrs --> ReturnHTML[추출된 HTML 반환]
 
     ReturnHTML --> SendToPopup[Popup으로 HTML 전달]
     SendToPopup --> End([파싱 API 호출로 진행])

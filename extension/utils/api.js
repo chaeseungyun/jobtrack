@@ -102,10 +102,14 @@ export async function apiCall(endpoint, options = {}) {
   }
 }
 
-export async function parseHtml(url, html) {
+export async function parseHtml(url, html, options = {}) {
   return apiCall("/api/applications/parse-html", {
     method: "POST",
-    body: { url, html },
+    body: {
+      url,
+      html,
+      ...(options.bypassCache ? { bypassCache: true } : {}),
+    },
   });
 }
 
