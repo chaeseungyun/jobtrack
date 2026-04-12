@@ -28,6 +28,14 @@
 
 ---
 
+# 2026-04-09
+
+**한 것**: 크롬 확장 Step 6 세분화(6-1~6-4) + Step 6-1 구현 완료. Step 6의 작업량이 과다하여 4개 서브스텝으로 분할 후 `docs/extension/step.md`에 반영. Step 6-1 — `sites.js`(SITE_CONFIGS, matchSite, isSupportedSite), `api.js`에 `parseHtml`/`createApplication` 추가, `popup.html`에 저장 버튼/미지원 안내 요소 추가, `popup.js` init()에서 사이트 판별 분기 구현.
+**결정**: `GENERIC_CONFIG`을 `SITE_CONFIGS` 배열에 넣지 않고 별도 export — `matchSite`은 지원 사이트만 반환하고, generic fallback은 Step 6-2 extractor에서만 사용하도록 책임 분리.
+**빌드**: ✓
+
+---
+
 # 2026-03-31
 
 **한 것**: 크롬 확장 Step 3 검증 완료 + Step 4 완료. Step 3 코드 구현 상태 점검(전 항목 구현 완료 확인), `pnpm build` / `pnpm test:run` (71 tests) 통과 검증 후 체크리스트 마킹. Step 4 — `POST /api/applications/parse-html` 스펙을 `public/openapi.json`에 추가 (`extension-token`은 Step 2에서 이미 추가됨). `/api-sync` 감사로 전체 20개 라우트 중 누락 1건만 확인 후 반영.

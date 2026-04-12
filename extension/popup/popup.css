@@ -112,6 +112,10 @@ body {
   border: 1px solid var(--border);
 }
 
+#btn-save[hidden] {
+  display: none;
+}
+
 .btn-sm {
   padding: 6px 12px;
   font-size: 12px;

@@ -101,3 +101,17 @@ export async function apiCall(endpoint, options = {}) {
     };
   }
 }
+
+export async function parseHtml(url, html) {
+  return apiCall("/api/applications/parse-html", {
+    method: "POST",
+    body: { url, html },
+  });
+}
+
+export async function createApplication(data) {
+  return apiCall("/api/applications", {
+    method: "POST",
+    body: data,
+  });
+}

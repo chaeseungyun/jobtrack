@@ -1,5 +1,6 @@
 import { getValidToken, clearToken } from "../utils/auth.js";
 import { ensureApiBase } from "../utils/api.js";
+import { matchSite } from "../utils/sites.js";
 
 const views = {
   loading: document.getElementById("view-loading"),
@@ -27,8 +28,18 @@ async function init() {
   const url = tab?.url || "";
 
   document.getElementById("current-url").textContent = url;
-  document.getElementById("site-status").textContent =
-    "저장 기능은 다음 업데이트에서 추가됩니다.";
+
+  const site = matchSite(url);
+
+  if (site) {
+    document.getElementById("site-status").textContent = site.name;
+    document.getElementById("btn-save").hidden = false;
+    document.getElementById("unsupported-msg").hidden = true;
+  } else {
+    document.getElementById("site-status").textContent = "미지원 사이트";
+    document.getElementById("btn-save").hidden = true;
+    document.getElementById("unsupported-msg").hidden = false;
+  }
 
   showView("main");
 }

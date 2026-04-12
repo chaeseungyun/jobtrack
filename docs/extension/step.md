@@ -245,47 +245,164 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 
 **선행**: Step 3, Step 5
 
-### 컨텍스트 복구
+> 작업량이 많아 4개 서브스텝으로 세분화. 각 서브스텝은 독립적으로 완료 가능하며, 순서대로 진행한다.
+
+---
+
+### Step 6-1: 기반 레이어 — 사이트 판별 + API 래퍼 확장
+
+**목표**: 팝업이 현재 탭이 지원 사이트인지 판별하고, 저장/파싱 API 함수를 준비한다.
+
+#### 컨텍스트 복구
 
 | 읽을 파일 | 이유 |
 |-----------|------|
-| `docs/extension/step.md` | 전체 작업 흐름 복구 |
-| `docs/extension/implementation-plan.md` § 4-1 | HTML 추출 전략 (4단계 정제, 뷰포트 감지) |
-| `docs/extension/flow.md` § 3, 4 | HTML 추출 + 다른 공고 선택 플로우 |
-| `src/lib/core/config/adapter.config.ts` | 서버 adapter config (동기화 기준) |
-| `extension/utils/api.js` | Step 5에서 만든 API 래퍼 |
-| `extension/popup/popup.js` | Step 5에서 만든 팝업 로직 |
+| `src/lib/core/config/adapter.config.ts` | 사이트별 content/remove 셀렉터 동기화 기준 |
+| `extension/utils/api.js` | 기존 `apiCall` 래퍼 구조 파악 |
+| `extension/popup/popup.js` | 현재 view-main 분기 위치 확인 |
+| `extension/popup/popup.html` | 기존 뷰 구조 확인 |
 
-### 작업
+#### 작업
 
-- [ ] `sites.js` 구현
-  - `SITE_CONFIGS` — `adapter.config.ts`와 동기화
-  - `matchSite(url)` — URL → 사이트 config 매칭
-  - `isSupportedSite(url)` — 지원 사이트 여부
-- [ ] `extractor.js` 구현 — 4단계 정제 파이프라인
-  - Stage 1: 노이즈 태그 제거 (script, style, noscript, iframe, svg)
-  - Stage 2: remove 셀렉터 적용 (사이트별)
-  - Stage 3: content 셀렉터 매칭 + 뷰포트 감지
-    - 컨테이너 0개 → generic fallback
-    - 컨테이너 1개 → 바로 추출
-    - 컨테이너 2개+ → `getBoundingClientRect` 기반 뷰포트 비율 계산
-    - `alternatives` 배열 반환 (다른 공고 선택용)
-  - Stage 4: 속성 정제 (불필요 속성 strip)
-- [ ] `popup.js` 저장 플로우 추가
-  - 사이트 판별 → "이 공고 저장하기" / "미지원 사이트" 분기
-  - 저장 클릭 → `chrome.scripting.executeScript`로 extractor 실행
-  - 추출된 HTML → `POST /api/applications/parse-html` 호출
-  - 파싱 결과 → 확인 화면 ("이 공고가 맞나요?")
-  - "다른 공고" 클릭 시 → alternatives 목록 표시 → 선택 후 재파싱
-  - 편집 폼 → 수정 → `POST /api/applications` → 성공/실패 처리
-- [ ] `api.js`에 `parseHtml(url, html)`, `createApplication(data)` 추가
+- [x] `extension/utils/sites.js` 구현
+  - `SITE_CONFIGS` 객체 — `adapter.config.ts`의 `saramin.co.kr`, `jobkorea.co.kr`, `generic`을 JS 객체로 그대로 포팅
+    - 각 항목: `{ hostname, content: string[], remove: string[] }`
+  - `matchSite(url)` — URL의 hostname을 순회하여 매칭되는 config 반환, 없으면 `null`
+  - `isSupportedSite(url)` — `matchSite` 결과가 non-null이고 generic이 아닌 경우 `true`
+- [x] `extension/utils/api.js`에 두 함수 추가
+  - `parseHtml(url, html)` — `apiCall('/api/applications/parse-html', { method: 'POST', body: { url, html } })`
+  - `createApplication(data)` — `apiCall('/api/applications', { method: 'POST', body: data })`
+    - `data` 필드: `company_name`, `position`, `career_type`, `job_url`, `source`, `deadline` (nullable)
+- [x] `extension/popup/popup.html`에 view-main 내부 요소 보강
+  - `#btn-save` 버튼 ("이 공고 저장하기") — 초기 `hidden`
+  - `#unsupported-msg` 단락 ("지원하지 않는 사이트입니다") — 초기 `hidden`
+- [x] `extension/popup/popup.js`의 `init()` 내 view-main 분기 처리
+  - `isSupportedSite(url)` → `true`면 `#btn-save` 표시, `false`면 `#unsupported-msg` 표시
+  - `#site-status` 텍스트는 사이트명 표시 (예: "사람인", "잡코리아") 또는 "미지원 사이트"
 
-### 완료 조건
+#### 완료 조건
 
-- [ ] 사람인 공고 페이지에서 저장 플로우 수동 테스트 성공
-- [ ] 잡코리아 공고 페이지에서 저장 플로우 수동 테스트 성공
-- [ ] 미지원 사이트에서 안내 메시지 표시 확인
-- [ ] JobTrack 웹에서 저장된 지원서 확인
+- [x] 사람인/잡코리아 공고 URL에서 팝업 열면 "이 공고 저장하기" 버튼 표시
+- [x] 그 외 사이트에서 팝업 열면 "지원하지 않는 사이트" 안내 표시, 버튼 숨김
+- [x] `chrome://extensions`에서 확장 로드 시 에러 없음 확인
+
+---
+
+### Step 6-2: HTML 추출 파이프라인 — `extractor.js`
+
+**목표**: 버튼 클릭 시 현재 페이지에서 공고 HTML을 추출하여 파싱 API를 호출하고, 로딩 상태를 표시한다.
+
+#### 컨텍스트 복구
+
+| 읽을 파일 | 이유 |
+|-----------|------|
+| `docs/extension/flow.md` § 3 | HTML 추출 4단계 파이프라인 다이어그램 |
+| `docs/extension/flow.md` § 6 | 팝업-Content Script 통신 시퀀스 |
+| `extension/utils/sites.js` | Step 6-1에서 만든 사이트 config |
+| `extension/utils/api.js` | Step 6-1에서 추가한 `parseHtml` |
+| `extension/popup/popup.js` | `#btn-save` 핸들러 추가 위치 |
+
+#### 작업
+
+- [ ] `extension/content/extractor.js` 구현 — `extractJobHtml(siteConfig)` 함수
+  - **Stage 1**: `document.body.cloneNode(true)`로 DOM 클론 생성 후, `script`, `style`, `noscript`, `iframe`, `svg` 태그 일괄 제거
+  - **Stage 2**: `siteConfig.remove` 셀렉터 목록 순회하여 일치 요소 제거
+  - **Stage 3**: `siteConfig.content` 셀렉터로 컨테이너 검색
+    - 0개: `generic` config의 `content` 셀렉터로 fallback (`main → article → #content → body` 순)
+    - 1개: 해당 컨테이너 바로 추출
+    - 2개+: 각 컨테이너에 `getBoundingClientRect` 적용 → 뷰포트 내 노출 비율(`visibleHeight / viewportHeight`) 최대인 것 선택, 나머지는 `alternatives` 배열에 보관
+  - **Stage 4**: 선택된 컨테이너의 모든 요소에서 `style`, `class`, `id`, `data-*` 속성 제거 (태그 구조와 텍스트만 유지)
+  - 반환값: `{ html: string, title: string, alternatives: Array<{ html: string, title: string }> }`
+    - `title`: 컨테이너 내 첫 번째 `h1 | h2 | h3` 텍스트, 없으면 `document.title` 앞 30자
+- [ ] `extension/popup/popup.js`에 `#btn-save` 클릭 핸들러 추가
+  - `showView('loading')` 전환
+  - `chrome.scripting.executeScript({ target: { tabId }, func: extractJobHtml, args: [siteConfig] })` 실행
+  - 반환값 `{ html, title, alternatives }` 수신
+  - `parseHtml(tab.url, html)` 호출
+  - 성공/실패 결과를 `console.log`로 출력 (뷰 전환은 Step 6-3에서 구현)
+  - 실패 시 `showView('main')`으로 롤백
+
+#### 완료 조건
+
+- [ ] 사람인 공고 페이지에서 버튼 클릭 → 로딩 뷰 전환 → 파싱 API 응답 콘솔 출력
+- [ ] 잡코리아 공고 페이지에서 동일 동작 확인
+- [ ] `alternatives` 배열이 공고가 1개인 경우 빈 배열, 여러 개인 경우 나머지 컨테이너 포함 확인
+
+---
+
+### Step 6-3: 확인 + 편집 + 저장 뷰
+
+**목표**: 파싱 결과를 사용자에게 보여주고, 편집 후 지원서를 저장하는 E2E 플로우를 완성한다.
+
+#### 컨텍스트 복구
+
+| 읽을 파일 | 이유 |
+|-----------|------|
+| `docs/extension/flow.md` § 1 | 전체 플로우 다이어그램 (confirm → form → success 경로) |
+| `docs/extension/flow.md` § 5 | 팝업 UI 상태 전이 다이어그램 |
+| `src/lib/validation/step4.ts` | `createApplicationSchema` — 저장 API 필드 확인 |
+| `extension/popup/popup.html` | 기존 뷰 구조 (뷰 추가 위치) |
+| `extension/popup/popup.js` | Step 6-2까지의 저장 핸들러 |
+| `extension/utils/api.js` | `createApplication` 함수 |
+
+#### 작업
+
+- [ ] `extension/popup/popup.html`에 뷰 3개 추가 (초기 `hidden`)
+  - `#view-confirm`: 공고 제목(`#confirm-title`) + "맞아요" 버튼(`#btn-confirm`) + "다른 공고" 버튼(`#btn-other`) — Step 6-4에서 연결
+  - `#view-form`: 편집 폼
+    - 필드: `#field-company`(회사명), `#field-position`(포지션), `#field-career-type`(경력구분 select: `신입|경력|무관`), `#field-deadline`(마감일 date input), `#field-source`(출처 — 사이트명 자동 입력), `#field-url`(공고 URL — 현재 탭 URL 자동 입력)
+    - "저장" 버튼(`#btn-submit`), "취소" 버튼(`#btn-cancel`)
+  - `#view-success`: 성공 메시지 + "JobTrack에서 보기" 링크(`#link-view`, `target="_blank"`)
+- [ ] `extension/popup/popup.js` 뷰 전환 로직 완성
+  - `parseHtml` 성공 → `#confirm-title`에 파싱된 `position` 또는 company/position 조합 표시 → `showView('confirm')`
+  - `parseHtml` 실패 → `showView('main')` 롤백 + `#site-status`에 오류 메시지 표시
+  - `#btn-confirm` 클릭 → 파싱 결과로 폼 필드 자동 채움 → `showView('form')`
+    - `#field-url`: 현재 탭 URL
+    - `#field-source`: `matchSite(url).hostname` 기반 사이트명 ("사람인" | "잡코리아")
+    - 나머지: 파싱 결과 필드 그대로 매핑
+  - `#btn-cancel` 클릭 → `showView('main')`
+  - `#btn-submit` 클릭 → 폼 값 수집 → `createApplication(data)` 호출
+    - 성공 → `#link-view` href 구성(`${apiBase}/applications/${id}`) → `showView('success')`
+    - 실패 → `#site-status` 영역에 오류 문구 표시, 폼 유지
+
+#### 완료 조건
+
+- [ ] 사람인 공고 → 저장하기 → 파싱 → 확인 화면 → 폼 자동 채움 → 저장 → 성공 화면 E2E 통과
+- [ ] 잡코리아 동일 E2E 통과
+- [ ] JobTrack 웹(`/applications`)에서 저장된 지원서 확인
+
+---
+
+### Step 6-4: 다른 공고 선택 (alternatives)
+
+**목표**: 뷰포트 감지 결과가 틀렸을 때 사용자가 수동으로 공고를 선택할 수 있도록 한다.
+
+#### 컨텍스트 복구
+
+| 읽을 파일 | 이유 |
+|-----------|------|
+| `docs/extension/flow.md` § 4 | 다른 공고 선택 플로우 다이어그램 |
+| `extension/popup/popup.html` | 뷰 추가 위치 |
+| `extension/popup/popup.js` | `#btn-other` 핸들러 추가 위치, `alternatives` 데이터 접근 |
+
+#### 작업
+
+- [ ] `extension/popup/popup.html`에 `#view-alternatives` 뷰 추가 (초기 `hidden`)
+  - `#alternatives-list` — 동적으로 항목을 주입할 `<ul>` 컨테이너
+  - "돌아가기" 버튼(`#btn-back-to-confirm`)
+- [ ] `extension/popup/popup.js`에 alternatives 플로우 연결
+  - `#btn-other` 클릭 시:
+    - `alternatives`가 빈 배열이면 `#site-status`에 "다른 공고를 찾을 수 없습니다" 표시 후 유지
+    - `alternatives`가 있으면 `#alternatives-list`를 동적 생성 — 각 항목은 `<li>` 버튼으로 `alt.title` 표시
+    - `showView('alternatives')`
+  - 목록 항목 클릭 → 해당 `alt.html`로 `parseHtml(tab.url, alt.html)` 재호출 → `showView('loading')` → 파싱 결과로 `showView('confirm')` 업데이트
+  - `#btn-back-to-confirm` 클릭 → `showView('confirm')`
+
+#### 완료 조건
+
+- [ ] 공고가 2개 이상 감지되는 페이지에서 "다른 공고" 클릭 → alternatives 목록 표시
+- [ ] 목록에서 선택 → 재파싱 → confirm 화면 업데이트 정상 동작
+- [ ] alternatives가 없을 때 적절한 안내 표시
 
 ---
 
