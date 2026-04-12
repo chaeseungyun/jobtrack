@@ -30,9 +30,10 @@
 
 # 2026-04-12
 
-**한 것**: 크롬 확장 Step 6-2 구현. `extractor.js`에 `extractJobHtml(siteConfig)`를 추가하여 공고 컨테이너 탐색, 뷰포트 기반 선택, 노이즈 제거, 속성 정리, alternatives 반환을 구현. `popup.js`의 "이 공고 저장하기" 클릭 흐름을 로딩 전환 → `chrome.scripting.executeScript` HTML 추출 → `parseHtml` API 호출 → 콘솔 출력/실패 롤백으로 연결. 리뷰 반영으로 parse-html 호출에 `bypassCache: true`를 전달하고, root 컨테이너 속성 제거와 콘솔 로그 최소화를 추가.
+**한 것**: 크롬 확장 Step 6-2 구현 및 수동 검증 완료. `extractor.js`에 `extractJobHtml(siteConfig)`를 추가하여 공고 컨테이너 탐색, 뷰포트 기반 선택, 노이즈 제거, 속성 정리, alternatives 반환을 구현. `popup.js`의 "이 공고 저장하기" 클릭 흐름을 로딩 전환 → `chrome.scripting.executeScript` HTML 추출 → `parseHtml` API 호출 → 콘솔 출력/실패 롤백으로 연결. 리뷰 반영으로 parse-html 호출에 `bypassCache: true`를 전달하고, root 컨테이너 속성 제거와 콘솔 로그 최소화를 추가. 실제 공고 페이지에서 popup DevTools 로그와 서버 `POST /api/applications/parse-html 200` 응답을 확인하고, Step 6-2 변경사항을 `95c8b34 feat(extension): implement step 6-2 html extraction`으로 커밋.
 **결정**: 컨테이너 후보의 뷰포트 비율 계산은 실제 페이지 DOM에서 수행하고, 전송용 HTML은 선택된 컨테이너를 clone한 뒤 정리한다. 분리된 clone DOM에서는 `getBoundingClientRect()`가 유효한 레이아웃 값을 주지 않을 수 있기 때문이다.
-**검증**: `git diff --check` 성공, `node --check`(`extractor.js`, `popup.js`, `api.js`) 성공, `pnpm build` 성공. 최초 build는 샌드박스 네트워크 제한으로 Google Fonts fetch 실패 후, 네트워크 권한으로 재실행하여 성공.
+**검증**: `git diff --check` 성공, `node --check`(`extractor.js`, `popup.js`, `api.js`) 성공, `pnpm build` 성공. 최초 build는 샌드박스 네트워크 제한으로 Google Fonts fetch 실패 후, 네트워크 권한으로 재실행하여 성공. 수동 검증 중 개발 서버가 꺼져 있어 `Network request failed`가 발생했으나, `pnpm dev` 서버 재실행 후 API 호출과 popup 로그가 정상 동작함을 확인.
+**배운 것**: 확장 프로그램 popup 로그는 일반 페이지 DevTools가 아니라 popup view DevTools에서 확인해야 한다. `chrome://extensions`의 `Inspect views`는 popup이 열려 있을 때만 표시되며, 닫힌 상태의 `No active views`는 정상이다. `alternatives`는 대표 공고 컨테이너 외 후보 HTML 목록이며, 단일 공고 상세 페이지에서는 빈 배열이 정상이다.
 **빌드**: ✓
 
 ---
