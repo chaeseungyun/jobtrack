@@ -1,5 +1,5 @@
 import { getValidToken, clearToken } from "../utils/auth.js";
-import { ensureApiBase, parseHtml } from "../utils/api.js";
+import { ensureApiBase, getApiBase, parseHtml, createApplication } from "../utils/api.js";
 import { matchSite } from "../utils/sites.js";
 import { extractJobHtml } from "../content/extractor.js";
 
@@ -7,7 +7,20 @@ const views = {
   loading: document.getElementById("view-loading"),
   login: document.getElementById("view-login"),
   main: document.getElementById("view-main"),
+  confirm: document.getElementById("view-confirm"),
+  form: document.getElementById("view-form"),
+  success: document.getElementById("view-success"),
 };
+
+const SOURCE_LABELS = {
+  saramin: "사람인",
+  jobkorea: "잡코리아",
+  company: "회사 홈페이지",
+  linkedin: "LinkedIn",
+  etc: "기타",
+};
+
+const CAREER_TYPES = new Set(["new", "experienced", "any"]);
 
 const state = {
   tab: null,
@@ -22,6 +35,32 @@ function showView(name) {
   }
 }
 
+function setSiteStatus(text) {
+  document.getElementById("site-status").textContent = text;
+}
+
+function setFormError(message) {
+  const el = document.getElementById("form-error");
+  if (!message) {
+    el.hidden = true;
+    el.textContent = "";
+  } else {
+    el.hidden = false;
+    el.textContent = message;
+  }
+}
+
+function toDeadlineInput(iso) {
+  if (!iso) return "";
+  const match = String(iso).match(/^\d{4}-\d{2}-\d{2}/);
+  return match ? match[0] : "";
+}
+
+function toDeadlineIso(dateStr) {
+  if (!dateStr) return null;
+  return `${dateStr}T23:59:59+09:00`;
+}
+
 async function init() {
   showView("loading");
 
@@ -31,7 +70,6 @@ async function init() {
     return;
   }
 
-  // 현재 탭 URL 표시
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const url = tab?.url || "";
   state.tab = tab || null;
@@ -42,11 +80,11 @@ async function init() {
   state.site = site;
 
   if (site) {
-    document.getElementById("site-status").textContent = site.name;
+    setSiteStatus(site.name);
     document.getElementById("btn-save").hidden = false;
     document.getElementById("unsupported-msg").hidden = true;
   } else {
-    document.getElementById("site-status").textContent = "미지원 사이트";
+    setSiteStatus("미지원 사이트");
     document.getElementById("btn-save").hidden = true;
     document.getElementById("unsupported-msg").hidden = false;
   }
@@ -74,11 +112,6 @@ async function handleSaveClick() {
     }
 
     state.extraction = extraction;
-    console.log("[JobTrack] Extracted job HTML", {
-      title: extraction.title,
-      htmlLength: extraction.html.length,
-      alternativesCount: extraction.alternatives?.length ?? 0,
-    });
 
     const response = await parseHtml(state.tab.url, extraction.html, {
       bypassCache: true,
@@ -89,23 +122,98 @@ async function handleSaveClick() {
     }
 
     state.parsedJob = response.data;
-    console.log("[JobTrack] Parse HTML response", {
-      ok: true,
-      hasCompanyName: Boolean(response.data?.company_name),
-      hasPosition: Boolean(response.data?.position),
-      hasDeadline: Boolean(response.data?.deadline),
-    });
-
-    showView("main");
+    renderConfirm(response.data, extraction.title);
+    showView("confirm");
   } catch (error) {
     console.error("[JobTrack] Save flow failed", error);
-    document.getElementById("site-status").textContent =
-      error instanceof Error ? error.message : "공고 저장 준비 중 오류가 발생했습니다.";
+    setSiteStatus(
+      error instanceof Error ? error.message : "공고 저장 준비 중 오류가 발생했습니다.",
+    );
     showView("main");
   }
 }
 
-// 로그인 버튼
+function renderConfirm(parsed, fallbackTitle) {
+  const company = parsed?.company_name?.trim();
+  const position = parsed?.position?.trim();
+  let title = "";
+  if (company && position) {
+    title = `${company} — ${position}`;
+  } else if (position) {
+    title = position;
+  } else if (company) {
+    title = company;
+  } else {
+    title = fallbackTitle || "공고 정보";
+  }
+  document.getElementById("confirm-title").textContent = title;
+}
+
+function fillForm(parsed) {
+  const company = parsed?.company_name ?? "";
+  const position = parsed?.position ?? "";
+  const careerType = CAREER_TYPES.has(parsed?.career_type) ? parsed.career_type : "any";
+  const source = parsed?.source ?? "etc";
+  const deadline = toDeadlineInput(parsed?.deadline);
+
+  document.getElementById("field-company").value = company;
+  document.getElementById("field-position").value = position;
+  document.getElementById("field-career-type").value = careerType;
+  document.getElementById("field-deadline").value = deadline;
+  document.getElementById("field-source").value = source;
+  document.getElementById("field-source-label").textContent =
+    SOURCE_LABELS[source] || SOURCE_LABELS.etc;
+  document.getElementById("field-url").value = state.tab?.url || "";
+
+  setFormError("");
+}
+
+async function handleSubmit() {
+  const company = document.getElementById("field-company").value.trim();
+  const position = document.getElementById("field-position").value.trim();
+  const careerType = document.getElementById("field-career-type").value;
+  const deadlineDate = document.getElementById("field-deadline").value;
+  const source = document.getElementById("field-source").value || "etc";
+  const jobUrl = document.getElementById("field-url").value || state.tab?.url || "";
+
+  if (!company || !position) {
+    setFormError("회사명과 포지션은 필수입니다.");
+    return;
+  }
+
+  setFormError("");
+
+  const payload = {
+    company_name: company,
+    position,
+    career_type: careerType,
+    source,
+    job_url: jobUrl,
+    deadline: toDeadlineIso(deadlineDate),
+  };
+
+  const submitBtn = document.getElementById("btn-submit");
+  submitBtn.disabled = true;
+
+  try {
+    const response = await createApplication(payload);
+
+    if (!response.ok) {
+      setFormError(response.errorMessage || "저장에 실패했습니다.");
+      return;
+    }
+
+    const apiBase = await getApiBase();
+    const id = response.data?.id;
+    const link = document.getElementById("link-view");
+    link.href = id ? `${apiBase}/applications/${id}` : `${apiBase}/applications`;
+
+    showView("success");
+  } finally {
+    submitBtn.disabled = false;
+  }
+}
+
 document.getElementById("btn-login").addEventListener("click", async () => {
   const apiBase = await ensureApiBase();
   chrome.tabs.create({ url: `${apiBase}/auth?from=extension` });
@@ -113,10 +221,28 @@ document.getElementById("btn-login").addEventListener("click", async () => {
 
 document.getElementById("btn-save").addEventListener("click", handleSaveClick);
 
-// 로그아웃 버튼
 document.getElementById("btn-logout").addEventListener("click", async () => {
   await clearToken();
   showView("login");
 });
+
+document.getElementById("btn-confirm").addEventListener("click", () => {
+  if (!state.parsedJob) return;
+  fillForm(state.parsedJob);
+  showView("form");
+});
+
+document.getElementById("btn-other").addEventListener("click", () => {
+  // Step 6-4에서 구현
+  setSiteStatus("다른 공고 선택은 아직 지원되지 않습니다.");
+  showView("main");
+});
+
+document.getElementById("btn-cancel").addEventListener("click", () => {
+  setFormError("");
+  showView("main");
+});
+
+document.getElementById("btn-submit").addEventListener("click", handleSubmit);
 
 init();

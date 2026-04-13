@@ -125,3 +125,51 @@ body {
   display: flex;
   justify-content: flex-end;
 }
+
+.form {
+  gap: 10px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted-foreground);
+}
+
+.form-input {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--foreground);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 0.25rem);
+  padding: 8px 10px;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--primary);
+}
+
+.form-input[readonly] {
+  background: var(--muted);
+  color: var(--muted-foreground);
+}
+
+.form-static {
+  font-size: 13px;
+  color: var(--foreground);
+  padding: 6px 0;
+}
+
+.text-error {
+  font-size: 12px;
+  color: var(--destructive);
+  line-height: 1.4;
+}

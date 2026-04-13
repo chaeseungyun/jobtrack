@@ -347,22 +347,34 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 
 #### 작업
 
-- [ ] `extension/popup/popup.html`에 뷰 3개 추가 (초기 `hidden`)
+> **스키마 정합성 주의 (createApplicationSchema — `src/lib/validation/step4.ts`)**
+> - `career_type`: enum `new | experienced | any` — select의 `value`는 영문 enum, 라벨만 한글(`신입|경력|무관`)
+> - `source`: enum `saramin | jobkorea | company | linkedin | etc` — 파싱 응답의 `source` (서버가 `inferSourceFromUrl`로 주입)를 그대로 사용. UI에는 한글 라벨만 표시하고 실제 전송 값은 enum 유지 (hidden/readonly)
+> - `deadline`: `z.string().datetime({ offset: true })` — `<input type="date">`의 `YYYY-MM-DD`를 `YYYY-MM-DDT23:59:59+09:00`으로 변환. 빈 값이면 `null`
+> - `POST /api/applications` 응답 shape에 `id`가 있는지 구현 전 확인 (성공 화면 링크 구성용)
+
+- [x] `extension/popup/popup.html`에 뷰 3개 추가 (초기 `hidden`)
   - `#view-confirm`: 공고 제목(`#confirm-title`) + "맞아요" 버튼(`#btn-confirm`) + "다른 공고" 버튼(`#btn-other`) — Step 6-4에서 연결
   - `#view-form`: 편집 폼
-    - 필드: `#field-company`(회사명), `#field-position`(포지션), `#field-career-type`(경력구분 select: `신입|경력|무관`), `#field-deadline`(마감일 date input), `#field-source`(출처 — 사이트명 자동 입력), `#field-url`(공고 URL — 현재 탭 URL 자동 입력)
+    - 필드: `#field-company`(회사명), `#field-position`(포지션), `#field-career-type`(select — option value=`new|experienced|any`, 라벨=`신입|경력|무관`), `#field-deadline`(마감일 date input), `#field-source`(출처 — 파싱 응답의 enum 값 기반, 한글 라벨 표시 + hidden value 유지), `#field-url`(공고 URL — 현재 탭 URL 자동 입력)
     - "저장" 버튼(`#btn-submit`), "취소" 버튼(`#btn-cancel`)
   - `#view-success`: 성공 메시지 + "JobTrack에서 보기" 링크(`#link-view`, `target="_blank"`)
-- [ ] `extension/popup/popup.js` 뷰 전환 로직 완성
+- [x] `extension/popup/popup.js` 뷰 전환 로직 완성
   - `parseHtml` 성공 → `#confirm-title`에 파싱된 `position` 또는 company/position 조합 표시 → `showView('confirm')`
   - `parseHtml` 실패 → `showView('main')` 롤백 + `#site-status`에 오류 메시지 표시
   - `#btn-confirm` 클릭 → 파싱 결과로 폼 필드 자동 채움 → `showView('form')`
     - `#field-url`: 현재 탭 URL
-    - `#field-source`: `matchSite(url).hostname` 기반 사이트명 ("사람인" | "잡코리아")
+    - `#field-source`: 파싱 응답 `source` enum 값을 hidden에 저장 (`saramin|jobkorea|etc`). 화면 표시는 enum→한글 매핑 헬퍼 사용
+    - `#field-career-type`: 파싱 응답 `career_type`이 enum이면 그대로, 아니면 `any` 기본값
+    - `#field-deadline`: 파싱 응답 `deadline`이 ISO면 `YYYY-MM-DD`로 잘라서 주입
     - 나머지: 파싱 결과 필드 그대로 매핑
   - `#btn-cancel` 클릭 → `showView('main')`
-  - `#btn-submit` 클릭 → 폼 값 수집 → `createApplication(data)` 호출
-    - 성공 → `#link-view` href 구성(`${apiBase}/applications/${id}`) → `showView('success')`
+  - `#btn-submit` 클릭 → 폼 값 수집 → 제출 페이로드 정규화 후 `createApplication(data)` 호출
+    - `career_type`: select value 그대로
+    - `source`: hidden enum 값 그대로
+    - `deadline`: `YYYY-MM-DD` → `${date}T23:59:59+09:00`, 빈 값이면 `null`
+    - `job_url`: 현재 탭 URL
+    - 성공 → 응답 `id`로 `#link-view` href 구성(`${apiBase}/applications/${id}`) → `showView('success')`
     - 실패 → `#site-status` 영역에 오류 문구 표시, 폼 유지
 
 #### 완료 조건
