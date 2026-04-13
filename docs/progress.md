@@ -28,6 +28,15 @@
 
 ---
 
+# 2026-04-13
+
+**한 것**: 확장 프로그램 로그인 시 새로고침을 해야만 토큰이 저장되는 버그 수정. `src/app/auth/_components/auth-form.client.tsx`의 `onSuccess`에서 `callbackUrlOverride`(확장 플로우)가 있을 때는 `router.replace` 대신 `window.location.assign`으로 풀페이지 이동하도록 분기. 일반 로그인 플로우는 기존 soft nav 유지.
+**결정**: DOM attribute + content script 브리지 전략은 유지. `externally_connectable` 전환 등 구조 개편은 보류하고, SPA 네비게이션 이슈만 최소 변경으로 해결. 자체 웹앱 ↔ 자체 확장 페어링에서 현 브리지 방식도 업계에서 널리 쓰이는 유효한 패턴이라는 판단.
+**배운 것**: Chrome MV3 `content_scripts`는 `matches`에 해당하는 **document 풀로드 시점에만 주입**됨. Next.js `router.push/replace`는 `history.pushState/replaceState` 기반 soft nav라 content script가 실행되지 않음. 확장용 콜백 페이지로 이동할 때는 `window.location.assign`으로 풀페이지 로드를 강제해야 함. `launchWebAuthFlow`는 서드파티 OAuth 전용에 가깝고, 자체 서비스 확장에는 content script 브리지 또는 `externally_connectable`이 더 일반적.
+**빌드**: 미검증 (로컬 수동 검증 예정)
+
+---
+
 # 2026-04-12
 
 **한 것**: 크롬 확장 Step 6-2 구현 및 수동 검증 완료. `extractor.js`에 `extractJobHtml(siteConfig)`를 추가하여 공고 컨테이너 탐색, 뷰포트 기반 선택, 노이즈 제거, 속성 정리, alternatives 반환을 구현. `popup.js`의 "이 공고 저장하기" 클릭 흐름을 로딩 전환 → `chrome.scripting.executeScript` HTML 추출 → `parseHtml` API 호출 → 콘솔 출력/실패 롤백으로 연결. 리뷰 반영으로 parse-html 호출에 `bypassCache: true`를 전달하고, root 컨테이너 속성 제거와 콘솔 로그 최소화를 추가. 실제 공고 페이지에서 popup DevTools 로그와 서버 `POST /api/applications/parse-html 200` 응답을 확인하고, Step 6-2 변경사항을 `95c8b34 feat(extension): implement step 6-2 html extraction`으로 커밋.
