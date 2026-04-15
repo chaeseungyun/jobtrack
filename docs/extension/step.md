@@ -31,13 +31,14 @@ docs/extension/
 Step 1 (Bearer 인증)
   ├── Step 2 (토큰 발급 + 콜백)
   │     └── Step 5 (확장: 기본 구조 + 인증)
-  │           └── Step 6 (확장: HTML 추출 + 저장)
+  │           └── Step 6-1 ~ 6-3 (확장: HTML 추출 + 저장 핵심 플로우)
   │                 └── Step 7 (마무리)
   └── Step 3 (HTML 파싱 엔드포인트)
-        └── Step 6 (확장: HTML 추출 + 저장)
+        └── Step 6-1 ~ 6-3
               └── Step 7 (마무리)
 
 Step 4 (openapi.json) ← Step 2, 3 완료 후
+Step 6-4 (alternatives) — Step 7과 독립, 1차 배포 후 백로그
 ```
 
 ---
@@ -388,6 +389,8 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 
 ### Step 6-4: 다른 공고 선택 (alternatives)
 
+**상태**: 1차 배포 후 백로그로 연기. Step 7과 독립적이며 Step 7 진행을 막지 않는다. 재현 가능한 멀티-공고 페이지가 확보되면 재개.
+
 **목표**: 뷰포트 감지 결과가 틀렸을 때 사용자가 수동으로 공고를 선택할 수 있도록 한다.
 
 #### 컨텍스트 복구
@@ -421,7 +424,7 @@ Step 4 (openapi.json) ← Step 2, 3 완료 후
 
 ## Step 7: 마무리 — 에러 핸들링 + UI 폴리싱
 
-**선행**: Step 6
+**선행**: Step 6-1 ~ 6-3 (Step 6-4는 선행 아님)
 
 ### 컨텍스트 복구
 
