@@ -67,7 +67,8 @@
 
 | ID | 항목 | 요구사항 |
 |----|------|---------|
-| NFR-1 | 보안 | 토큰은 `chrome.storage.local`에만 저장. `auth-callback.js` content_script가 저장을 담당하며, 공고 추출용 `extractor.js`에는 토큰을 노출하지 않음 |
+| NFR-1 | 보안 | 토큰은 `chrome.storage.local`에만 저장. `auth-callback.js` content_script가 저장을 담당하며, 공고 추출용 `extractor.js`에는 토큰을 노출하지 않음. 단, 콜백 페이지(`/auth/extension-callback`)는 DOM attribute를 통해 토큰을 일시적으로 page JS 컨텍스트에 노출한다 — 자체 도메인의 최소 렌더링 페이지(외부 입력 렌더링 없음, 서드파티 스크립트 없음)라는 전제 하에서만 허용. 해당 페이지에 사용자 입력/외부 컨텐츠를 추가하려면 NFR-1a의 대안 채널(예: `chrome.runtime` IPC)로 먼저 이관해야 함 |
+| NFR-1a | 보안/구현 | 확장용 콜백(`/auth/extension-callback`)으로의 네비게이션은 반드시 **document 풀페이지 로드**여야 한다. Next.js `router.push/replace` 등 SPA soft-nav를 사용하면 MV3 content script가 주입되지 않아 토큰 저장이 누락된다. `window.location.assign/replace` 또는 서버 side redirect만 허용 |
 | NFR-2 | 보안 | HTML 전송 시 셀렉터로 추출한 공고 본문 영역만 전송. 쿠키, 로컬스토리지 등 민감 정보 미포함 |
 | NFR-3 | 보안/성능 | HTML 파싱 엔드포인트에 요청 크기 제한 설정 (최대 5MB). 클라이언트 사이드 정제로 실제 전송 크기는 50~200KB 수준 |
 | NFR-4 | 보안 | Chrome Web Store 등록 기준 충족 — 권한 최소화 원칙 (`activeTab`, `storage`, 대상 사이트 host_permissions만) |
