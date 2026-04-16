@@ -69,8 +69,12 @@ export function extractJobHtml(siteConfig) {
   }
 
   function selectBestContainer(containers) {
-    if (containers.length <= 1) {
-      return containers[0] || document.body;
+    if (containers.length === 0) {
+      return null;
+    }
+
+    if (containers.length === 1) {
+      return containers[0];
     }
 
     return containers
@@ -144,6 +148,11 @@ export function extractJobHtml(siteConfig) {
   ];
   const containers = findContainers(contentSelectors);
   const selectedContainer = selectBestContainer(containers);
+
+  if (!selectedContainer) {
+    return { html: "", title: "", alternatives: [] };
+  }
+
   const selected = sanitizeContainer(selectedContainer, removeSelectors);
   const alternatives = containers
     .filter((container) => container !== selectedContainer)

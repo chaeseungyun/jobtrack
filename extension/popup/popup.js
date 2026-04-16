@@ -21,6 +21,7 @@ const SOURCE_LABELS = {
 };
 
 const CAREER_TYPES = new Set(["new", "experienced", "any"]);
+const MAX_HTML_BYTES = 5 * 1024 * 1024;
 
 const state = {
   tab: null,
@@ -96,6 +97,8 @@ function toDeadlineIso(dateStr) {
 }
 
 async function init() {
+  setLoadingHint("");
+  setFormError("");
   showView("loading");
 
   const token = await getValidToken();
@@ -149,7 +152,14 @@ async function handleSaveClick() {
     const extraction = injectionResult?.result;
 
     if (!extraction?.html) {
-      await showError({ context: "parse", errorType: "parse" });
+      setSiteStatus("공고 본문을 찾지 못했습니다.");
+      showView("main");
+      return;
+    }
+
+    if (new Blob([extraction.html]).size > MAX_HTML_BYTES) {
+      setSiteStatus("공고 본문이 너무 큽니다 (5MB 초과). 다른 페이지에서 시도해주세요.");
+      showView("main");
       return;
     }
 
@@ -174,6 +184,17 @@ async function handleSaveClick() {
     clearTimeout(hintTimer);
     setLoadingHint("");
   }
+}
+
+async function renderSuccess({ title, message, id }) {
+  document.getElementById("success-title").textContent = title;
+  document.getElementById("success-message").textContent = message;
+
+  const apiBase = await getApiBase();
+  const link = document.getElementById("link-view");
+  link.href = id ? `${apiBase}/applications/${id}` : `${apiBase}/applications`;
+
+  showView("success");
 }
 
 function renderConfirm(parsed, fallbackTitle) {
@@ -242,16 +263,23 @@ async function handleSubmit() {
     const response = await createApplication(payload);
 
     if (!response.ok) {
+      if (response.status === 409) {
+        await renderSuccess({
+          title: "이미 저장된 공고입니다.",
+          message: "JobTrack에서 기존 지원서를 확인할 수 있습니다.",
+          id: response.data?.id,
+        });
+        return;
+      }
       await showError({ context: "save", errorType: response.errorType });
       return;
     }
 
-    const apiBase = await getApiBase();
-    const id = response.data?.id;
-    const link = document.getElementById("link-view");
-    link.href = id ? `${apiBase}/applications/${id}` : `${apiBase}/applications`;
-
-    showView("success");
+    await renderSuccess({
+      title: "저장 완료!",
+      message: "JobTrack에서 저장된 지원서를 확인할 수 있습니다.",
+      id: response.data?.id,
+    });
   } finally {
     submitBtn.disabled = false;
   }
