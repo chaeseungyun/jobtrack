@@ -50,6 +50,40 @@ function setFormError(message) {
   }
 }
 
+function setLoadingHint(text) {
+  const el = document.getElementById("loading-hint");
+  if (!text) {
+    el.hidden = true;
+    el.textContent = "";
+  } else {
+    el.hidden = false;
+    el.textContent = text;
+  }
+}
+
+async function showError({ context, errorType }) {
+  if (errorType === "auth") {
+    await clearToken();
+    showView("login");
+    return;
+  }
+
+  const message =
+    errorType === "network"
+      ? "연결할 수 없습니다. 인터넷 연결을 확인해주세요."
+      : context === "save"
+        ? "저장에 실패했습니다."
+        : "분석에 실패했습니다. 다시 시도해주세요.";
+
+  if (context === "save") {
+    setFormError(message);
+    return;
+  }
+
+  setSiteStatus(message);
+  showView("main");
+}
+
 function toDeadlineInput(iso) {
   if (!iso) return "";
   const match = String(iso).match(/^\d{4}-\d{2}-\d{2}/);
@@ -97,7 +131,14 @@ async function handleSaveClick() {
     return;
   }
 
+  setLoadingHint("");
+  setFormError("");
   showView("loading");
+
+  const hintTimer = setTimeout(
+    () => setLoadingHint("시간이 걸리고 있습니다..."),
+    5000,
+  );
 
   try {
     const [injectionResult] = await chrome.scripting.executeScript({
@@ -108,7 +149,8 @@ async function handleSaveClick() {
     const extraction = injectionResult?.result;
 
     if (!extraction?.html) {
-      throw new Error("공고 HTML을 추출하지 못했습니다.");
+      await showError({ context: "parse", errorType: "parse" });
+      return;
     }
 
     state.extraction = extraction;
@@ -118,7 +160,8 @@ async function handleSaveClick() {
     });
 
     if (!response.ok) {
-      throw new Error(response.errorMessage || "공고 파싱에 실패했습니다.");
+      await showError({ context: "parse", errorType: response.errorType });
+      return;
     }
 
     state.parsedJob = response.data;
@@ -126,10 +169,10 @@ async function handleSaveClick() {
     showView("confirm");
   } catch (error) {
     console.error("[JobTrack] Save flow failed", error);
-    setSiteStatus(
-      error instanceof Error ? error.message : "공고 저장 준비 중 오류가 발생했습니다.",
-    );
-    showView("main");
+    await showError({ context: "parse", errorType: "http" });
+  } finally {
+    clearTimeout(hintTimer);
+    setLoadingHint("");
   }
 }
 
@@ -199,7 +242,7 @@ async function handleSubmit() {
     const response = await createApplication(payload);
 
     if (!response.ok) {
-      setFormError(response.errorMessage || "저장에 실패했습니다.");
+      await showError({ context: "save", errorType: response.errorType });
       return;
     }
 
