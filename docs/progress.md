@@ -28,6 +28,18 @@
 
 ---
 
+# 2026-04-16
+
+**한 것**: 크롬 확장 Step 7-1, 7-2 연속 구현. **7-1**(에러 통합) — `popup.js`에 공통 `showError({context, errorType})` 헬퍼와 `setLoadingHint` 도입, `handleSaveClick`의 `throw`를 제거하고 `parseHtml` 응답의 `errorType` 4종(`auth/network/http/parse`)을 직접 분기, 파싱 호출 5초 경과 시 "시간이 걸리고 있습니다..." 보조 안내(`setTimeout` + `finally clearTimeout`), `handleSubmit`의 실패 분기도 `showError`로 통일. 별도 retry 버튼 추가 없이 `#btn-save`/`#btn-submit`을 인라인 재시도로 재사용. **7-2**(엣지 케이스) — `extractor.js`의 `selectBestContainer`가 컨테이너 0개일 때 `null` 반환하도록 변경 후 메인에서 `{html:"", title:"", alternatives:[]}` 반환, `popup.js`에서 빈 결과 시 "공고 본문을 찾지 못했습니다" 표시 + 추출 직후 `new Blob([html]).size > 5MB`면 서버 호출 없이 안내, `init()` 진입 시 `setLoadingHint("")`/`setFormError("")` 방어 리셋, `renderSuccess({title, message, id})` 헬퍼 도입으로 성공 뷰 텍스트 동적화 → 409 도착 시 "이미 저장된 공고입니다" + 기존 지원서 링크 표시.
+
+**결정/막혔던 것**: (1) 재시도 버튼을 별도 `#btn-retry-parse`로 신설할지 기존 `#btn-save` 재활용할지 — 핸들러가 동일하고 뷰 복귀 시 리셋이 단순한 후자 채택. (2) 서버 `POST /api/applications`가 동일 `job_url`에 대해 409를 반환하지 않음(유니크 제약 없음) — step.md "서버 측 변경 제외" 지침대로 본 단계에서는 보류, 클라이언트는 도착 시 처리하도록 방어 코드만 구현. step.md 체크박스에 `[~]`로 부분 완료 표시. (3) 401 시 `api.js`가 이미 `clearToken()`을 호출하지만 토큰 부재 단락은 거치지 않음 → popup의 `auth` 분기에서 방어적으로 한 번 더 호출해도 멱등이라 안전.
+
+**배운 것**: `api.js`가 NFR-10대로 `errorType` 4종을 객체로 반환하지만, popup이 `throw new Error(response.errorMessage)`로 감싸서 catch에서 메시지 문자열만 사용하면 분류 정보가 통째로 사라진다 — `response.ok` 직접 분기 + early return 패턴이 더 자연스럽고, `try/catch`는 진짜 예상치 못한 런타임 예외(스크립팅 권한 실패 등)만 잡도록 좁혀야 한다. 팝업은 매 오픈마다 DOM/모듈 컨텍스트가 새로 만들어지므로 모듈 `state`는 자연 리셋되지만, UI 토글(loading-hint, form-error)은 명시적으로 리셋해야 잔상이 없다.
+
+**빌드**: ✓ (Step 7-1, 7-2 각각 검증). 수동 E2E(오프라인/토큰 만료/5xx/5MB 초과/추출 빈 결과)는 확장 로드 후 별도 검증 예정.
+
+---
+
 # 2026-04-13
 
 **한 것**: 확장 프로그램 로그인 시 새로고침을 해야만 토큰이 저장되는 버그 수정. `src/app/auth/_components/auth-form.client.tsx`의 `onSuccess`에서 `callbackUrlOverride`(확장 플로우)가 있을 때는 `router.replace` 대신 `window.location.assign`으로 풀페이지 이동하도록 분기. 일반 로그인 플로우는 기존 soft nav 유지.
