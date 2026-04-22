@@ -22,6 +22,13 @@ const SOURCE_LABELS = {
 
 const CAREER_TYPES = new Set(["new", "experienced", "any"]);
 const MAX_HTML_BYTES = 5 * 1024 * 1024;
+const SAVE_BTN_LABEL_DEFAULT = "이 공고 저장하기";
+const SAVE_BTN_LABEL_RETRY = "재시도";
+
+function setSaveButtonLabel(text) {
+  const btn = document.getElementById("btn-save");
+  if (btn) btn.textContent = text;
+}
 
 const state = {
   tab: null,
@@ -62,9 +69,21 @@ function setLoadingHint(text) {
   }
 }
 
+function setLoginNotice(text) {
+  const el = document.getElementById("login-notice");
+  if (!text) {
+    el.hidden = true;
+    el.textContent = "";
+  } else {
+    el.hidden = false;
+    el.textContent = text;
+  }
+}
+
 async function showError({ context, errorType }) {
   if (errorType === "auth") {
     await clearToken();
+    setLoginNotice("로그인이 만료되었습니다. 다시 로그인해주세요.");
     showView("login");
     return;
   }
@@ -82,6 +101,7 @@ async function showError({ context, errorType }) {
   }
 
   setSiteStatus(message);
+  setSaveButtonLabel(SAVE_BTN_LABEL_RETRY);
   showView("main");
 }
 
@@ -99,6 +119,8 @@ function toDeadlineIso(dateStr) {
 async function init() {
   setLoadingHint("");
   setFormError("");
+  setLoginNotice("");
+  setSaveButtonLabel(SAVE_BTN_LABEL_DEFAULT);
   showView("loading");
 
   const token = await getValidToken();
@@ -287,6 +309,7 @@ async function handleSubmit() {
 
 document.getElementById("btn-login").addEventListener("click", async () => {
   const apiBase = await ensureApiBase();
+  setLoginNotice("");
   chrome.tabs.create({ url: `${apiBase}/auth?from=extension` });
 });
 
@@ -306,11 +329,13 @@ document.getElementById("btn-confirm").addEventListener("click", () => {
 document.getElementById("btn-other").addEventListener("click", () => {
   // Step 6-4에서 구현
   setSiteStatus("다른 공고 선택은 아직 지원되지 않습니다.");
+  setSaveButtonLabel(SAVE_BTN_LABEL_DEFAULT);
   showView("main");
 });
 
 document.getElementById("btn-cancel").addEventListener("click", () => {
   setFormError("");
+  setSaveButtonLabel(SAVE_BTN_LABEL_DEFAULT);
   showView("main");
 });
 
