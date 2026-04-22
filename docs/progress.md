@@ -28,6 +28,18 @@
 
 ---
 
+# 2026-04-22
+
+**한 것**: Step 7-1 수동 검증 중 발견된 버그 2건 수정 + auth 에러 UX 리파인먼트 2건. **(1) 위조 Bearer 토큰 우회 버그** — `chrome.storage.local`의 `authToken`을 임의 문자열로 덮어써도 저장이 성공하던 문제. 원인은 이중: 서버 `extractToken`(`src/lib/auth/request.ts`)이 쿠키 우선이라 Bearer가 검증되지 않았고, 확장 `fetch`(`extension/utils/api.js`)가 `credentials`를 명시 안 해 이전 웹 로그인 쿠키가 자동 첨부됨. 서버를 Bearer 우선(헤더 존재 시 쿠키 폴백 금지)으로 역전, 클라이언트에 `credentials: "omit"` 추가, 회귀 테스트 6건(`src/lib/auth/__tests__/request.test.ts`) 작성 — `server-only` import를 vitest에서 해석 못해 `vitest.config.ts`에 alias + `src/test-utils/server-only.ts` 빈 stub 추가. **(2) 500 에러 시 `#btn-save` 레이블** — 에러 후 main 뷰 복귀 시 "재시도"로 전환, `init()`/취소/다른공고 경로에서 "이 공고 저장하기"로 복원. **(3) 401 태깅 리파인먼트** — `apiCall`이 401 수신 시 `errorType: "http"`가 아닌 `"auth"`로 반환하도록 변경, 팝업이 2단계("재시도" 클릭 후에야 로그인 뷰) 대신 1클릭으로 로그인 전환. **(4) 로그인 뷰 맥락 배너** — auth 에러로 로그인 뷰 진입 시 "로그인이 만료되었습니다. 다시 로그인해주세요." 배너 노출(`#login-notice`), `init()`/`btn-login` 클릭 시 clear하여 정상 첫 사용자/로그아웃 플로우는 배너 없이 유지.
+
+**결정/막혔던 것**: (1) 서버 `extractToken` 우선순위 역전 vs 확장 fetch `credentials: "omit"`만 — **둘 다** 채택(이중 방어). 원래 설계 의도("확장은 쿠키 경로 미사용, 웹은 Authorization 미사용")를 런타임에서 복원하려면 클라이언트에서 쿠키를 안 싣는 게 1차, `curl`/타 확장처럼 클라이언트를 제어 못 하는 경우까지 포함하려면 서버 쪽도 막는 게 2차. (2) 로그인 뷰 맥락 전달 방식 — 토스트(타이밍 의존) / 중간 에러 뷰(클릭 1회 추가) / 배너(현재 선택) 중, 구현 최소 + 사용자 도착 즉시 이해 가능한 **배너**로. 메시지는 "세션"·"인증"보다 일반 사용자 친화적인 "로그인이 만료되었습니다"로 통일(서버 401은 만료/revoke/위조 다 포함하지만 사용자 액션은 동일하므로 구분 불필요).
+
+**배운 것**: Chrome 확장의 `host_permissions` 하에서 `fetch`는 기본 CORS와 별개로 **매칭 호스트 쿠키를 자동 첨부**하는데, `credentials` 기본값이 `"same-origin"`이라 확장 origin ↔ 웹 origin 간 요청에서도 쿠키가 실려 나감. 명시적 `"omit"` 없이는 이 누수가 보이지 않아, 서버 로그에는 Bearer가 찍혀도 실제 인증은 쿠키로 통과되는 기이한 상태가 된다. 또한 `signExtensionToken`을 따로 설계했어도 클라이언트가 쿠키 채널을 끊지 않으면 토큰이 발급만 되고 **실제 인증에는 쓰이지 않을 수** 있다는 점. Vitest에서 Next.js 서버 모듈(`import "server-only"`)을 테스트하려면 alias stub이 필요하며, 이후 `src/lib/auth/*` 서버 모듈 테스트 추가 시 재사용 가능한 기반이 생긴 셈.
+
+**빌드**: ✓ (`pnpm test:run` 11 파일 / 78 테스트 전부 통과, 신규 `request.test.ts` 6건 포함. `pnpm build` 성공). 수동 E2E(위조/만료 토큰 배너, 500 재시도 레이블, 로그인 뷰 배너 라이프사이클)는 확장 로드 후 별도 검증 예정.
+
+---
+
 # 2026-04-16
 
 **한 것**: 크롬 확장 Step 7-1, 7-2 연속 구현. **7-1**(에러 통합) — `popup.js`에 공통 `showError({context, errorType})` 헬퍼와 `setLoadingHint` 도입, `handleSaveClick`의 `throw`를 제거하고 `parseHtml` 응답의 `errorType` 4종(`auth/network/http/parse`)을 직접 분기, 파싱 호출 5초 경과 시 "시간이 걸리고 있습니다..." 보조 안내(`setTimeout` + `finally clearTimeout`), `handleSubmit`의 실패 분기도 `showError`로 통일. 별도 retry 버튼 추가 없이 `#btn-save`/`#btn-submit`을 인라인 재시도로 재사용. **7-2**(엣지 케이스) — `extractor.js`의 `selectBestContainer`가 컨테이너 0개일 때 `null` 반환하도록 변경 후 메인에서 `{html:"", title:"", alternatives:[]}` 반환, `popup.js`에서 빈 결과 시 "공고 본문을 찾지 못했습니다" 표시 + 추출 직후 `new Blob([html]).size > 5MB`면 서버 호출 없이 안내, `init()` 진입 시 `setLoadingHint("")`/`setFormError("")` 방어 리셋, `renderSuccess({title, message, id})` 헬퍼 도입으로 성공 뷰 텍스트 동적화 → 409 도착 시 "이미 저장된 공고입니다" + 기존 지원서 링크 표시.
