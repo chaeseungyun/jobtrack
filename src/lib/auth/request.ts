@@ -11,15 +11,12 @@ type AuthResult =
   | { ok: false; response: NextResponse };
 
 const extractToken = (request: NextRequest): string | null => {
-  const cookieToken = request.cookies.get(AUTH_COOKIE_NAME)?.value;
-  if (cookieToken) return cookieToken;
-
   const authHeader = request.headers.get("Authorization");
   if (authHeader?.startsWith("Bearer ")) {
     return authHeader.slice(7);
   }
 
-  return null;
+  return request.cookies.get(AUTH_COOKIE_NAME)?.value ?? null;
 };
 
 export const requireAuth = (request: NextRequest): AuthResult => {
