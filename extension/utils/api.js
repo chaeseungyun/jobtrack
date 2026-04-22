@@ -42,6 +42,7 @@ export async function apiCall(endpoint, options = {}) {
     const response = await fetch(url, {
       method: options.method || "GET",
       headers,
+      credentials: "omit",
       ...(options.body ? { body: JSON.stringify(options.body) } : {}),
     });
 
@@ -78,7 +79,7 @@ export async function apiCall(endpoint, options = {}) {
         ok: false,
         status: response.status,
         data,
-        errorType: "http",
+        errorType: response.status === 401 ? "auth" : "http",
         errorMessage:
           typeof data?.error === "string" ? data.error : `Request failed (${response.status})`,
       };
