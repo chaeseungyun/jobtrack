@@ -12,6 +12,18 @@
 
 ---
 
+# 2026-04-30
+
+**한 것**: Step 7-2 마지막 미완 조각인 **서버 측 동일 URL 중복 저장 차단(409)** 도입. 클라이언트(`extension/popup/popup.js:285-295`)는 이미 `response.status === 409` + `response.data?.id` 분기를 갖고 있었으나 서버는 무조건 신규 행을 만들어 노출되지 않던 상태였다. **(1) AppError 메타데이터 확장** — `src/lib/core/errors.ts`의 `AppError`에 optional 4번째 인자 `details?: Record<string, unknown>` 추가, `toErrorResponse`(`src/lib/api/response.ts`)가 응답 body에 spread하도록 수정. 새 도메인 헬퍼 `duplicateApplication(id)`는 `AppError(409, "DUPLICATE_APPLICATION", "이미 저장된 공고입니다.", { id })`을 만든다. 기존 `conflict()` 등 다른 헬퍼는 details 미사용으로 호환 유지. **(2) Repository — findByJobUrl** — `IApplicationRepository`에 `findByJobUrl(userId, jobUrl)` 추가, `SupabaseApplicationRepository`에서 `.eq("user_id").eq("job_url").maybeSingle()` 패턴으로 구현. **(3) Service 중복 검사 + race 방어** — `ApplicationService.create()` 진입 직후 `input.job_url` 있으면 `findByJobUrl` 사전 검사 → 있으면 `duplicateApplication(existing.id)` throw. `repo.create()` 호출은 try/catch로 감싸 Postgres unique violation(`code === "23505"`) 캐치 후 한 번 더 `findByJobUrl`로 id 확보 → 동일 변환. id 못 찾으면 `conflict("Duplicate application")` fallback. **(4) DB unique constraint** — `(user_id, job_url)` 복합 유니크 제약을 SQL로 문서화하고 사용자에게 Supabase Studio 직접 적용 안내 예정 (Postgres NULL distinct 처리로 nullable job_url 안전). **(5) 단위 테스트 6건** — `ApplicationService.test.ts` 신규 작성 (사전 검사 throw / null이면 통과 / 23505 catch+재조회 / job_url 빈 문자열 스킵 / 23505 외 에러 전파 / AppError instanceof + details 보존). **(6) OpenAPI** — `POST /api/applications`에 409 응답 스펙 추가 (body schema: `{ error, code: DUPLICATE_APPLICATION, id }`). **(7) step.md** — 7-2 §2 [~]→[x] 마킹, 보류 사유 제거.
+
+**결정/막혔던 것**: (1) 응답에 기존 application id를 어떻게 담을까 — AppError 확장 vs 라우트 핸들러에서 직접 NextResponse 생성 vs id 없이 fallback. **AppError에 details 필드 추가** 채택. 이유: 클라이언트 popup이 이미 `response.data?.id`를 사용하므로 서버가 body에 id를 실어야 함. AppError 변경은 한 줄 추가뿐이고 toErrorResponse도 spread 한 줄로 처리 가능, 다른 헬퍼는 details 미사용으로 호환 유지됨 → DI 흐름·기존 패턴 깨지 않고 최소 확장. (2) DB 유니크 제약 적용 — 앱 레이어 검사만 vs DB 제약만 vs 둘 다. **둘 다** 채택. 단일 사용자 단일 클릭 흐름이라 race 가능성은 낮지만 동시 요청(예: 빠른 더블클릭, 동시 탭) 시 `findByJobUrl` 통과 후 두 트랜잭션이 모두 insert 가능 → DB 제약이 최종 방어선. service의 23505 catch는 race 발생 시에도 동일한 409 메시지로 사용자 경험 일관성 유지. (3) findByJobUrl 호출 횟수 — 일반 케이스(중복 없음) 1회 SELECT 추가 비용 발생. job_url + user_id로 인덱스 활용 시 무시 가능 수준이고, race 케이스에서만 추가 1회 호출되므로 성능 영향 최소.
+
+**배운 것**: `AppError`처럼 모든 도메인 에러가 통과하는 단일 클래스에 메타데이터 슬롯을 미리 옵셔널로 열어두면, 도메인별 에러에 사용자/UI에 필요한 추가 정보(여기서는 기존 application id)를 실어보내기가 매우 깔끔해진다. 라우트 핸들러를 수정하지 않고 service에서 throw만으로 응답 body 형태를 제어할 수 있다는 점이 layered architecture의 장점을 잘 보여주는 사례. Postgres unique constraint는 NULL을 distinct로 취급하므로 nullable 컬럼 조합에도 안전하게 적용 가능 (NULL job_url끼리는 중복으로 보지 않음 → 수동 입력 지원서가 job_url 없이 여러 개 생성되는 케이스 방해 없음).
+
+**빌드**: ✓ (`pnpm test:run` ApplicationService.test.ts 6건 통과, `pnpm build` 검증 예정). 수동 E2E(중복 저장→409 + 링크 / 5MB 초과 / 미지원 사이트 / 팝업 재열기 잔존 없음)는 DB 제약 적용 후 별도 검증 예정.
+
+---
+
 ## 경량 템플릿 (빠르게 쓸 때)
 
 ```markdown

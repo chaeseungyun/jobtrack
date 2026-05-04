@@ -485,18 +485,22 @@ Step 6의 핵심 플로우를 안정화하는 마무리 단계. 세 개의 서�
 #### 작업
 
 - [x] 팝업 재열기 상태 초기화 — `init()` 진입 시 `setLoadingHint("")` / `setFormError("")` 방어 리셋 추가 (모듈 `state`는 매 팝업 오픈마다 새 컨텍스트라 자연 리셋)
-- [~] 동일 URL 중복 저장 안내
-  - 클라이언트는 `response.status === 409`일 때 `renderSuccess`로 "이미 저장된 공고입니다." + `link-view` 표시 구현 완료
-  - **서버 측 409 미지원** (`POST /api/applications`는 현재 무조건 신규 생성). 서버에 `job_url` 유니크 제약 + `conflict()` 추가가 필요하나, step.md 지침대로 본 단계 범위에서는 보류
+- [x] 동일 URL 중복 저장 안내
+  - 클라이언트는 `response.status === 409`일 때 `renderSuccess`로 "이미 저장된 공고입니다." + `link-view` 표시
+  - 서버 측 `ApplicationService.create`에 `findByJobUrl` 사전 검사 + Postgres unique violation(23505) catch 추가, `AppError.details`로 기존 application id를 응답 body에 포함
+  - DB는 `(user_id, job_url)` unique constraint로 race-condition 방어 (Supabase Studio에서 dev/prod 적용)
 - [x] HTML 5MB 초과 방어 — 추출 직후 `new Blob([extraction.html]).size > 5MB` 시 서버 호출 생략하고 안내 표시
 - [x] content 셀렉터 전부 실패 시 안내 — `extractor.js`에서 `selectBestContainer`가 컨테이너 0개면 `null` 반환 → 빈 `{html, title, alternatives}` 반환, 팝업이 "공고 본문을 찾지 못했습니다." 표시
 
 #### 완료 조건
 
-- [ ] 팝업 닫고 재열 때 이전 상태 이월 없음
-- [ ] 중복 URL 저장 시나리오에서 안내 메시지 표시 (서버 지원 여부에 맞춰 — 서버 409 도입 후 검증)
-- [ ] 5MB 초과 HTML에서 네트워크 요청 없이 안내
-- [ ] 지원 사이트 외 임의 페이지에서 적절한 안내
+- [x] 팝업 닫고 재열 때 이전 상태 이월 없음
+  - 팝업 닫히면 client fetch는 자동 abort되지만 server-side LLM 호출은 계속 진행됨
+  - `parse-html`은 read-only이고 저장은 `(user_id, job_url)` unique constraint + 409 분기로 멱등 처리되므로 데이터 정합성 문제 없음
+  - 닫고 즉시 재오픈 시 `bypassCache: true`로 LLM이 중복 호출되어 비용 2배 발생 — server route에서 `request.signal`을 OpenAI 호출에 전파하면 개선 가능 (별도 백로그)
+- [x] 중복 URL 저장 시나리오에서 안내 메시지 + JobTrack 보기 링크
+- [ ] 5MB 초과 HTML에서 네트워크 요청 없이 안내 (5mb 초과 html이 담긴 공고를 찾지 못해 테스트 어려움)
+- [x] 지원 사이트 외 임의 페이지에서 적절한 안내 (지원하지 않은 사이트라는 문구 제공)
 - [x] `pnpm build` 성공
 
 ---
