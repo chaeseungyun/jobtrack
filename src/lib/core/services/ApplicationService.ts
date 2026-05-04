@@ -1,4 +1,8 @@
-import { notFound } from "@/lib/core/errors";
+import {
+  conflict,
+  duplicateApplication,
+  notFound,
+} from "@/lib/core/errors";
 import type {
   IApplicationRepository,
   CreateApplicationInput,
@@ -46,7 +50,28 @@ export class ApplicationService {
     input: CreateApplicationInput,
     deadline?: string,
   ): Promise<ApplicationRow> {
-    const application = await this.applicationRepo.create(userId, input);
+    if (input.job_url) {
+      const existing = await this.applicationRepo.findByJobUrl(
+        userId,
+        input.job_url,
+      );
+      if (existing) throw duplicateApplication(existing.id);
+    }
+
+    let application: ApplicationRow;
+    try {
+      application = await this.applicationRepo.create(userId, input);
+    } catch (error) {
+      if (isUniqueViolation(error) && input.job_url) {
+        const existing = await this.applicationRepo.findByJobUrl(
+          userId,
+          input.job_url,
+        );
+        if (existing) throw duplicateApplication(existing.id);
+        throw conflict("Duplicate application");
+      }
+      throw error;
+    }
 
     if (deadline) {
       await this.eventRepo.create({
@@ -108,4 +133,10 @@ export class ApplicationService {
   ): Promise<UpcomingEvent[]> {
     return this.eventRepo.findUpcoming(applicationIds);
   }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const code = (error as { code?: unknown }).code;
+  return code === "23505";
 }

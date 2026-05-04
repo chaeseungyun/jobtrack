@@ -3,6 +3,7 @@ export class AppError extends Error {
     public readonly status: number,
     public readonly code: string,
     message: string,
+    public readonly details?: Record<string, unknown>,
   ) {
     super(message);
     this.name = "AppError";
@@ -23,3 +24,11 @@ export const badRequest = (message = "Bad request") =>
 
 export const unauthorized = (message = "Unauthorized") =>
   new AppError(401, "UNAUTHORIZED", message);
+
+export const duplicateApplication = (id: string) =>
+  new AppError(
+    409,
+    "DUPLICATE_APPLICATION",
+    "이미 저장된 공고입니다.",
+    { id },
+  );

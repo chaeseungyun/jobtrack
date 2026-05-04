@@ -303,6 +303,38 @@
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "409": {
+            "description": "Duplicate application — same job_url already saved by this user. Body includes the existing application id so clients can link to it.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error",
+                    "code",
+                    "id"
+                  ],
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "이미 저장된 공고입니다."
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "DUPLICATE_APPLICATION"
+                      ]
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Existing application id"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }

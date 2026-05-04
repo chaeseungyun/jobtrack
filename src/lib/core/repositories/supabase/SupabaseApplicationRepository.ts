@@ -50,6 +50,21 @@ export class SupabaseApplicationRepository implements IApplicationRepository {
     return data as ApplicationRow | null;
   }
 
+  async findByJobUrl(
+    userId: string,
+    jobUrl: string,
+  ): Promise<ApplicationRow | null> {
+    const { data, error } = await this.supabase
+      .from("applications")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("job_url", jobUrl)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data as ApplicationRow | null;
+  }
+
   async existsForUser(id: string, userId: string): Promise<boolean> {
     const { data, error } = await this.supabase
       .from("applications")

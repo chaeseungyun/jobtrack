@@ -5,7 +5,7 @@ import { AppError } from "@/lib/core/errors";
 export function toErrorResponse(error: unknown): NextResponse {
   if (error instanceof AppError) {
     return NextResponse.json(
-      { error: error.message, code: error.code },
+      { error: error.message, code: error.code, ...(error.details ?? {}) },
       { status: error.status },
     );
   }

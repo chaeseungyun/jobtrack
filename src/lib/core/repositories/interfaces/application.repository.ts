@@ -35,6 +35,10 @@ export interface IApplicationRepository {
     params?: { stage?: StageType; search?: string },
   ): Promise<ApplicationRow[]>;
   findById(id: string, userId: string): Promise<ApplicationRow | null>;
+  findByJobUrl(
+    userId: string,
+    jobUrl: string,
+  ): Promise<ApplicationRow | null>;
   existsForUser(id: string, userId: string): Promise<boolean>;
   create(
     userId: string,
